@@ -7,6 +7,12 @@
     "test": "grunt"
   },
   "private": true,
+  "dependencies": {
+    "underscore": "~1.6.0",
+    "request": "~2.34.0",
+    "colors": "~0.6.2",
+    "http-status": "~0.1.4"
+  },
   "devDependencies": {
     "grunt": "~0.4.4",
     "grunt-bump": "~0.0.13",
