@@ -1,8 +1,8 @@
 {
-  "name": "api-spawner",
+  "name": "api-copilot",
   "version": "0.1.0",
   "main": "./lib",
-  "bin": "./bin/api-spawner",
+  "bin": "./bin/api-copilot",
   "scripts": {
     "test": "grunt"
   },
@@ -11,17 +11,18 @@
     "underscore": "~1.6.0",
     "request": "~2.34.0",
     "colors": "~0.6.2",
-    "http-status": "~0.1.4"
+    "http-status": "~0.1.4",
+    "commander": "~2.1.0",
+    "glob": "^3.2.9"
   },
   "devDependencies": {
     "grunt": "~0.4.4",
     "grunt-bump": "~0.0.13",
     "grunt-contrib-jshint": "~0.9.2",
-    "grunt-jasmine-node": "~0.2.1",
-    "commander": "~2.1.0"
+    "grunt-jasmine-node": "~0.2.1"
   },
-  "homepage": "https://github.com/lotaris/api-spawner",
-  "bugs": "https://github.com/lotaris/api-spawner/issues",
+  "homepage": "https://github.com/lotaris/api-copilot",
+  "bugs": "https://github.com/lotaris/api-copilot/issues",
   "author": {
     "name": "Simon Oulevay",
     "email": "simon.oulevay@lotaris.com",
@@ -29,12 +30,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/lotaris/api-spawner"
+    "url": "https://github.com/lotaris/api-copilot"
   },
   "licenses": [
     {
       "type": "MIT",
-      "url": "https://raw.github.com/lotaris/api-spawner/master/LICENSE.txt"
+      "url": "https://raw.github.com/lotaris/api-copilot/master/LICENSE.txt"
     }
   ]
 }
