@@ -2,11 +2,9 @@
   "name": "api-copilot",
   "version": "0.1.0",
   "main": "./lib",
-  "bin": "./bin/api-copilot",
   "scripts": {
     "test": "grunt"
   },
-  "private": true,
   "dependencies": {
     "underscore": "~1.6.0",
     "request": "~2.34.0",
@@ -26,7 +24,7 @@
   "bugs": "https://github.com/lotaris/api-copilot/issues",
   "author": {
     "name": "Simon Oulevay",
-    "email": "simon.oulevay@lotaris.com",
+    "email": "simon.oulevay@gmail.com",
     "url": "https://github.com/AlphaHydrae"
   },
   "repository": {
