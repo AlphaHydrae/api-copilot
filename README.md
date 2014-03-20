@@ -6,30 +6,11 @@
 
 ## Installation
 
-```sh
-npm install --save-dev api-copilot
-npm install -g api-copilot-cli # command line utility
-```
+Install the command line utility:
 
-### Requirements
+    npm install -g api-copilot-cli
 
-* [Node.js](http://nodejs.org) v0.10+
-
-## Usage
-
-* [Project Setup](#projectsetup)
-* [API Scenarios](#apiscenarios)
-* [Flow Control](#flowcontrol)
-  * [Completing a step](#step-complete)
-  * [Skipping a step](#step-skip)
-  * [Failing](#step-fail)
-  * [Asynchronous steps](#step-async)
-* [HTTP calls](#httpcalls)
-* [Command Line](#commandline)
-
-### Project Setup
-
-If you have a Node.js project, add `api-copilot` as a development dependency:
+To set up your Node.js project to use API Copilot, install `api-copilot` as a development dependency:
 
     npm install --save-dev api-copilot
 
@@ -47,13 +28,12 @@ If your project is in another language, you can add this minimal `package.json` 
 ```
 
 Then run `npm install`.
-You may also add `node_modules` to your version control ignore file.
+You may want to add the `node_modules` directory to your version control ignore file.
 
 API Copilot expects your project to have an `api` directory containing **scenarios**.
 Each scenario is a Node.js file that can be run by API Copilot.
 It must end with `.scenario.js`.
-
-A project containing only API Copilot scenarios might look like this:
+The structure of a project containing only API Copilot scenarios might look like this:
 
 ```txt
 api/foo.scenario.js
@@ -61,6 +41,22 @@ api/bar.scenario.js
 api/baz.scenario.js
 package.json
 ```
+
+### Requirements
+
+* [Node.js](http://nodejs.org) v0.10+
+
+## Usage
+
+* [API Scenarios](#apiscenarios)
+* [Flow Control](#flowcontrol)
+  * [Completing a step](#step-complete)
+  * [Skipping a step](#step-skip)
+  * [Failing](#step-fail)
+  * [Asynchronous steps](#step-async)
+  * [Change step order](#step-goto)
+* [HTTP calls](#httpcalls)
+* [Command Line](#commandline)
 
 ### API Scenarios
 
