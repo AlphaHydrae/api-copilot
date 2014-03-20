@@ -29,36 +29,53 @@ npm install -g api-copilot-cli # command line utility
 
 ### Project Setup
 
+If you have a Node.js project, add `api-copilot` as a development dependency:
+
+    npm install --save-dev api-copilot
+
+If your project is in another language, you can add this minimal `package.json` file to your project:
+
+```json
+{
+  "name": "my-project",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "api-copilot": "^0.1.0"
+  }
+}
+```
+
+Then run `npm install`.
+You may also add `node_modules` to your version control ignore file.
+
 API Copilot expects your project to have an `api` directory containing **scenarios**.
-For example, your project structure might look like this:
+Each scenario is a Node.js file that can be run by API Copilot.
+It must end with `.scenario.js`.
+
+A project containing only API Copilot scenarios might look like this:
 
 ```txt
 api/foo.scenario.js
 api/bar.scenario.js
-src/myCode.js
+api/baz.scenario.js
 package.json
-README.md
 ```
-
-Each scenario is a Node.js file that can be run by API Copilot.
-They must end with `.scenario.js`.
-
-Your `package.json` should include `api-copilot` as a development dependency.
-Install it with `npm install --save-dev api-copilot`.
 
 ### API Scenarios
 
-The first thing you should do in a scenario file is require `api-copilot` and create a `Scenario` object:
+The first to do in a scenario file is require `api-copilot` and create a `Scenario` object:
 
 ```js
 var copilot = require('api-copilot');
 
-var scenario = new spawner.Scenario({
+var scenario = new copilot.Scenario({
   name: 'My Demo Sample Data'
 });
 ```
 
-A scenario is basically a sequence of steps that you define using the `step` method:
+A scenario is basically a sequence of steps that you define using the `step` method.
+The data returned by each step is available in the next step.
 
 ```js
 scenario.step('create some data', function() {
@@ -73,16 +90,16 @@ scenario.step('log the data', function(data) {
 Steps are executed in the order they are defined by default.
 See [Flow Control](#flowcontrol) for more advanced behavior.
 
-At the end of the file, you should run the scenario with the `run` method:
+At the end of the file, you should export the scenario object:
 
 ```js
-scenario.run();
+module.exports = scenario;
 ```
 
 ### Flow Control
 
 <a name="step-complete"></a>
-To **complete a step** and send a result to the next step, you can simply return the result if your step is synchronous:
+To **complete a step** and send a result to the next step, you can simply return the result:
 
 ```js
 scenario.step('compute data', function() {
@@ -93,6 +110,9 @@ scenario.step('log data', function(data) {
   console.log(data);
 });
 ```
+
+Note that this only works for *synchronous* steps.
+[Asynchronous steps](#step-async) are described later.
 
 If you want to **pass multiple results** to the next step, use the `success` method:
 
@@ -107,6 +127,8 @@ scenario.step('log data', function(result1, result2, result3) {
   console.log(result3);
 });
 ```
+
+Again, this is only for synchronous steps.
 
 <a name="step-skip"></a>
 To **skip a step** and log an informational message, use the `skip` method:
@@ -134,15 +156,19 @@ scenario.step('log data', function(data) {
 ```
 
 <a name="step-async"></a>
-To make a **asynchronous step**,
-return a [promise](http://promises-aplus.github.io/promises-spec/) instead of a value (see [q](https://github.com/kriskowal/q)).
-You can generate a deferred object with the `defer` method. Return this object, then resolve or reject it once your asynchronous operation is complete.
+To make an **asynchronous step**,
+return a [promise](http://promises-aplus.github.io/promises-spec/) instead of a value (see the [q](https://github.com/kriskowal/q) library).
+
+API Copilot provides you the `defer` method to generate a deferred object.
+This object has a promise property which you can return;
+then resolve or reject the deferred object once your asynchronous operation is complete.
 
 ```js
 scenario.step('async step', function() {
 
   var deferred = this.defer();
 
+  // this operation is asynchronous, so it will be executed later
   asyncStuff('input', function(err, result) {
     if (err) {
       deferred.reject(err);
@@ -151,17 +177,40 @@ scenario.step('async step', function() {
     }
   });
 
+  // return the promise object
   return deferred.promise;
 });
 ```
 
-You can simplify callback-based asynchronous code by requiring [q](https://github.com/kriskowal/q) and using its Node adaptation functions:
+You can simplify callback-based asynchronous code by requiring [q](https://github.com/kriskowal/q) and using its [Node adaptation functions](https://github.com/kriskowal/q#adapting-node):
 
 ```js
 var q = require('q');
 
 scenario.step('async step', function() {
   return q.nfcall(asyncStuff, 'input');
+});
+```
+
+To do this, you must add `q` to your own development dependencies by running `npm install --save-dev q`.
+
+You may also return any promise that follows the [Promises/A+ standard](http://promises-aplus.github.io/promises-spec/).
+
+<a name="step-goto"></a>
+To **continue with another step than the next one**, call the `setNextStep` method at any time during the execution of the current step:
+
+```js
+scenario.step('first step', function() {
+  this.setNextStep('third step');
+  return this.success('some data');
+});
+
+scenario.step('second step', function() {
+  // this step will be skipped
+});
+
+scenario.step('third step', function(data) {
+  console.log(data);
 });
 ```
 
