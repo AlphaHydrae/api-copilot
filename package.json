@@ -12,7 +12,8 @@
     "http-status": "~0.1.4",
     "commander": "~2.1.0",
     "glob": "^3.2.9",
-    "q": "^1.0.1"
+    "q": "^1.0.1",
+    "log4js": "^0.6.12"
   },
   "devDependencies": {
     "grunt": "~0.4.4",
