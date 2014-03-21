@@ -1,8 +1,8 @@
-var copilot = require('../lib');
-
 describe("Version", function() {
 
+  var version = require('../lib').version;
+
   it("should be correct", function() {
-    expect(copilot.version).toBe(require('../package').version);
+    expect(version).toBe(require('../package').version);
   });
 });
