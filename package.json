@@ -13,7 +13,8 @@
     "commander": "~2.1.0",
     "glob": "^3.2.9",
     "q": "^1.0.1",
-    "log4js": "^0.6.12"
+    "log4js": "^0.6.12",
+    "js-yaml": "^3.0.2"
   },
   "devDependencies": {
     "grunt": "~0.4.4",
