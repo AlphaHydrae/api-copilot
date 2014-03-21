@@ -61,13 +61,15 @@ package.json
 * [Writing API Scenarios](#writing-api-scenarios)
 * [Running Scenarios from the Command Line](#running-scenarios-from-the-command-line)
 * [Configuration Options](#configuration-options)
-* [Flow Control](#flow-control)
+* [Scenario Flow Control](#scenario-flow-control)
   * [Completing a step](#step-complete)
   * [Skipping a step](#step-skip)
   * [Failing](#step-fail)
   * [Asynchronous steps](#step-async)
   * [Change step order](#step-goto)
-* [HTTP calls](#http-calls)
+* [Making HTTP calls](#making-http-calls)
+  * [Default Request Options](#default-request-options)
+  * [Request Filters](#request-filters)
 
 
 
@@ -97,7 +99,7 @@ scenario.step('log the data', function(data) {
 ```
 
 Steps are executed in the order they are defined by default.
-See [Flow Control](#flow-control) for more advanced behavior.
+See [Flow Control](#scenario-flow-control) for more advanced behavior.
 
 At the end of the file, you should export the scenario object:
 
@@ -165,7 +167,7 @@ Additionally, this command line option can be used to load another configuration
 
 
 
-### Flow Control
+### Scenario Flow Control
 
 <a name="step-complete"></a>
 To **complete a step** and send a result to the next step, you can simply return the result:
@@ -181,7 +183,7 @@ scenario.step('log data', function(data) {
 ```
 
 Note that this only works for *synchronous* steps.
-[Asynchronous steps](#step-async) are described later.
+[Asynchronous steps](#step-async) and [HTTP Calls](#making-http-calls) are described later.
 
 If you want to **pass multiple results** to the next step, use the `success` method:
 
@@ -285,7 +287,7 @@ scenario.step('third step', function(data) {
 
 
 
-### HTTP Calls
+### Making HTTP Calls
 
 API Copilot includes the [request](https://github.com/mikeal/request) library to make HTTP calls.
 
@@ -355,6 +357,125 @@ scenario.step('handle API data', function(response) {
 ```
 
 Read the [request documentation](https://github.com/mikeal/request#requestoptions-callback) for more HTTP configuration options.
+
+#### Default Request Options
+
+If you need to re-use options for many requests, you can use `setDefaultRequestOptions` in a step.
+It will apply the specified options to all subsequent requests.
+
+```js
+scenario.step('step 1', function() {
+
+  this.setDefaultRequestOptions({
+    json: true
+  });
+
+  // the `json` option will be added to this request
+  return this.post({
+    url: '/foo',
+    body: {
+      some: 'data'
+    }
+  });
+});
+
+scenario.step('step 2', function(response) {
+
+  // this request will also have the `json` option
+  return this.post({
+    url: '/bar',
+    body: {
+      more: 'data'
+    }
+  });
+});
+```
+
+You can also extend default request options (without overriding all of them) with `extendDefaultRequestOptions`:
+
+```js
+scenario.step('step 3', function(response) {
+
+  this.extendDefaultRequestOptions({
+    headers: {
+      'X-Custom': 'value'
+    }
+  });
+
+  // this request will have both the `json` and `headers` options
+  return this.post({
+    url: '/baz',
+    body: {
+      more: 'data'
+    }
+  });
+});
+```
+
+Clear previously configured default request options with `clearDefaultRequestOptions`:
+
+```js
+scenario.step('step 4', function(response) {
+
+  // clear specific request option(s) by name
+  this.clearDefaultRequestOptions('headers');
+
+  // this request will only have the `json` option added since the `headers` option was cleared
+  return this.post({
+    url: '/qux',
+    body: {
+      more: 'data'
+    }
+  });
+});
+
+scenario.step('step 5', function(response) {
+
+  // clear all default request options
+  this.clearDefaultRequestOptions();
+
+  // no additional options will be added
+  return this.post({
+    url: '/quxx',
+    body: 'some text'
+  });
+});
+```
+
+#### Request Filters
+
+Request filters are run just before an HTTP call is made, allowing you to customize the request based on all its options:
+
+```js
+scenario.step('HTTP call with signature authentication', function() {
+
+  // define a named filter
+  // `requestOptions` are the actual options passed to the request library
+  this.setRequestFilter('signature', function(requestOptions) {
+    requestOptions.headers = {
+      'X-Signature': sha1(requestOptions.method + '\n' + requestOptions.url)
+    };
+  });
+
+  // the X-Signature header will be added to this and subsequent requests
+  this.get({
+    url: '/foo'
+  });
+});
+```
+
+Remove request filters with `removeRequestFilters`:
+
+```js
+scenario.step('another step', function() {
+
+  // remove specific request filter(s) by name
+  this.removeRequestFilters('signature');
+
+  // remove all requests filters
+  this.removeRequestFilters();
+});
+```
 
 
 
