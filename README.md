@@ -4,6 +4,10 @@
 
 [![NPM Version](https://badge.fury.io/js/api-copilot.png)](http://badge.fury.io/js/api-copilot)
 
+
+
+
+
 ## Installation
 
 Install the command line utility:
@@ -42,13 +46,21 @@ api/baz.scenario.js
 package.json
 ```
 
+
+
 ### Requirements
 
 * [Node.js](http://nodejs.org) v0.10+
 
+
+
+
+
 ## Usage
 
-* [API Scenarios](#api-scenarios)
+* [Writing API Scenarios](#writing-api-scenarios)
+* [Running Scenarios from the Command Line](#running-scenarios-from-the-command-line)
+* [Configuration Options](#configuration-options)
 * [Flow Control](#flow-control)
   * [Completing a step](#step-complete)
   * [Skipping a step](#step-skip)
@@ -56,9 +68,10 @@ package.json
   * [Asynchronous steps](#step-async)
   * [Change step order](#step-goto)
 * [HTTP calls](#http-calls)
-* [Command Line](#command-line)
 
-### API Scenarios
+
+
+### Writing API Scenarios
 
 The first to do in a scenario file is require `api-copilot` and create a `Scenario` object:
 
@@ -91,6 +104,66 @@ At the end of the file, you should export the scenario object:
 ```js
 module.exports = scenario;
 ```
+
+
+
+### Running Scenarios from the Command Line
+
+The `api-copilot` command is provided by the separate [api-copilot-cli](https://github.com/lotaris/api-copilot-cli) package.
+Install it with `npm install -g api-copilot-cli`.
+
+Running `api-copilot` in your project will list available API scenarios and ask you which one you want to run.
+If there is only one scenario, it will be run automatically.
+
+
+
+### Configuration Options
+
+API Copilot can be given configuration options in three ways:
+
+* as options to the Scenario object;
+* from the `api-copilot.yml` file in the current working directory;
+* as options on the command line.
+
+Command line options override options from the configuration file and both override the Scenario object options.
+
+The following configuration options are supported:
+
+* `log` - command line `-l, --log [level]`
+
+  Log level (trace, debug or info). The default level is info.
+
+* `source` - command line `-s, --source [dir]`
+
+  Path to the directory where API scenarios are located.
+  The default directory is `api`.
+  The path can be absolute or relative to the current working directory.
+
+* `baseUrl` - command line `-u, --base-url [url]`
+
+  Override the base URL of the scenario.
+
+* `showTime` - command line `-t, --show-time`
+
+  Print the date and time with each log.
+
+* `showRequest` - command line `-q, --show-request`
+
+  Print options for each HTTP request (only with debug or trace log levels).
+
+* `showResponseBody` - command line `-b, --show-response-body`
+
+  Print response body for each HTTP request (only with debug or trace log levels).
+
+Additionally, this command line option can be used to load another configuration file:
+
+* `-c, --config [file]`
+
+  Path to the configuration file.
+  The default path is `api-copilot.yml`.
+  The path can be absolute or relative to the current working directory.
+
+
 
 ### Flow Control
 
@@ -210,6 +283,8 @@ scenario.step('third step', function(data) {
 });
 ```
 
+
+
 ### HTTP Calls
 
 API Copilot includes the [request](https://github.com/mikeal/request) library to make HTTP calls.
@@ -281,13 +356,9 @@ scenario.step('handle API data', function(response) {
 
 Read the [request documentation](https://github.com/mikeal/request#requestoptions-callback) for more HTTP configuration options.
 
-### Command Line
 
-The `api-copilot` command is provided by the separate [api-copilot-cli](https://github.com/lotaris/api-copilot-cli) package.
-Install it with `npm install -g api-copilot-cli`.
 
-Running `api-copilot` in your project will list available API scenarios and ask you which one you want to run.
-If there is only one scenario, it will be run automatically.
+
 
 ## Contributing
 
@@ -297,6 +368,10 @@ If there is only one scenario, it will be run automatically.
 * Create a [pull request](http://help.github.com/pull-requests/) from your branch
 
 Please add a changelog entry with your name for new features and bug fixes.
+
+
+
+
 
 ## License
 
