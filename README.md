@@ -48,15 +48,15 @@ package.json
 
 ## Usage
 
-* [API Scenarios](#apiscenarios)
-* [Flow Control](#flowcontrol)
+* [API Scenarios](#api-scenarios)
+* [Flow Control](#flow-control)
   * [Completing a step](#step-complete)
   * [Skipping a step](#step-skip)
   * [Failing](#step-fail)
   * [Asynchronous steps](#step-async)
   * [Change step order](#step-goto)
-* [HTTP calls](#httpcalls)
-* [Command Line](#commandline)
+* [HTTP calls](#http-calls)
+* [Command Line](#command-line)
 
 ### API Scenarios
 
@@ -84,7 +84,7 @@ scenario.step('log the data', function(data) {
 ```
 
 Steps are executed in the order they are defined by default.
-See [Flow Control](#flowcontrol) for more advanced behavior.
+See [Flow Control](#flow-control) for more advanced behavior.
 
 At the end of the file, you should export the scenario object:
 
