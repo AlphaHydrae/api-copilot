@@ -10,11 +10,11 @@ describe("Client", function() {
   var requestMock, Client;
   var LoggerMock = require('./support/logger.mock'),
       RequestMock = require('./support/request.mock'),
-      ClientInjector = require('../lib/client').inject;
+      clientInjector = require('../lib/client').inject;
 
   beforeEach(function() {
     requestMock = new RequestMock();
-    Client = ClientInjector({
+    Client = clientInjector({
       request: requestMock.func()
     });
   });
