@@ -36,9 +36,9 @@ describe("Scenario", function() {
     expect(log4jsMock.getLogger).toHaveBeenCalledWith('foo');
   });
 
-  it("should create a client with its options and logger", function() {
+  it("should create a client with no arguments", function() {
     var scenario = new Scenario({ name: 'foo', bar: 'baz' });
-    expect(scenario.client.options).toEqual({ name: 'foo', bar: 'baz', logger: log4jsMock.getLogger('foo') });
+    expect(scenario.client.args).toEqual([]);
   });
 
   it("should throw an error if no step is defined", function() {

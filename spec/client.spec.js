@@ -1,15 +1,10 @@
 var _ = require('underscore'),
     colors = require('colors');
 
-RegExp.escape = function(s) {
-  return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-};
-
 describe("Client", function() {
 
   var requestMock, Client;
-  var LoggerMock = require('./support/logger.mock'),
-      RequestMock = require('./support/request.mock'),
+  var RequestMock = require('./support/request.mock'),
       clientInjector = require('../lib/client').inject;
 
   beforeEach(function() {
@@ -29,6 +24,7 @@ describe("Client", function() {
     beforeEach(function() {
 
       client = new Client({});
+      client.on('error', function() {});
 
       minimalRequestOptions = {
         url: '/foo',
@@ -175,105 +171,52 @@ describe("Client", function() {
       });
     });
 
-    describe("with the `logger` option", function() {
+    it("should emit a `request` and a `response` event when a request succeeds", function() {
 
-      var logger;
-      beforeEach(function() {
-        logger = new LoggerMock();
-        client.configure({ logger: logger });
+      var requestSpy = jasmine.createSpy('client request event'),
+          errorSpy = jasmine.createSpy('client error event'),
+          responseSpy = jasmine.createSpy('client response event');
+
+      client.on('request', requestSpy);
+      client.on('error', errorSpy);
+      client.on('response', responseSpy);
+
+      makeRequest(minimalRequestOptions, simpleResponse);
+
+      runs(function() {
+        expect(errorSpy).not.toHaveBeenCalled();
+
+        expect(requestSpy.calls.length).toBe(1);
+        expect(requestSpy).toHaveBeenCalledWith(1, { method: 'GET', url: '/foo' }, { url: '/foo', method: 'get' });
+
+        expect(responseSpy.calls.length).toBe(1);
+        expect(responseSpy.calls[0].args.length).toBe(3);
+        expect(responseSpy.calls[0].args[0]).toBe(1);
+        expect(responseSpy.calls[0].args[1]).toEqual(simpleResponse);
+        expect(typeof(responseSpy.calls[0].args[2])).toBe('number');
       });
+    });
 
-      it("should log successful HTTP requests with the DEBUG level", function() {
+    it("should emit a `request` and an `error` event when a request fails", function() {
 
-        makeRequest(minimalRequestOptions, simpleResponse);
+      var requestSpy = jasmine.createSpy('client request event'),
+          errorSpy = jasmine.createSpy('client error event'),
+          responseSpy = jasmine.createSpy('client response event');
 
-        runs(function() {
-          expect(logger.debug.calls.length).toBe(2);
-          expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET /foo' ]);
-          expect(logger.debug.calls[1].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '204 No Content'.green + ' in ') + '\\d+ms$'));
-        });
-      });
+      client.on('request', requestSpy);
+      client.on('error', errorSpy);
+      client.on('response', responseSpy);
 
-      it("should not log failed HTTP requests with the DEBUG level", function() {
+      makeRequest(minimalRequestOptions, new Error('foo'));
 
-        makeRequest(minimalRequestOptions, new Error('foo'));
+      runs(function() {
+        expect(responseSpy).not.toHaveBeenCalled();
 
-        runs(function() {
-          expect(logger.debug.calls.length).toBe(1);
-          expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET /foo' ]);
-        });
-      });
+        expect(requestSpy.calls.length).toBe(1);
+        expect(requestSpy).toHaveBeenCalledWith(1, { method: 'GET', url: '/foo' }, { url: '/foo', method: 'get' });
 
-      it("should log the HTTP status code in yellow if not in the 200-399 range", function() {
-
-        makeRequest(minimalRequestOptions, { statusCode: 400, body: 'epic fail' });
-
-        runs(function() {
-          expect(logger.debug.calls.length).toBe(2);
-          expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET /foo' ]);
-          expect(logger.debug.calls[1].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '400 Bad Request'.yellow + ' in ') + '\\d+ms$'));
-        });
-      });
-
-      it("should number HTTP requests in the order they are made", function() {
-
-        _.each([ simpleResponse, { statusCode: 500, body: 'oops' }, { statusCode: 200, body: 'bar' } ], function(response) {
-          makeRequest(minimalRequestOptions, response);
-        });
-
-        runs(function() {
-          expect(logger.debug.calls.length).toBe(6);
-          expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET /foo' ]);
-          expect(logger.debug.calls[1].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '204 No Content'.green + ' in ') + '\\d+ms$'));
-          expect(logger.debug.calls[2].args).toEqual([ "http[2]".cyan + ' GET /foo' ]);
-          expect(logger.debug.calls[3].args[0]).toMatch(new RegExp(RegExp.escape("http[2]".cyan + ' ' + '500 Internal Server Error'.yellow + ' in ') + '\\d+ms$'));
-          expect(logger.debug.calls[4].args).toEqual([ "http[3]".cyan + ' GET /foo' ]);
-          expect(logger.debug.calls[5].args[0]).toMatch(new RegExp(RegExp.escape("http[3]".cyan + ' ' + '200 OK'.green + ' in ') + '\\d+ms$'));
-        });
-      });
-
-      it("should log HTTP request options with the `showRequest` option", function() {
-
-        client.configure({ showRequest: true });
-        makeRequest(minimalRequestOptions, simpleResponse);
-
-        runs(function() {
-          expect(logger.debug.calls.length).toBe(3);
-          expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET /foo' ]);
-          expect(logger.debug.calls[1].args).toEqual([ 'http[1]'.cyan + ' request options: ' + JSON.stringify({ url: '/foo', method: 'GET' }).magenta ]);
-          expect(logger.debug.calls[2].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '204 No Content'.green + ' in ') + '\\d+ms$'));
-        });
-      });
-
-      describe("with the `showResponseBody` option", function() {
-
-        beforeEach(function() {
-          client.configure({ showResponseBody: true });
-        });
-
-        it("should not log the HTTP response body if there is none", function() {
-
-          makeRequest(minimalRequestOptions, simpleResponse);
-
-          runs(function() {
-            expect(logger.debug.calls.length).toBe(2);
-            expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET /foo' ]);
-            expect(logger.debug.calls[1].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '204 No Content'.green + ' in ') + '\\d+ms$'));
-          });
-        });
-
-        it("should log the HTTP response body", function() {
-
-          var response = { statusCode: 200, body: { bar: 'baz' } };
-          makeRequest(minimalRequestOptions, response);
-
-          runs(function() {
-            expect(logger.debug.calls.length).toBe(3);
-            expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET /foo' ]);
-            expect(logger.debug.calls[1].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '200 OK'.green + ' in ') + '\\d+ms$'));
-            expect(logger.debug.calls[2].args).toEqual([ 'http[1]'.cyan + ' response body: ' + JSON.stringify(response.body).magenta ]);
-          });
-        });
+        expect(errorSpy.calls.length).toBe(1);
+        expect(errorSpy).toHaveBeenCalledWith(1, new Error('foo'));
       });
     });
   });
