@@ -117,6 +117,8 @@ Install it with `npm install -g api-copilot-cli`.
 Running `api-copilot` in your project will list available API scenarios and ask you which one you want to run.
 If there is only one scenario, it will be run automatically.
 
+Run `api-copilot --help` for instructions.
+
 
 
 ### Configuration Options
@@ -125,7 +127,7 @@ API Copilot can be given configuration options in three ways:
 
 * as options to the Scenario object;
 * from the `api-copilot.yml` file in the current working directory;
-* as options on the command line.
+* as options on the command line (run `api-copilot --help` to see available options).
 
 Command line options override options from the configuration file and both override the Scenario object options.
 
