@@ -1,7 +1,7 @@
 var LoggerMock = require('./logger.mock');
 
 function Log4js() {
-  this.loggers = {};
+  this.reset();
 }
 
 Log4js.prototype.getLogger = function(name) {
@@ -11,6 +11,10 @@ Log4js.prototype.getLogger = function(name) {
   }
 
   return this.loggers[name];
+};
+
+Log4js.prototype.reset = function() {
+  this.loggers = {};
 };
 
 module.exports = new Log4js();

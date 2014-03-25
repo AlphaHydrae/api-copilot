@@ -4,16 +4,16 @@ var LEVELS = [ 'trace', 'debug', 'info', 'warn', 'error', 'fatal' ];
 
 function LoggerMock() {
 
-  this.count = 0;
+  this.totalCalls = 0;
 
   _.each(LEVELS, function(level) {
-    spyOn(this, level);
+    spyOn(this, level).andCallThrough();
   }, this);
 }
 
 _.each(LEVELS, function(level) {
   LoggerMock.prototype[level] = function() {
-    this.count++;
+    this.totalCalls++;
   };
 });
 
