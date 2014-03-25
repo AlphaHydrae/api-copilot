@@ -45,7 +45,7 @@ describe("Scenario", function() {
     expect(function() { scenario.run(); }).toThrow('No step defined');
   });
 
-  it("should run steps in order", function() {
+  it("should run in the order they were defined by default", function() {
 
     var data = [];
     _.times(4, function(i) { scenario.step('step ' + i, function() { data.push(i); }); });
@@ -57,24 +57,24 @@ describe("Scenario", function() {
     });
   });
 
-  describe("steps", function() {
+  it("should pass returned data to the next step", function() {
 
-    it("should pass returned data to the next step", function() {
-
-      var stepArgs = [];
-      _.each([ 'foo', 'bar', 'baz' ], function(data, i) {
-        scenario.step('step ' + i, function() {
-          stepArgs.push(Array.prototype.slice.call(arguments));
-          return data;
-        });
-      });
-
-      runScenario();
-
-      runs(function() {
-        expect(stepArgs).toEqual([ [], [ 'foo' ], [ 'bar' ] ]);
+    var stepArgs = [];
+    _.each([ 'foo', 'bar', 'baz' ], function(data, i) {
+      scenario.step('step ' + i, function() {
+        stepArgs.push(Array.prototype.slice.call(arguments));
+        return data;
       });
     });
+
+    runScenario();
+
+    runs(function() {
+      expect(stepArgs).toEqual([ [], [ 'foo' ], [ 'bar' ] ]);
+    });
+  });
+
+  describe("#success", function() {
 
     it("should pass data returned through #success to the next step", function() {
 
@@ -94,6 +94,21 @@ describe("Scenario", function() {
 
       runs(function() {
         expect(stepArgs).toEqual([ [], [ 'foo' ], [ 'foo', 'bar' ] ]);
+      });
+    });
+  });
+
+  describe("#skip", function() {
+
+    it("should skip to the next step", function() {
+
+      var data = [];
+      _.times(4, function(i) { scenario.step('step ' + i, function() { data.push(i); return this.skip(); }); });
+
+      runScenario();
+
+      runs(function() {
+        expect(data).toEqual([ 0, 1, 2, 3 ]);
       });
     });
   });
