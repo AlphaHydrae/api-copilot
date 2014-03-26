@@ -1,6 +1,18 @@
 var _ = require('underscore'),
     q = require('q');
 
+function fulfill(value) {
+  var deferred = q.defer();
+  deferred.resolve(value);
+  return deferred.promise;
+}
+
+function reject(err) {
+  var deferred = q.defer();
+  deferred.reject(err);
+  return deferred.promise;
+}
+
 describe("Scenario", function() {
 
   var scenarioInjector = require('../lib/scenario').inject,
@@ -18,16 +30,32 @@ describe("Scenario", function() {
     scenario = new Scenario({ name: 'once upon a time' });
   });
 
-  function runScenario() {
+  function runScenario(expectedResult) {
 
-    var done = false;
+    var result,
+        deferred = q.defer();
+
+    expectedResult = typeof(expectedResult) != 'undefined' ? expectedResult : true;
+
     runs(function() {
-      scenario.run().fin(function() { done = true; });
+      scenario.run().then(function(value) {
+        deferred.resolve(value);
+        result = true;
+      }, function(err) {
+        deferred.reject(err);
+        result = false;
+      });
     });
 
     waitsFor(function() {
-      return done;
+      return typeof(result) != 'undefined';
     }, "The scenario should have finished running.", 50);
+
+    runs(function() {
+      expect(result).toBe(expectedResult);
+    });
+
+    return deferred.promise;
   }
 
   it("should create a logger with its name", function() {
@@ -74,9 +102,52 @@ describe("Scenario", function() {
     });
   });
 
+  it("should return a promise that is resolved if steps return values or resolved promises", function() {
+
+    scenario.step('step 0', function() {});
+    scenario.step('step 1', function() { return fulfill('foo'); });
+    scenario.step('step 2', function() { return 'bar'; });
+    scenario.step('step 3', function() { return fulfill('baz'); });
+
+    var fulfilledSpy = jasmine.createSpy();
+    runs(function() {
+      scenario.run().then(fulfilledSpy);
+    });
+
+    waitsFor(function() {
+      return fulfilledSpy.calls.length;
+    }, "The scenario should have finished running.", 50);
+
+    runs(function() {
+      expect(fulfilledSpy).toHaveBeenCalledWith(undefined);
+    });
+  });
+
+  it("should return a promise that is rejected if a step returns a rejected promise", function() {
+
+    var error = new Error('bar');
+    scenario.step('step 0', function() {});
+    scenario.step('step 1', function() { return fulfill('foo'); });
+    scenario.step('step 2', function() { return reject(error); });
+
+    var rejectedSpy = jasmine.createSpy();
+
+    runs(function() {
+      scenario.run().then(undefined, rejectedSpy);
+    });
+
+    waitsFor(function() {
+      return rejectedSpy.calls.length;
+    }, "The scenario should have finished running.", 50);
+
+    runs(function() {
+      expect(rejectedSpy).toHaveBeenCalledWith(error);
+    });
+  });
+
   describe("#success", function() {
 
-    it("should pass data returned through #success to the next step", function() {
+    it("should pass its arguments to the next step", function() {
 
       var stepArgs = [];
       _.each([ 'foo', 'bar', 'baz' ], function(data, i) {
@@ -109,6 +180,86 @@ describe("Scenario", function() {
 
       runs(function() {
         expect(data).toEqual([ 0, 1, 2, 3 ]);
+      });
+    });
+
+    it("should pass arguments after the message to the next step", function() {
+
+      var stepArgs = [];
+      _.each([ 'foo', 'bar', 'baz' ], function(data, i) {
+        scenario.step('step ' + i, function() {
+
+          var args = Array.prototype.slice.call(arguments);
+          stepArgs.push(args.slice());
+          args.unshift('skipping step ' + i);
+          args.push(data);
+
+          return this.skip.apply(this, args);
+        });
+      });
+
+      runScenario();
+
+      runs(function() {
+        expect(stepArgs).toEqual([ [], [ 'foo' ], [ 'foo', 'bar' ] ]);
+      });
+    });
+  });
+
+  describe("#fail", function() {
+
+    it("should terminate the scenario", function() {
+
+      var data = [],
+          error = new Error('foo');
+
+      scenario.step('step 0', function() { data.push(0); });
+      scenario.step('step 1', function() { data.push(1); return this.fail(error); });
+      scenario.step('step 2', function() { data.push(2); });
+
+      var callbackError;
+      runScenario(false).fail(function(err) {
+        callbackError = err;
+      });
+
+      runs(function() {
+        expect(data).toEqual([ 0, 1 ]);
+        expect(callbackError).toBe(error);
+      });
+    });
+  });
+
+  describe("#setNextStep", function() {
+
+    it("should cause the scenario to go to the specified step instead of the next one", function() {
+
+      var data = [];
+      scenario.step('step 0', function() { data.push(0); this.setNextStep('step 2'); });
+      scenario.step('step 1', function() { data.push(1); });
+      scenario.step('step 2', function() { data.push(2); });
+      scenario.step('step 3', function() { data.push(3); });
+
+      runScenario();
+
+      runs(function() {
+        expect(data).toEqual([ 0, 2, 3 ]);
+      });
+    });
+
+    it("should cause the scenario to fail if the specified step doesn't exist", function() {
+
+      var data = [];
+      scenario.step('step 0', function() { data.push(0); });
+      scenario.step('step 1', function() { data.push(1); this.setNextStep('unknown'); });
+      scenario.step('step 2', function() { data.push(2); });
+
+      var error;
+      runScenario(false).fail(function(err) {
+        error = err;
+      });
+
+      runs(function() {
+        expect(error).toEqual(new Error('No such step defined: "unknown"'));
       });
     });
   });

@@ -135,42 +135,6 @@ describe("Client", function() {
       expect(requestMock.lastRequestOptions).toEqual({ url: '/foo', method: 'GET' });
     });
 
-    describe("with the `baseUrl` option", function() {
-
-      beforeEach(function() {
-        client.configure({ baseUrl: 'http://example.com' });
-      });
-
-      it("should prepend the base URL to the `url` option", function() {
-        requestMock.addResponse(simpleResponse);
-        client.request(minimalRequestOptions);
-        expect(requestMock.requestCount).toBe(1);
-        expect(requestMock.lastRequestOptions).toEqual({ url: 'http://example.com/foo', method: 'GET' });
-      });
-    });
-
-    describe("with the `filters` option", function() {
-
-      var filter1 = function(options) { options.headers = { 'X-Signature': options.method + ' ' + options.url }; },
-          filter2 = function(options) { options.foo = 24; },
-          filter3 = function(options) { options.bar = 42; },
-          filter4 = function(options) { options.baz = options.foo + options.bar; };
-
-      it("should allow a filter to modify the request options", function() {
-        requestMock.addResponse(simpleResponse);
-        client.request(_.extend(minimalRequestOptions, { filters: [ filter1 ] }));
-        expect(requestMock.requestCount).toBe(1);
-        expect(requestMock.lastRequestOptions).toEqual({ url: '/foo', method: 'GET', headers: { 'X-Signature': 'GET /foo' } });
-      });
-
-      it("should allow filters to incrementally build request options", function() {
-        requestMock.addResponse(simpleResponse);
-        client.request(_.extend(minimalRequestOptions, { filters: [ filter2, filter3, filter4 ] }));
-        expect(requestMock.requestCount).toBe(1);
-        expect(requestMock.lastRequestOptions).toEqual({ url: '/foo', method: 'GET', foo: 24, bar: 42, baz: 66 });
-      });
-    });
-
     it("should emit a `request` and a `response` event when a request succeeds", function() {
 
       var requestSpy = jasmine.createSpy('client request event'),
@@ -217,6 +181,42 @@ describe("Client", function() {
 
         expect(errorSpy.calls.length).toBe(1);
         expect(errorSpy).toHaveBeenCalledWith(1, new Error('foo'));
+      });
+    });
+
+    describe("with the `baseUrl` option", function() {
+
+      beforeEach(function() {
+        client.configure({ baseUrl: 'http://example.com' });
+      });
+
+      it("should prepend the base URL to the `url` option", function() {
+        requestMock.addResponse(simpleResponse);
+        client.request(minimalRequestOptions);
+        expect(requestMock.requestCount).toBe(1);
+        expect(requestMock.lastRequestOptions).toEqual({ url: 'http://example.com/foo', method: 'GET' });
+      });
+    });
+
+    describe("with the `filters` option", function() {
+
+      var filter1 = function(options) { options.headers = { 'X-Signature': options.method + ' ' + options.url }; },
+          filter2 = function(options) { options.foo = 24; },
+          filter3 = function(options) { options.bar = 42; },
+          filter4 = function(options) { options.baz = options.foo + options.bar; };
+
+      it("should allow a filter to modify the request options", function() {
+        requestMock.addResponse(simpleResponse);
+        client.request(_.extend(minimalRequestOptions, { filters: [ filter1 ] }));
+        expect(requestMock.requestCount).toBe(1);
+        expect(requestMock.lastRequestOptions).toEqual({ url: '/foo', method: 'GET', headers: { 'X-Signature': 'GET /foo' } });
+      });
+
+      it("should allow filters to incrementally build request options", function() {
+        requestMock.addResponse(simpleResponse);
+        client.request(_.extend(minimalRequestOptions, { filters: [ filter2, filter3, filter4 ] }));
+        expect(requestMock.requestCount).toBe(1);
+        expect(requestMock.lastRequestOptions).toEqual({ url: '/foo', method: 'GET', foo: 24, bar: 42, baz: 66 });
       });
     });
   });
