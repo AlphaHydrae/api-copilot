@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.4 - Match 26, 2014
+
+* Fixed the scenario completion message.
+
+* Fixed a bug where request filters would not receive the request options as first argument.
+
 ## v0.1.3 - March 26, 2014
 
 * **NEW:** Scenario options can be given through an `api-copilot.yml` file in the current working directory:
@@ -9,6 +15,8 @@
 * The `run` method of scenario objects returns a promise.
 
 * Process exits with status 2 if the scenario fails.
+
+* Fixed a bug where `success` would only forward its first argument to the next step.
 
 ## v0.1.2 - March 21, 2014
 
