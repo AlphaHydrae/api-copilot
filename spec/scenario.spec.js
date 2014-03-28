@@ -1,17 +1,5 @@
 var _ = require('underscore'),
-    q = require('q');
-
-function fulfill(value) {
-  var deferred = q.defer();
-  deferred.resolve(value);
-  return deferred.promise;
-}
-
-function reject(err) {
-  var deferred = q.defer();
-  deferred.reject(err);
-  return deferred.promise;
-}
+    h = require('./support/helpers');
 
 describe("Scenario", function() {
 
@@ -29,34 +17,6 @@ describe("Scenario", function() {
 
     scenario = new Scenario({ name: 'once upon a time' });
   });
-
-  function runScenario(expectedResult) {
-
-    var result,
-        deferred = q.defer();
-
-    expectedResult = typeof(expectedResult) != 'undefined' ? expectedResult : true;
-
-    runs(function() {
-      scenario.run().then(function(value) {
-        deferred.resolve(value);
-        result = true;
-      }, function(err) {
-        deferred.reject(err);
-        result = false;
-      });
-    });
-
-    waitsFor(function() {
-      return typeof(result) != 'undefined';
-    }, "The scenario should have finished running.", 50);
-
-    runs(function() {
-      expect(result).toBe(expectedResult);
-    });
-
-    return deferred.promise;
-  }
 
   it("should create a logger with its name", function() {
     spyOn(log4jsMock, 'getLogger');
@@ -78,7 +38,7 @@ describe("Scenario", function() {
     var data = [];
     _.times(4, function(i) { scenario.step('step ' + i, function() { data.push(i); }); });
 
-    runScenario();
+    h.runScenario(scenario);
 
     runs(function() {
       expect(data).toEqual([ 0, 1, 2, 3 ]);
@@ -95,7 +55,7 @@ describe("Scenario", function() {
       });
     });
 
-    runScenario();
+    h.runScenario(scenario);
 
     runs(function() {
       expect(stepArgs).toEqual([ [], [ 'foo' ], [ 'bar' ] ]);
@@ -105,9 +65,9 @@ describe("Scenario", function() {
   it("should return a promise that is resolved if steps return values or resolved promises", function() {
 
     scenario.step('step 0', function() {});
-    scenario.step('step 1', function() { return fulfill('foo'); });
+    scenario.step('step 1', function() { return h.fulfill('foo'); });
     scenario.step('step 2', function() { return 'bar'; });
-    scenario.step('step 3', function() { return fulfill('baz'); });
+    scenario.step('step 3', function() { return h.fulfill('baz'); });
 
     var fulfilledSpy = jasmine.createSpy();
     runs(function() {
@@ -127,8 +87,8 @@ describe("Scenario", function() {
 
     var error = new Error('bar');
     scenario.step('step 0', function() {});
-    scenario.step('step 1', function() { return fulfill('foo'); });
-    scenario.step('step 2', function() { return reject(error); });
+    scenario.step('step 1', function() { return h.fulfill('foo'); });
+    scenario.step('step 2', function() { return h.reject(error); });
 
     var rejectedSpy = jasmine.createSpy();
 
@@ -161,7 +121,7 @@ describe("Scenario", function() {
         });
       });
 
-      runScenario();
+      h.runScenario(scenario);
 
       runs(function() {
         expect(stepArgs).toEqual([ [], [ 'foo' ], [ 'foo', 'bar' ] ]);
@@ -176,7 +136,7 @@ describe("Scenario", function() {
       var data = [];
       _.times(4, function(i) { scenario.step('step ' + i, function() { data.push(i); return this.skip(); }); });
 
-      runScenario();
+      h.runScenario(scenario);
 
       runs(function() {
         expect(data).toEqual([ 0, 1, 2, 3 ]);
@@ -198,7 +158,7 @@ describe("Scenario", function() {
         });
       });
 
-      runScenario();
+      h.runScenario(scenario);
 
       runs(function() {
         expect(stepArgs).toEqual([ [], [ 'foo' ], [ 'foo', 'bar' ] ]);
@@ -218,7 +178,7 @@ describe("Scenario", function() {
       scenario.step('step 2', function() { data.push(2); });
 
       var callbackError;
-      runScenario(false).fail(function(err) {
+      h.runScenario(scenario, false).fail(function(err) {
         callbackError = err;
       });
 
@@ -239,7 +199,7 @@ describe("Scenario", function() {
       scenario.step('step 2', function() { data.push(2); });
       scenario.step('step 3', function() { data.push(3); });
 
-      runScenario();
+      h.runScenario(scenario);
 
       runs(function() {
         expect(data).toEqual([ 0, 2, 3 ]);
@@ -254,7 +214,7 @@ describe("Scenario", function() {
       scenario.step('step 2', function() { data.push(2); });
 
       var error;
-      runScenario(false).fail(function(err) {
+      h.runScenario(scenario, false).fail(function(err) {
         error = err;
       });
 
