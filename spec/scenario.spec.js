@@ -33,7 +33,7 @@ describe("Scenario", function() {
     expect(function() { scenario.run(); }).toThrow('No step defined');
   });
 
-  it("should run in the order they were defined by default", function() {
+  it("should run steps in the order they were defined by default", function() {
 
     var data = [];
     _.times(4, function(i) { scenario.step('step ' + i, function() { data.push(i); }); });
@@ -102,6 +102,32 @@ describe("Scenario", function() {
 
     runs(function() {
       expect(rejectedSpy).toHaveBeenCalledWith(error);
+    });
+  });
+
+  describe("#step", function() {
+
+    it("should not accept a name that is not a string", function() {
+      _.each([ undefined, null, [], {}, 4.2, function() {} ], function(invalidName) {
+        expect(function() {
+          scenario.step(invalidName, function() {});
+        }).toThrow('Step name must be a string, got ' + typeof(invalidName));
+      });
+    });
+
+    it("should not accept a definition that is not a function", function() {
+      _.each([ undefined, null, [], {}, 4.2, "foo" ], function(invalidDefinition, i) {
+        expect(function() {
+          scenario.step('step ' + i, invalidDefinition);
+        }).toThrow('Step definition must be a function, got ' + typeof(invalidDefinition));
+      });
+    });
+
+    it("should not accept a name that was already used", function() {
+      _.times(3, function(i) { scenario.step('step ' + i, function() {}); });
+      expect(function() {
+        scenario.step('step 1', function() {});
+      }).toThrow('Step "step 1" is already defined');
     });
   });
 
