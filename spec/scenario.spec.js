@@ -1,5 +1,6 @@
 var _ = require('underscore'),
-    h = require('./support/helpers');
+    h = require('./support/helpers'),
+    q = require('q');
 
 describe("Scenario", function() {
 
@@ -65,9 +66,9 @@ describe("Scenario", function() {
   it("should return a promise that is resolved if steps return values or resolved promises", function() {
 
     scenario.step('step 0', function() {});
-    scenario.step('step 1', function() { return h.fulfill('foo'); });
+    scenario.step('step 1', function() { return q('foo'); });
     scenario.step('step 2', function() { return 'bar'; });
-    scenario.step('step 3', function() { return h.fulfill('baz'); });
+    scenario.step('step 3', function() { return q('baz'); });
 
     var fulfilledSpy = jasmine.createSpy();
     runs(function() {
@@ -87,8 +88,8 @@ describe("Scenario", function() {
 
     var error = new Error('bar');
     scenario.step('step 0', function() {});
-    scenario.step('step 1', function() { return h.fulfill('foo'); });
-    scenario.step('step 2', function() { return h.reject(error); });
+    scenario.step('step 1', function() { return q('foo'); });
+    scenario.step('step 2', function() { return q.reject(error); });
 
     var rejectedSpy = jasmine.createSpy();
 
@@ -109,7 +110,7 @@ describe("Scenario", function() {
 
     var error = new Error('bar');
     scenario.step('step 0', function() {});
-    scenario.step('step 1', function() { return h.fulfill('foo'); });
+    scenario.step('step 1', function() { return q('foo'); });
     scenario.step('step 2', function() { throw error; });
 
     var rejectedSpy = jasmine.createSpy();

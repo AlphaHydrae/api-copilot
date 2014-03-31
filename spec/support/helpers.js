@@ -1,17 +1,5 @@
 var q = require('q');
 
-exports.fulfill = function(value) {
-  var deferred = q.defer();
-  deferred.resolve(value);
-  return deferred.promise;
-};
-
-exports.reject = function(err) {
-  var deferred = q.defer();
-  deferred.reject(err);
-  return deferred.promise;
-};
-
 exports.runScenario = function(scenario, expectedResult) {
 
   var result,
