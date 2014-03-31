@@ -1,5 +1,6 @@
 var _ = require('underscore'),
-    h = require('./support/helpers');
+    h = require('./support/helpers'),
+    slice = Array.prototype.slice;
 
 var METHODS = [ 'get', 'head', 'post', 'put', 'patch', 'delete' ];
 
@@ -158,6 +159,97 @@ describe("Scenario Client Extensions", function() {
         _.each(METHODS, function(method, i) {
           expect(request.calls[i].args).toEqual([ { method: method.toUpperCase(), url: 'http://example.com', bar: 'baz' } ]);
         });
+      });
+    });
+  });
+
+  describe("request filters", function() {
+
+    it("should be configurable in order with #addRequestFilter", function() {
+
+      var filters = {
+        foo: function() {},
+        bar: function() {},
+        baz: function() {}
+      };
+
+      _.each(filters, function(func, name) {
+        scenario.step('step ' + name, function() {
+          this.addRequestFilter(name, func);
+          this.get({ url: 'http://example.com' });
+        });
+      });
+
+      h.runScenario(scenario);
+
+      runs(function() {
+        expect(request.calls.length).toBe(3);
+        expect(request.calls[0].args).toEqual([ { method: 'GET', url: 'http://example.com', filters: [ filters.foo ] } ]);
+        expect(request.calls[1].args).toEqual([ { method: 'GET', url: 'http://example.com', filters: [ filters.foo, filters.bar ] } ]);
+        expect(request.calls[2].args).toEqual([ { method: 'GET', url: 'http://example.com', filters: [ filters.foo, filters.bar, filters.baz ] } ]);
+      });
+    });
+
+    it("should be removable with #removeRequestFilters", function() {
+
+      var filters = {
+        foo: function() {},
+        bar: function() {},
+        baz: function() {},
+        qux: function() {},
+        corge: function() {},
+        grault: function() {}
+      };
+
+      function getFilters() {
+
+        var names = slice.call(arguments);
+        return _.reduce(filters, function(memo, func, name) {
+
+          if (_.contains(names, name)) {
+            memo.push(func);
+          }
+
+          return memo;
+        }, []);
+      }
+
+      // add filters
+      scenario.step('step', function() {
+
+        _.each(filters, function(filter, name) {
+          this.addRequestFilter(name, filter);
+        }, this);
+
+        this.get({ url: 'http://example.com' });
+      });
+
+      // remove one filter
+      scenario.step('step 0', function() {
+        this.removeRequestFilters('foo');
+        this.get({ url: 'http://example.com' });
+      });
+
+      // remove multiple filters
+      scenario.step('step 1', function() {
+        this.removeRequestFilters('bar', 'baz');
+        this.get({ url: 'http://example.com' });
+      });
+
+      // remove all filters
+      scenario.step('step 2', function() {
+        this.removeRequestFilters();
+        this.get({ url: 'http://example.com' });
+      });
+
+      h.runScenario(scenario);
+
+      runs(function() {
+        expect(request.calls.length).toBe(4);
+        expect(request.calls[0].args).toEqual([ { method: 'GET', url: 'http://example.com', filters: getFilters('foo', 'bar', 'baz', 'qux', 'corge', 'grault') } ]);
+        expect(request.calls[1].args).toEqual([ { method: 'GET', url: 'http://example.com', filters: getFilters('bar', 'baz', 'qux', 'corge', 'grault') } ]);
+        expect(request.calls[2].args).toEqual([ { method: 'GET', url: 'http://example.com', filters: getFilters('qux', 'corge', 'grault') } ]);
+        expect(request.calls[3].args).toEqual([ { method: 'GET', url: 'http://example.com' } ]);
       });
     });
   });
