@@ -1,6 +1,12 @@
 # Changelog
 
-## v0.1.4 - Match 26, 2014
+## v0.2.0 - March 31, 2014
+
+* **BREAKING!** Request filters must now return the request options object instead of modifying it by reference.
+
+* Request filters can be made asynchronous by returning a promise for the request options.
+
+## v0.1.4 - March 26, 2014
 
 * Fixed the scenario completion message.
 

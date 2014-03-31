@@ -453,13 +453,17 @@ scenario.step('HTTP call with signature authentication', function() {
 
   // define a named filter
   // `requestOptions` are the actual options passed to the request library
-  this.setRequestFilter('signature', function(requestOptions) {
+  this.addRequestFilter('signature', function(requestOptions) {
+
     requestOptions.headers = {
       'X-Signature': sha1(requestOptions.method + '\n' + requestOptions.url)
     };
+
+    // the filter function must return the updated request options
+    return requestOptions;
   });
 
-  // the X-Signature header will be added to this and subsequent requests
+  // the X-Signature header will automatically be added to this and subsequent requests
   this.get({
     url: '/foo'
   });
@@ -476,6 +480,36 @@ scenario.step('another step', function() {
 
   // remove all requests filters
   this.removeRequestFilters();
+});
+```
+
+You can make a request filters asynchronous by returning a promise for the request options:
+
+```js
+scenario.step('asynchronous filters', function() {
+
+  this.addRequestFilter('signature', function(requestOptions) {
+
+    // make a deferred object with the q library
+    var deferred = q.defer();
+
+    // launch your asynchronous operation
+    getSomeAsyncRequestOptions(requestOptions, function(err, options) {
+      if (err) {
+        return deferred.reject(err);
+      }
+
+      // resolve the deferred object when done
+      deferred.resolve(options);
+    });
+
+    // return the promise
+    return deferred.promise;
+  });
+
+  this.get({
+    url: '/foo'
+  });
 });
 ```
 

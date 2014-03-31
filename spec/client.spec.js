@@ -1,5 +1,7 @@
 var _ = require('underscore'),
-    colors = require('colors');
+    colors = require('colors'),
+    h = require('./support/helpers'),
+    q = require('q');
 
 describe("Client", function() {
 
@@ -8,6 +10,9 @@ describe("Client", function() {
       clientInjector = require('../lib/client').inject;
 
   beforeEach(function() {
+
+    h.addMatchers(this);
+
     requestMock = new RequestMock();
     Client = clientInjector({
       request: requestMock.func()
@@ -36,18 +41,35 @@ describe("Client", function() {
       };
     });
 
-    function makeRequest(req, res, definition) {
+    function makeRequest(req, res, expectedResult) {
 
-      var done = false;
+      var result,
+          deferred = q.defer();
+
+      expectedResult = expectedResult !== undefined ? expectedResult : !(res instanceof Error);
 
       runs(function() {
+
         requestMock[res instanceof Error ? 'addError' : 'addResponse'](res);
-        client.request(req).fin(function() { done = true; });
+
+        client.request(req).then(function(value) {
+          deferred.resolve(value);
+          result = true;
+        }, function(err) {
+          deferred.reject(err);
+          result = false;
+        });
       });
 
       waitsFor(function() {
-        return done;
+        return result !== undefined;
       }, 'The client request should be completed', 50);
+
+      runs(function() {
+        expect(result).toBe(expectedResult);
+      });
+
+      return deferred.promise;
     }
 
     it("should not accept options that are not an object", function() {
@@ -130,9 +152,12 @@ describe("Client", function() {
     });
 
     it("should convert the `method` option to uppercase", function() {
-      requestMock.addResponse(simpleResponse);
-      client.request(minimalRequestOptions);
-      expect(requestMock.lastRequestOptions).toEqual({ url: '/foo', method: 'GET' });
+
+      makeRequest(minimalRequestOptions, simpleResponse);
+
+      runs(function() {
+        expect(requestMock.lastRequestOptions).toEqual({ url: '/foo', method: 'GET' });
+      });
     });
 
     it("should emit a `request` and a `response` event when a request succeeds", function() {
@@ -191,32 +216,108 @@ describe("Client", function() {
       });
 
       it("should prepend the base URL to the `url` option", function() {
-        requestMock.addResponse(simpleResponse);
-        client.request(minimalRequestOptions);
-        expect(requestMock.requestCount).toBe(1);
-        expect(requestMock.lastRequestOptions).toEqual({ url: 'http://example.com/foo', method: 'GET' });
+
+        makeRequest(minimalRequestOptions, simpleResponse);
+
+        runs(function() {
+          expect(requestMock.requestCount).toBe(1);
+          expect(requestMock.lastRequestOptions).toEqual({ url: 'http://example.com/foo', method: 'GET' });
+        });
       });
     });
 
     describe("with the `filters` option", function() {
 
-      var filter1 = function(options) { options.headers = { 'X-Signature': options.method + ' ' + options.url }; },
-          filter2 = function(options) { options.foo = 24; },
-          filter3 = function(options) { options.bar = 42; },
-          filter4 = function(options) { options.baz = options.foo + options.bar; };
-
       it("should allow a filter to modify the request options", function() {
-        requestMock.addResponse(simpleResponse);
-        client.request(_.extend(minimalRequestOptions, { filters: [ filter1 ] }));
-        expect(requestMock.requestCount).toBe(1);
-        expect(requestMock.lastRequestOptions).toEqual({ url: '/foo', method: 'GET', headers: { 'X-Signature': 'GET /foo' } });
+
+        function filter(options) {
+          return _.extend(options, { headers: { 'X-Signature': options.method + ' ' + options.url } });
+        }
+
+        makeRequest(_.extend(minimalRequestOptions, { filters: [ filter ] }), simpleResponse);
+
+        runs(function() {
+          expect(requestMock.requestCount).toBe(1);
+          expect(requestMock.lastRequestOptions).toEqual({ url: '/foo', method: 'GET', headers: { 'X-Signature': 'GET /foo' } });
+        });
       });
 
       it("should allow filters to incrementally build request options", function() {
-        requestMock.addResponse(simpleResponse);
-        client.request(_.extend(minimalRequestOptions, { filters: [ filter2, filter3, filter4 ] }));
-        expect(requestMock.requestCount).toBe(1);
-        expect(requestMock.lastRequestOptions).toEqual({ url: '/foo', method: 'GET', foo: 24, bar: 42, baz: 66 });
+
+        var filters = [
+          function(options) { options.foo = 24; return options; },
+          function(options) { options.bar = 42; return options; },
+          function(options) { options.baz = options.foo + options.bar; return options; }
+        ];
+
+        makeRequest(_.extend(minimalRequestOptions, { filters: filters }), simpleResponse);
+
+        runs(function() {
+          expect(requestMock.requestCount).toBe(1);
+          expect(requestMock.lastRequestOptions).toEqual({ url: '/foo', method: 'GET', foo: 24, bar: 42, baz: 66 });
+        });
+      });
+
+      it("should support asynchronous filters", function() {
+
+        function filter(options) {
+          return q(_.extend(options, { foo: 'bar' })).delay(30);
+        }
+
+        makeRequest(_.extend(minimalRequestOptions, { filters: [ filter ] }), simpleResponse);
+
+        runs(function() {
+          expect(requestMock.requestCount).toBe(1);
+          expect(requestMock.lastRequestOptions).toEqual({ url: '/foo', method: 'GET', foo: 'bar' });
+        });
+      });
+
+      it("should throw an error if a filter doesn't return options", function() {
+
+        var run = [],
+            filters = [
+              function(options) { run.push(0); return options; },
+              function(options) { run.push(1); return q(options); },
+              function(options) { run.push(2); return; },
+              function(options) { run.push(3); return options; }
+            ];
+
+        var rejectedSpy = jasmine.createSpy();
+        makeRequest(_.extend(minimalRequestOptions, { filters: filters }), simpleResponse, false).fail(rejectedSpy);
+
+        runs(function() {
+
+          expect(rejectedSpy.calls.length).toBe(1);
+          expect(rejectedSpy.calls[0].args.length).toBe(1);
+          expect(rejectedSpy.calls[0].args[0]).toBeAnError('Request filter at index 2 returned nothing; it must return the filtered request options');
+
+          expect(run).toEqual([ 0, 1, 2 ]);
+          expect(requestMock.requestCount).toBe(0);
+        });
+      });
+
+      it("should throw an error if a filter returns something other than an object", function() {
+
+        var run = [],
+            filters = [
+              function(options) { run.push(0); return options; },
+              function(options) { run.push(1); return q(options); },
+              function(options) { run.push(2); return true; },
+              function(options) { run.push(3); return options; }
+            ];
+
+        var rejectedSpy = jasmine.createSpy();
+        makeRequest(_.extend(minimalRequestOptions, { filters: filters }), simpleResponse, false).fail(rejectedSpy);
+
+        runs(function() {
+
+          expect(rejectedSpy.calls.length).toBe(1);
+          expect(rejectedSpy.calls[0].args.length).toBe(1);
+          expect(rejectedSpy.calls[0].args[0]).toBeAnError('Expected request filter at index 2 to return the request options as an object, got boolean');
+
+          expect(run).toEqual([ 0, 1, 2 ]);
+          expect(requestMock.requestCount).toBe(0);
+        });
       });
     });
   });
