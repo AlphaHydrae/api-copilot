@@ -167,6 +167,31 @@ describe("Scenario Client Extensions", function() {
 
     it("should be configurable in order with #addRequestFilter", function() {
 
+      var filters = [
+        function() {},
+        function() {},
+        function() {}
+      ];
+
+      _.each(filters, function(func, i) {
+        scenario.step('step ' + i, function() {
+          this.addRequestFilter(func);
+          this.get({ url: 'http://example.com' });
+        });
+      });
+
+      h.runScenario(scenario);
+
+      runs(function() {
+        expect(request.calls.length).toBe(3);
+        expect(request.calls[0].args).toEqual([ { method: 'GET', url: 'http://example.com', filters: filters.slice(0, 1) } ]);
+        expect(request.calls[1].args).toEqual([ { method: 'GET', url: 'http://example.com', filters: filters.slice(0, 2) } ]);
+        expect(request.calls[2].args).toEqual([ { method: 'GET', url: 'http://example.com', filters: filters.slice() } ]);
+      });
+    });
+
+    it("should be configurable by name in order with #addRequestFilter", function() {
+
       var filters = {
         foo: function() {},
         bar: function() {},
@@ -191,6 +216,46 @@ describe("Scenario Client Extensions", function() {
     });
 
     it("should be removable with #removeRequestFilters", function() {
+
+      var filters = [
+        function() {},
+        function() {},
+        function() {}
+      ];
+
+      // add filters
+      scenario.step('step', function() {
+
+        _.each(filters, function(filter, name) {
+          this.addRequestFilter(name, filter);
+        }, this);
+
+        this.get({ url: 'http://example.com' });
+      });
+
+      // remove one filter
+      scenario.step('step 0', function() {
+        this.removeRequestFilters(filters[1]);
+        this.get({ url: 'http://example.com' });
+      });
+
+      // remove all filters
+      scenario.step('step 1', function() {
+        this.removeRequestFilters();
+        this.get({ url: 'http://example.com' });
+      });
+
+      h.runScenario(scenario);
+
+      runs(function() {
+        expect(request.calls.length).toBe(3);
+        expect(request.calls[0].args).toEqual([ { method: 'GET', url: 'http://example.com', filters: filters } ]);
+        expect(request.calls[1].args).toEqual([ { method: 'GET', url: 'http://example.com', filters: [ filters[0], filters[2] ] } ]);
+        expect(request.calls[2].args).toEqual([ { method: 'GET', url: 'http://example.com' } ]);
+      });
+    });
+
+    it("should be removable by name with #removeRequestFilters", function() {
 
       var filters = {
         foo: function() {},

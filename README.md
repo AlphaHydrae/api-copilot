@@ -449,19 +449,22 @@ scenario.step('step 5', function(response) {
 Request filters are run just before an HTTP call is made, allowing you to customize the request based on all its options:
 
 ```js
+// define a filter function
+// the `requestOptions` argument will be the actual options passed to the request library
+function signRequest(requestOptions) {
+
+  requestOptions.headers = {
+    'X-Signature': sha1(requestOptions.method + '\n' + requestOptions.url)
+  };
+
+  // the filter function must return the updated request options
+  return requestOptions;
+}
+
 scenario.step('HTTP call with signature authentication', function() {
 
-  // define a named filter
-  // `requestOptions` are the actual options passed to the request library
-  this.addRequestFilter('signature', function(requestOptions) {
-
-    requestOptions.headers = {
-      'X-Signature': sha1(requestOptions.method + '\n' + requestOptions.url)
-    };
-
-    // the filter function must return the updated request options
-    return requestOptions;
-  });
+  // add the filter
+  this.addRequestFilter(signRequest);
 
   // the X-Signature header will automatically be added to this and subsequent requests
   this.get({
@@ -475,11 +478,28 @@ Remove request filters with `removeRequestFilters`:
 ```js
 scenario.step('another step', function() {
 
-  // remove specific request filter(s) by name
-  this.removeRequestFilters('signature');
+  // remove specific request filter(s)
+  this.removeRequestFilters(signRequest);
 
   // remove all requests filters
   this.removeRequestFilters();
+});
+```
+
+You can also identify filters by name:
+
+```js
+scenario.step('HTTP call with named filters', function() {
+
+  // add named filters
+  this.addRequestFilter('foo', fooFilter);
+  this.addRequestFilter('foo', anotherFooFilter);
+  this.addRequestFilter('bar', barFilter);
+  this.addRequestFilter('baz', bazFilter);
+
+  // remove all filters with a given name or names
+  this.removeRequestFilters('foo');
+  this.removeRequestFilters('bar', 'baz');
 });
 ```
 
