@@ -245,6 +245,7 @@ describe("Scenario", function() {
       });
 
       runs(function() {
+        expect(data).toEqual([ 0, 1 ]);
         expect(error).toEqual(new Error('No such step defined: "unknown"'));
       });
     });
