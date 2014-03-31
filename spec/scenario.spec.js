@@ -105,6 +105,28 @@ describe("Scenario", function() {
     });
   });
 
+  it("should return a promise that is rejected if a step throws an error", function() {
+
+    var error = new Error('bar');
+    scenario.step('step 0', function() {});
+    scenario.step('step 1', function() { return h.fulfill('foo'); });
+    scenario.step('step 2', function() { throw error; });
+
+    var rejectedSpy = jasmine.createSpy();
+
+    runs(function() {
+      scenario.run().then(undefined, rejectedSpy);
+    });
+
+    waitsFor(function() {
+      return rejectedSpy.calls.length;
+    }, "The scenario should have finished running.", 50);
+
+    runs(function() {
+      expect(rejectedSpy).toHaveBeenCalledWith(error);
+    });
+  });
+
   describe("#step", function() {
 
     it("should not accept a name that is not a string", function() {
