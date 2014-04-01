@@ -8,7 +8,7 @@ function RequestMock() {
 _.extend(RequestMock.prototype, {
 
   addResponse: function(response) {
-    this.callbackArgs.push([ undefined, response ]);
+    this.callbackArgs.push([ undefined, response, response.body ]);
   },
 
   addError: function(err) {
