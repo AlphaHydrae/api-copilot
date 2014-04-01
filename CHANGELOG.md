@@ -4,6 +4,8 @@
 
 * **BREAKING!** Request filters must now return the request options object instead of modifying it by reference.
 
+* **NEW:** When an error occurs, set the log level to `trace` to see the stack trace.
+
 * Request filters can be made asynchronous by returning a promise for the request options.
 
 ## v0.1.4 - March 26, 2014
