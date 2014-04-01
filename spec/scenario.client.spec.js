@@ -317,6 +317,33 @@ describe("Scenario Client Extensions", function() {
         expect(request.calls[3].args).toEqual([ { method: 'GET', url: 'http://example.com' } ]);
       });
     });
+
+    it("should override previous filters with the same name", function() {
+
+      var filters = [
+        function(options) {},
+        function(options) {},
+        function(options) {},
+        function(options) {}
+      ];
+
+      scenario.step('step', function() {
+
+        this.addRequestFilter('foo', filters[0]);
+        this.addRequestFilter('foo', filters[1]);
+        this.addRequestFilter('foo', filters[2]);
+        this.addRequestFilter('bar', filters[3]);
+
+        this.get({ url: 'http://example.com' });
+      });
+
+      h.runScenario(scenario);
+
+      runs(function() {
+        expect(request.calls.length).toBe(1);
+        expect(request.calls[0].args).toEqual([ { method: 'GET', url: 'http://example.com', filters: filters.slice(2, 4) } ]);
+      });
+    });
   });
 
   _.each(METHODS, function(method) {

@@ -493,13 +493,18 @@ scenario.step('HTTP call with named filters', function() {
 
   // add named filters
   this.addRequestFilter('foo', fooFilter);
-  this.addRequestFilter('foo', anotherFooFilter);
   this.addRequestFilter('bar', barFilter);
   this.addRequestFilter('baz', bazFilter);
 
-  // remove all filters with a given name or names
+  // adding a new filter for the same name overrides the previous filter
+  this.addRequestFilter('foo', anotherFooFilter);
+
+  // remove filters with a given name or names
   this.removeRequestFilters('foo');
   this.removeRequestFilters('bar', 'baz');
+
+  // remove all request filters
+  this.removeRequestFilters();
 });
 ```
 
