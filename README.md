@@ -135,7 +135,7 @@ The following configuration options are supported:
 
 * `log` - command line `-l, --log [level]`
 
-  Log level (trace, debug or info). The default level is info.
+  Log level (trace, debug or info). The default level is info. Use trace to see the stack trace of errors.
 
 * `source` - command line `-s, --source [dir]`
 
