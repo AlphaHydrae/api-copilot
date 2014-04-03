@@ -145,6 +145,52 @@ describe("Scenario Client Extensions", function() {
       });
     });
 
+    it("should be configurable with the `configure` event", function() {
+
+      scenario.step('step 0', function() {
+      
+        // set defaults
+        this.emit('configure', { defaultRequestOptions: { foo: 'bar' } });
+
+        // defaults should be merged with options
+        this.get({ url: 'http://example.com' });
+      });
+
+      scenario.step('step 1', function() {
+
+        // override previous defaults and set new defaults
+        this.emit('configure', { defaultRequestOptions: { foo: 'baz', qux: 'corge' } });
+
+        // request should use new defaults
+        this.post({ url: 'http://example.com' });
+      });
+
+      scenario.step('step 2', function() {
+
+        // override defaults
+        this.patch({ url: 'http://example.com', foo: 'grault' });
+
+        // set defaults after request
+        this.emit('configure', { defaultRequestOptions: { garply: 'waldo' } });
+      });
+
+      scenario.step('step 3', function() {
+
+        // request should use new defaults from previous step
+        this.delete({ url: 'http://example.com' });
+      });
+
+      h.runScenario(scenario);
+
+      runs(function() {
+        expect(request.calls.length).toBe(4);
+        expect(request.calls[0].args).toEqual([ { method: 'GET', url: 'http://example.com', foo: 'bar' } ]);
+        expect(request.calls[1].args).toEqual([ { method: 'POST', url: 'http://example.com', foo: 'baz', qux: 'corge' } ]);
+        expect(request.calls[2].args).toEqual([ { method: 'PATCH', url: 'http://example.com', foo: 'grault', qux: 'corge' } ]);
+        expect(request.calls[3].args).toEqual([ { method: 'DELETE', url: 'http://example.com', garply: 'waldo' } ]);
+      });
+    });
+
     it("should not override the method of request aliases", function() {
 
       scenario.step('step', function() { this.setDefaultRequestOptions({ method: 'foo' }); });

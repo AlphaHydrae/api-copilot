@@ -61,6 +61,7 @@ package.json
 * [Writing API Scenarios](#writing-api-scenarios)
 * [Running Scenarios from the Command Line](#running-scenarios-from-the-command-line)
 * [Configuration Options](#configuration-options)
+  * [Changing the configuration while a scenario is running](#configuration-runtime)
 * [Scenario Flow Control](#scenario-flow-control)
   * [Completing a step](#step-complete)
   * [Skipping a step](#step-skip)
@@ -166,6 +167,34 @@ Additionally, this command line option can be used to load another configuration
   Path to the configuration file.
   The default path is `api-copilot.yml`.
   The path can be absolute or relative to the current working directory.
+
+
+
+#### Changing the Configuration while a Scenario is Running
+
+In any step of the scenario, you may change the configuration with the `configure` method:
+
+```js
+var scenario = new Scenario({
+  name: 'once upon a time',
+  baseUrl: 'http://example.com/foo'
+});
+
+scenario.step('first step', function() {
+
+  // this HTTP request will use the baseUrl configured above
+  return this.get({ url: '/' });
+});
+
+scenario.step('second step', function(response) {
+  
+  // change the baseUrl
+  this.configure({ baseUrl: 'http://example.com/bar' });
+
+  // this HTTP request will use the newly configured baseUrl
+  return this.get({ url: '/' });
+});
+```
 
 
 

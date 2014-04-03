@@ -303,4 +303,27 @@ describe("Scenario", function() {
       });
     });
   });
+
+  describe("#configure", function() {
+
+    it("should emit the `configure` event", function() {
+
+      var configureSpy = jasmine.createSpy();
+      scenario.on('configure', configureSpy);
+
+      scenario.configure({ foo: 'bar' });
+      expect(configureSpy.calls.length).toBe(1);
+      expect(configureSpy).toHaveBeenCalledWith({ foo: 'bar' });
+    });
+
+    it("should forward the `configure` event to the client", function() {
+
+      var configureSpy = jasmine.createSpy();
+      scenario.client.on('configure', configureSpy);
+
+      scenario.configure({ baz: 'qux' });
+      expect(configureSpy.calls.length).toBe(1);
+      expect(configureSpy).toHaveBeenCalledWith({ baz: 'qux' });
+    });
+  });
 });

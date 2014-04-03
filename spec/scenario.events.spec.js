@@ -22,15 +22,16 @@ describe("Scenario Events", function() {
     scenario = new Scenario({ name: 'once upon a time' });
   });
 
-  it("should emit `scenario:start` and `scenario:end` when successful", function() {
+  it("should emit `configure`, `scenario:start` and `scenario:end` when successful", function() {
 
-    collector.collect(scenario, 'scenario:start', 'scenario:end');
+    collector.collect(scenario, 'configure', 'scenario:start', 'scenario:end');
     _.times(3, function(i){ scenario.step('step ' + i, function() { collector.add('executing step ' + i); }); });
 
     h.runScenario(scenario);
 
     runs(function() {
       expect(events).toEqual([
+        { name: 'configure', args: [ { name: 'once upon a time' } ] },
         { name: 'scenario:start', args: [ { name: 'once upon a time' } ] },
         { name: 'executing step 0', args: [] },
         { name: 'executing step 1', args: [] },
@@ -40,10 +41,10 @@ describe("Scenario Events", function() {
     });
   });
 
-  it("should emit `scenario:start` and `scenario:error` when failed", function() {
+  it("should emit `configure`, `scenario:start` and `scenario:error` when failed", function() {
 
     var error = new Error('bug');
-    collector.collect(scenario, 'scenario:start', 'scenario:error');
+    collector.collect(scenario, 'configure', 'scenario:start', 'scenario:error');
     scenario.step('step 0', function() { collector.add('executing step 0'); });
     scenario.step('step 1', function() { collector.add('executing step 1'); return this.fail(error); });
     scenario.step('step 2', function() { collector.add('executing step 2'); });
@@ -52,6 +53,7 @@ describe("Scenario Events", function() {
 
     runs(function() {
       expect(events).toEqual([
+        { name: 'configure', args: [ { name: 'once upon a time' } ] },
         { name: 'scenario:start', args: [ { name: 'once upon a time' } ] },
         { name: 'executing step 0', args: [] },
         { name: 'executing step 1', args: [] },
