@@ -61,7 +61,7 @@ package.json
 * [Writing API Scenarios](#writing-api-scenarios)
 * [Running Scenarios from the Command Line](#running-scenarios-from-the-command-line)
 * [Configuration Options](#configuration-options)
-  * [Changing the configuration while a scenario is running](#configuration-runtime)
+  * [Changing the configuration while a scenario is running](#changing-the-configuration-while-a-scenario-is-running)
 * [Scenario Flow Control](#scenario-flow-control)
   * [Completing a step](#step-complete)
   * [Skipping a step](#step-skip)
