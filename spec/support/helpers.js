@@ -1,6 +1,6 @@
 var q = require('q');
 
-exports.runScenario = function(scenario, expectedResult) {
+exports.runScenario = function(scenario, expectedResult, runOptions) {
 
   var result,
       deferred = q.defer();
@@ -8,7 +8,7 @@ exports.runScenario = function(scenario, expectedResult) {
   expectedResult = typeof(expectedResult) != 'undefined' ? expectedResult : true;
 
   runs(function() {
-    scenario.run().then(function(value) {
+    scenario.run(runOptions).then(function(value) {
       deferred.resolve(value);
       result = true;
     }, function(err) {

@@ -10,7 +10,7 @@ describe("CLI Logger", function() {
       ScenarioMock = require('./support/scenario.mock'),
       cliLoggerInjector = require('../lib/cli.logger').inject;
 
-  var CliLogger, scenario, cliLogger, sampleRequestOptions, sampleOriginalOptions, sampleResponse;
+  var CliLogger, scenario, cliLogger, sampleRequestOptions, sampleResponse;
   beforeEach(function() {
 
     log4jsMock.reset();
@@ -24,18 +24,16 @@ describe("CLI Logger", function() {
     logger = log4jsMock.getLogger(scenario.name);
 
     sampleRequestOptions = { method: 'GET', url: 'http://example.com/foo' };
-    sampleOriginalOptions = { method: 'get', url: '/foo' };
     sampleResponse = { statusCode: 204 };
   });
 
   function makeRequest(requestNumber, options) {
 
     options = _.extend({}, options);
-    requestOptions = options.requestOptions || sampleRequestOptions;
+    requestOptions = options.request || sampleRequestOptions;
     response = options.response || sampleResponse;
-    originalOptions = options.originalOptions || sampleOriginalOptions;
 
-    scenario.emit('client:request', requestNumber, requestOptions, originalOptions);
+    scenario.emit('client:request', requestNumber, requestOptions);
 
     if (response instanceof Error) {
       scenario.emit('client:error', requestNumber, response);
@@ -50,7 +48,7 @@ describe("CLI Logger", function() {
 
     expect(logger.totalCalls).toBe(2);
     expect(logger.debug.calls.length).toBe(2);
-    expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET /foo' ]);
+    expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET http://example.com/foo' ]);
     expect(logger.debug.calls[1].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '204 No Content'.green + ' in ') + '\\d+ms$'));
   });
 
@@ -60,7 +58,7 @@ describe("CLI Logger", function() {
 
     expect(logger.totalCalls).toBe(1);
     expect(logger.debug.calls.length).toBe(1);
-    expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET /foo' ]);
+    expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET http://example.com/foo' ]);
   });
 
   it("should log the HTTP status code in yellow if not in the 200-399 range", function() {
@@ -69,7 +67,7 @@ describe("CLI Logger", function() {
 
     expect(logger.totalCalls).toBe(2);
     expect(logger.debug.calls.length).toBe(2);
-    expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET /foo' ]);
+    expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET http://example.com/foo' ]);
     expect(logger.debug.calls[1].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '500 Internal Server Error'.yellow + ' in ') + '\\d+ms$'));
   });
 
@@ -81,12 +79,29 @@ describe("CLI Logger", function() {
 
     expect(logger.totalCalls).toBe(6);
     expect(logger.debug.calls.length).toBe(6);
-    expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET /foo' ]);
+    expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET http://example.com/foo' ]);
     expect(logger.debug.calls[1].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '204 No Content'.green + ' in ') + '\\d+ms$'));
-    expect(logger.debug.calls[2].args).toEqual([ "http[2]".cyan + ' GET /foo' ]);
+    expect(logger.debug.calls[2].args).toEqual([ "http[2]".cyan + ' GET http://example.com/foo' ]);
     expect(logger.debug.calls[3].args[0]).toMatch(new RegExp(RegExp.escape("http[2]".cyan + ' ' + '500 Internal Server Error'.yellow + ' in ') + '\\d+ms$'));
-    expect(logger.debug.calls[4].args).toEqual([ "http[3]".cyan + ' GET /foo' ]);
+    expect(logger.debug.calls[4].args).toEqual([ "http[3]".cyan + ' GET http://example.com/foo' ]);
     expect(logger.debug.calls[5].args[0]).toMatch(new RegExp(RegExp.escape("http[3]".cyan + ' ' + '200 OK'.green + ' in ') + '\\d+ms$'));
+  });
+
+  describe("with the `baseUrl` option", function() {
+
+    beforeEach(function() {
+      cliLogger.configure({ baseUrl: 'http://example.com/foo' });
+    });
+
+    it("should log only the path of URLs", function() {
+
+      makeRequest(1, { request: { method: 'GET', url: 'http://example.com/foo/bar/baz' } });
+
+      expect(logger.totalCalls).toBe(2);
+      expect(logger.debug.calls.length).toBe(2);
+      expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET /foo/bar/baz' ]);
+      expect(logger.debug.calls[1].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '204 No Content'.green + ' in ') + '\\d+ms$'));
+    });
   });
 
   describe("with the `showRequest` option", function() {
@@ -101,7 +116,7 @@ describe("CLI Logger", function() {
 
       expect(logger.totalCalls).toBe(3);
       expect(logger.debug.calls.length).toBe(3);
-      expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET /foo' ]);
+      expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET http://example.com/foo' ]);
       expect(logger.debug.calls[1].args).toEqual([ 'http[1]'.cyan + ' request options: ' + JSON.stringify(sampleRequestOptions).magenta ]);
       expect(logger.debug.calls[2].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '204 No Content'.green + ' in ') + '\\d+ms$'));
     });
@@ -119,7 +134,7 @@ describe("CLI Logger", function() {
 
       expect(logger.totalCalls).toBe(2);
       expect(logger.debug.calls.length).toBe(2);
-      expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET /foo' ]);
+      expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET http://example.com/foo' ]);
       expect(logger.debug.calls[1].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '204 No Content'.green + ' in ') + '\\d+ms$'));
     });
 
@@ -130,7 +145,7 @@ describe("CLI Logger", function() {
 
       expect(logger.totalCalls).toBe(3);
       expect(logger.debug.calls.length).toBe(3);
-      expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET /foo' ]);
+      expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET http://example.com/foo' ]);
       expect(logger.debug.calls[1].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '200 OK'.green + ' in ') + '\\d+ms$'));
       expect(logger.debug.calls[2].args).toEqual([ 'http[1]'.cyan + ' response body: ' + JSON.stringify(response.body).magenta ]);
     });

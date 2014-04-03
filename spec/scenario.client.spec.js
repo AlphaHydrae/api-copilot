@@ -10,7 +10,7 @@ describe("Scenario Client Extensions", function() {
       log4jsMock = require('./support/log4js.mock'),
       ClientMock = require('./support/client.mock');
 
-  var Scenario, scenario, client, request;
+  var Scenario, scenario, request;
   beforeEach(function() {
 
     Scenario = scenarioInjector({
@@ -19,11 +19,81 @@ describe("Scenario Client Extensions", function() {
     });
 
     scenario = new Scenario({ name: 'once upon a time' });
-    client = scenario.client;
-    request = client.request;
+    request = scenario.client.request;
+  });
+
+  describe("base URL", function() {
+
+    it("should be prepended to URLs", function() {
+
+      scenario.step('step', function() {
+        this.get({ url: '/foo' });
+      });
+
+      h.runScenario(scenario, true, { baseUrl: 'http://example.com' });
+
+      runs(function() {
+        expect(request.calls.length).toBe(1);
+        expect(request.calls[0].args).toEqual([ { method: 'GET', url: 'http://example.com/foo' } ]);
+      });
+    });
+
+    it("should be configurable at construction", function() {
+
+      scenario = new Scenario({ name: 'once upon a time', baseUrl: 'http://example.com' });
+      request = scenario.client.request;
+
+      scenario.step('step', function() {
+        this.get({ url: '/foo' });
+      });
+
+      h.runScenario(scenario);
+
+      runs(function() {
+        expect(request.calls.length).toBe(1);
+        expect(request.calls[0].args).toEqual([ { method: 'GET', url: 'http://example.com/foo' } ]);
+      });
+    });
+
+    it("should be configurable at runtime", function() {
+
+      scenario.step('step 0', function() {
+        this.get({ url: 'http://example.com/foo' });
+      });
+
+      scenario.step('step 1', function() {
+        this.configure({ baseUrl: 'http://example.com' });
+        this.get({ url: '/bar' });
+      });
+
+      h.runScenario(scenario);
+
+      runs(function() {
+        expect(request.calls.length).toBe(2);
+        expect(request.calls[0].args).toEqual([ { method: 'GET', url: 'http://example.com/foo' } ]);
+        expect(request.calls[1].args).toEqual([ { method: 'GET', url: 'http://example.com/bar' } ]);
+      });
+    });
   });
 
   describe("default request options", function() {
+
+    it("should be configurable at construction", function() {
+
+      scenario = new Scenario({ name: 'once upon a time', defaultRequestOptions: { foo: 'bar' } });
+      request = scenario.client.request;
+
+      scenario.step('step', function() {
+        this.get({ url: 'http://example.com' });
+      });
+
+      h.runScenario(scenario);
+
+      runs(function() {
+        expect(request.calls.length).toBe(1);
+        expect(request.calls[0].args).toEqual([ { method: 'GET', url: 'http://example.com', foo: 'bar' } ]);
+      });
+    });
 
     it("should be configurable with #setDefaultRequestOptions", function() {
 

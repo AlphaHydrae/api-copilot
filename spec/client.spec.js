@@ -176,7 +176,7 @@ describe("Client", function() {
         expect(errorSpy).not.toHaveBeenCalled();
 
         expect(requestSpy.calls.length).toBe(1);
-        expect(requestSpy).toHaveBeenCalledWith(1, { method: 'GET', url: '/foo' }, { url: '/foo', method: 'get' });
+        expect(requestSpy).toHaveBeenCalledWith(1, { method: 'GET', url: '/foo' });
 
         expect(responseSpy.calls.length).toBe(1);
         expect(responseSpy.calls[0].args.length).toBe(3);
@@ -202,27 +202,10 @@ describe("Client", function() {
         expect(responseSpy).not.toHaveBeenCalled();
 
         expect(requestSpy.calls.length).toBe(1);
-        expect(requestSpy).toHaveBeenCalledWith(1, { method: 'GET', url: '/foo' }, { url: '/foo', method: 'get' });
+        expect(requestSpy).toHaveBeenCalledWith(1, { method: 'GET', url: '/foo' });
 
         expect(errorSpy.calls.length).toBe(1);
         expect(errorSpy).toHaveBeenCalledWith(1, new Error('foo'));
-      });
-    });
-
-    describe("with the `baseUrl` option", function() {
-
-      beforeEach(function() {
-        client.configure({ baseUrl: 'http://example.com' });
-      });
-
-      it("should prepend the base URL to the `url` option", function() {
-
-        makeRequest(minimalRequestOptions, simpleResponse);
-
-        runs(function() {
-          expect(requestMock.requestCount).toBe(1);
-          expect(requestMock.lastRequestOptions).toEqual({ url: 'http://example.com/foo', method: 'GET' });
-        });
       });
     });
 
