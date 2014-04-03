@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.1 - April 3, 2014
+
+* **NEW:** Configuration options can be changed at runtime with the `configure` method.
+
+* The new `showFullUrl` option causes full URLs to be displayed instead of paths only when a base URL is configured.
+
 ## v0.2.0 - March 31, 2014
 
 * **BREAKING!** Request filters must now return the request options object instead of modifying it by reference.

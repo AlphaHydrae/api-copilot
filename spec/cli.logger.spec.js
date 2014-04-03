@@ -102,6 +102,23 @@ describe("CLI Logger", function() {
       expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET /foo/bar/baz' ]);
       expect(logger.debug.calls[1].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '204 No Content'.green + ' in ') + '\\d+ms$'));
     });
+
+    describe("with the `showFullUrl` option", function() {
+
+      beforeEach(function() {
+        cliLogger.configure({ showFullUrl: true });
+      });
+
+      it("should log full URLs", function() {
+
+        makeRequest(1, { request: { method: 'GET', url: 'http://example.com/foo/bar/baz' } });
+
+        expect(logger.totalCalls).toBe(2);
+        expect(logger.debug.calls.length).toBe(2);
+        expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET http://example.com/foo/bar/baz' ]);
+        expect(logger.debug.calls[1].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '204 No Content'.green + ' in ') + '\\d+ms$'));
+      });
+    });
   });
 
   describe("with the `showRequest` option", function() {

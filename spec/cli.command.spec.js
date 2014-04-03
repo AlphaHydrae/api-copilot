@@ -205,6 +205,10 @@ describe("CLI Command", function() {
       expect(commanderCommand.option).toHaveBeenCalledWith('-u, --base-url [url]', 'Override the base URL of the scenario');
     });
 
+    it("should define the config option", function() {
+      expect(commanderCommand.option).toHaveBeenCalledWith('-c, --config [file]', 'Set the configuration file path');
+    });
+
     it("should define the showTime option", function() {
       expect(commanderCommand.option).toHaveBeenCalledWith('-t, --show-time', 'Print the date and time with each log');
     });
@@ -217,12 +221,12 @@ describe("CLI Command", function() {
       expect(commanderCommand.option).toHaveBeenCalledWith('-b, --show-response-body', 'Print response body for each HTTP request (only with debug or trace log level)');
     });
 
-    it("should define the config option", function() {
-      expect(commanderCommand.option).toHaveBeenCalledWith('-c, --config [file]', 'Set the configuration file path');
+    it("should define the showFullUrl option", function() {
+      expect(commanderCommand.option).toHaveBeenCalledWith('--show-full-url', 'Show full URLs even when a base URL is configured (only with debug or trace log level)');
     });
 
     it("should not set other options", function() {
-      expect(commanderCommand.option.calls.length).toBe(7);
+      expect(commanderCommand.option.calls.length).toBe(8);
     });
 
     it("should parse the arguments", function() {
