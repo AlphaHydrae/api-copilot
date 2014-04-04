@@ -6,7 +6,7 @@ function Command() {
 
   commandInstances.push(this);
 
-  _.each([ 'version', 'option', 'parse' ], function(method) {
+  _.each([ 'version', 'option', 'parse', 'on' ], function(method) {
     spyOn(this, method).andCallThrough();
   }, this);
 }
@@ -18,6 +18,10 @@ _.extend(Command.prototype, {
   },
 
   option: function() {
+    return this;
+  },
+
+  on: function() {
     return this;
   },
 
