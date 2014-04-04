@@ -77,7 +77,7 @@ describe("Scenario", function() {
 
     waitsFor(function() {
       return fulfilledSpy.calls.length;
-    }, "The scenario should have finished running.", 50);
+    }, "the scenario to have finished running", 50);
 
     runs(function() {
       expect(fulfilledSpy).toHaveBeenCalledWith(undefined);
@@ -99,7 +99,7 @@ describe("Scenario", function() {
 
     waitsFor(function() {
       return rejectedSpy.calls.length;
-    }, "The scenario should have finished running.", 50);
+    }, "the scenario to have finished running", 50);
 
     runs(function() {
       expect(rejectedSpy).toHaveBeenCalledWith(error);
@@ -121,7 +121,7 @@ describe("Scenario", function() {
 
     waitsFor(function() {
       return rejectedSpy.calls.length;
-    }, "The scenario should have finished running.", 50);
+    }, "the scenario to have finished running", 50);
 
     runs(function() {
       expect(rejectedSpy).toHaveBeenCalledWith(error);
@@ -296,7 +296,7 @@ describe("Scenario", function() {
 
       waitsFor(function() {
         return typeof(successful) != 'undefined';
-      }, "The promise should be resolved.", 50);
+      }, "the promise to be resolved", 50);
 
       runs(function() {
         expect(successful).toBe(true);

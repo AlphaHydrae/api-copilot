@@ -63,7 +63,7 @@ describe("Client", function() {
 
       waitsFor(function() {
         return result !== undefined;
-      }, 'The client request should be completed', 50);
+      }, 'the client request to be completed', 50);
 
       runs(function() {
         expect(result).toBe(expectedResult);
@@ -118,7 +118,7 @@ describe("Client", function() {
 
       waitsFor(function() {
         return done;
-      }, 'The client request should be completed', 50);
+      }, 'the client request to be completed', 50);
 
       runs(function() {
         expect(failure).not.toHaveBeenCalled();
@@ -142,7 +142,7 @@ describe("Client", function() {
 
       waitsFor(function() {
         return done;
-      }, 'The client request should be completed', 50);
+      }, 'the client request to be completed', 50);
 
       runs(function() {
         expect(success).not.toHaveBeenCalled();

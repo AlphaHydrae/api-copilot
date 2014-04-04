@@ -30,7 +30,7 @@ describe("Scenario Client Extensions", function() {
         this.get({ url: '/foo' });
       });
 
-      h.runScenario(scenario, true, { baseUrl: 'http://example.com' });
+      h.runScenario(scenario, true, { runOptions: { baseUrl: 'http://example.com' } });
 
       runs(function() {
         expect(request.calls.length).toBe(1);

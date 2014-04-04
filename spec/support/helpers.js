@@ -1,14 +1,41 @@
-var q = require('q');
+var _ = require('underscore'),
+    cp = require('child_process'),
+    q = require('q'),
+    path = require('path'),
+    slice = Array.prototype.slice;
 
-exports.runScenario = function(scenario, expectedResult, runOptions) {
+exports.startMockServer = function() {
+
+  var started,
+      server = new MockServer();
+
+  runs(function() {
+    server.start(function(err, port) {
+      if (err) {
+        console.warn(err);
+      } else {
+        started = true;
+      }
+    });
+  });
+
+  waitsFor(function() {
+    return started;
+  }, "the mock server to have started", 1000);
+
+  return server;
+};
+
+exports.runScenario = function(scenario, expectedResult, options) {
 
   var result,
       deferred = q.defer();
 
+  options = options || {};
   expectedResult = typeof(expectedResult) != 'undefined' ? expectedResult : true;
 
   runs(function() {
-    scenario.run(runOptions).then(function(value) {
+    scenario.run(options.runOptions).then(function(value) {
       deferred.resolve(value);
       result = true;
     }, function(err) {
@@ -19,7 +46,7 @@ exports.runScenario = function(scenario, expectedResult, runOptions) {
 
   waitsFor(function() {
     return result !== undefined;
-  }, "The scenario should have finished running.", 50);
+  }, "the scenario to finished running", options.timeout || 50);
 
   runs(function() {
     expect(result).toBe(expectedResult);
@@ -53,3 +80,33 @@ exports.addMatchers = function(jasmine) {
     }
   });
 };
+
+function MockServer() {
+}
+
+_.extend(MockServer.prototype, {
+
+  start: function(callback) {
+    this.process = cp.fork(path.join(__dirname, 'server.mock.js'), [], { silent: true });
+    this.process.on('message', _.bind(this.onStart, this, callback));
+  },
+
+  onStart: function(callback, data) {
+    if (data.error) {
+      return callback(data.error);
+    }
+
+    this.port = data.port;
+    callback(undefined, data.port);
+  },
+
+  url: function(path) {
+    return 'http://127.0.0.1:' + this.port + path;
+  },
+
+  stop: function() {
+    if (this.process) {
+      this.process.kill();
+    }
+  }
+});
