@@ -147,6 +147,7 @@ The following configuration options are supported:
 * `baseUrl` - command line `-u, --base-url [url]`
 
   Override the base URL of the scenario.
+  Only the paths of URLs will be printed in debug mode.
 
 * `showTime` - command line `-t, --show-time`
 
@@ -159,6 +160,10 @@ The following configuration options are supported:
 * `showResponseBody` - command line `-b, --show-response-body`
 
   Print response body for each HTTP request (only with debug or trace log levels).
+
+* `showFullUrl` - command line `--show-full-url`
+
+  Always print full URLs even with a base URL configured (only with debug or trace log levels).
 
 Additionally, this command line option can be used to load another configuration file:
 
