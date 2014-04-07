@@ -262,6 +262,17 @@ scenario.step('log data', function(data) {
 });
 ```
 
+Or you can simply throw an error:
+
+```js
+scenario.step('log data', function(data) {
+  if (data == null) {
+    throw new Error('data was not computed');
+  }
+  console.log(data);
+});
+```
+
 <a name="step-async"></a>
 To make an **asynchronous step**,
 return a [promise](http://promises-aplus.github.io/promises-spec/) instead of a value (see the [q](https://github.com/kriskowal/q) library).
