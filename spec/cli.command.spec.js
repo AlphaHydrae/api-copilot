@@ -86,9 +86,37 @@ describe("CLI Command", function() {
       expect(parse('--show-response-body')).toEqual(parsed({ showResponseBody: true }));
     });
 
+    it("should parse the params option", function() {
+      expect(parse('-p', 'foo')).toEqual(parsed({ params: { foo: true } }));
+      expect(parse('--params', 'bar')).toEqual(parsed({ params: { bar: true } }));
+    });
+
+    it("should parse multiple params options", function() {
+      expect(parse('-p', 'foo', '--params', 'bar', '-p', 'baz')).toEqual(parsed({ params: { foo: true, bar: true, baz: true } }));
+    });
+
+    it("should parse key/value params options", function() {
+      expect(parse('-p', 'foo=bar')).toEqual(parsed({ params: { foo: 'bar' } }));
+      expect(parse('--params', 'baz=qux')).toEqual(parsed({ params: { baz: 'qux' } }));
+    });
+
+    it("should parse mixed params options", function() {
+      expect(parse('-p', 'foo=bar', '-p', 'baz', '--params', 'qux=corge')).toEqual(parsed({ params: { foo: 'bar', baz: true, qux: 'corge' } }));
+    });
+
     it("should not parse the config option", function() {
       expect(parse('-c', 'foo.yml')).toEqual(parsed());
       expect(parse('--config', 'bar.yml')).toEqual(parsed());
+    });
+
+    it("should override configuration file options", function() {
+      setConfig({ log: 'debug', source: 'foo', baseUrl: 'http://bar.com' });
+      expect(parse('-l', 'trace', '--source', 'baz', '-u', 'http://qux.com')).toEqual(parsed({ log: 'trace', source: 'baz', baseUrl: 'http://qux.com' }));
+    });
+
+    it("should merge configuration file params", function() {
+      setConfig({ params: { foo: 'bar', baz: 'qux' } });
+      expect(parse('-p', 'baz=corge', '--params', 'grault')).toEqual(parsed({ params: { foo: 'bar', baz: 'corge', grault: true } }));
     });
   });
 
@@ -131,6 +159,11 @@ describe("CLI Command", function() {
       expect(parse()).toEqual(parsed({ showResponseBody: true }));
     });
 
+    it("should parse the params option", function() {
+      setConfig({ params: { foo: 'bar' } });
+      expect(parse()).toEqual(parsed({ params: { foo: 'bar' } }));
+    });
+
     it("should not parse the config option", function() {
       setConfig({ config: 'foo' });
       expect(parse()).toEqual(parsed());
@@ -141,11 +174,6 @@ describe("CLI Command", function() {
       setConfig({ log: 'trace' }, 'foo.yml');
       expect(parse('-c', 'foo.yml')).toEqual(parsed({ log: 'trace' }));
       expect(parse('--config', 'foo.yml')).toEqual(parsed({ log: 'trace' }));
-    });
-
-    it("should be overriden by command line options", function() {
-      setConfig({ log: 'debug', source: 'foo', baseUrl: 'http://bar.com' });
-      expect(parse('-l', 'trace', '--source', 'baz', '-u', 'http://qux.com')).toEqual(parsed({ log: 'trace', source: 'baz', baseUrl: 'http://qux.com' }));
     });
 
     it("should not parse unknown options", function() {
@@ -225,8 +253,22 @@ describe("CLI Command", function() {
       expect(commanderCommand.option).toHaveBeenCalledWith('--show-full-url', 'Show full URLs even when a base URL is configured (only with debug or trace log level)');
     });
 
+    it("should define the params option", function() {
+
+      var calls = _.filter(commanderCommand.option.calls, function(call) {
+        return call.args[0] == '-p, --params [name]';
+      });
+
+      expect(calls.length).toEqual(1);
+
+      var args = calls[0].args;
+      expect(args[1]).toBe('Add a custom parameter (see Custom Parameters)');
+      expect(typeof(args[2])).toBe('function');
+      expect(args[3]).toEqual({});
+    });
+
     it("should not set other options", function() {
-      expect(commanderCommand.option.calls.length).toBe(8);
+      expect(commanderCommand.option.calls.length).toBe(9);
     });
 
     it("should parse the arguments", function() {
