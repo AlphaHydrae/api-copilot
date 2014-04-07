@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.0
+
+* **NEW:** Scenarios can be [customized with runtime parameters](README.md#custom-parameters):
+
+  * the `-p, --params [name|name=value]` command line option sets a custom parameter;
+
+  * the `param` method of a scenario allows to retrieve these parameters.
+
+* Fixed a bug where all steps would be printed as step number 1.
+
 ## v0.2.1 - April 3, 2014
 
 * **NEW:** Configuration options can be changed at runtime with the `configure` method.

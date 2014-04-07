@@ -71,6 +71,7 @@ package.json
 * [Making HTTP calls](#making-http-calls)
   * [Default Request Options](#default-request-options)
   * [Request Filters](#request-filters)
+* [Custom Parameters](#custom-parameters)
 
 
 
@@ -582,6 +583,46 @@ scenario.step('asynchronous filters', function() {
   });
 });
 ```
+
+
+
+### Custom Parameters
+
+Scenarios can be given runtime parameters on the command line:
+
+```
+#> api-copilot -p foo -p bar=baz
+```
+
+These parameters can then be retrieved with the `param` method:
+
+```js
+scenario.step('step', function() {
+  this.param('foo');   // true
+  this.param('bar');   // "baz"
+});
+```
+
+By default, trying to retrieve an unknown parameter will throw an error and stop the scenario.
+To disable this behavior, set the `required` option to false when calling `param`:
+
+```js
+scenario.step('step', function() {
+  this.param('qux', { required: false });   // undefined
+});
+```
+
+If you want to make sure certain parameters are present before running your scenario, use the `requireParameters` method before defining steps:
+
+```js
+scenario.requireParameters('foo', 'bar');
+
+scenario.step('step 0', function() {
+  // ...
+});
+```
+
+An error will be thrown immediately upon trying to start the scenario if any required parameter is missing.
 
 
 
