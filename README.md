@@ -71,7 +71,8 @@ package.json
 * [Making HTTP calls](#making-http-calls)
   * [Default Request Options](#default-request-options)
   * [Request Filters](#request-filters)
-* [Custom Parameters](#custom-parameters)
+* [Runtime Parameters](#runtime-parameters)
+* [Multipart Form Data](#multipart-form-data)
 
 
 
@@ -586,7 +587,7 @@ scenario.step('asynchronous filters', function() {
 
 
 
-### Custom Parameters
+### Runtime Parameters
 
 Scenarios can be given runtime parameters on the command line:
 
@@ -623,6 +624,54 @@ scenario.step('step 0', function() {
 ```
 
 An error will be thrown immediately upon trying to start the scenario if any required parameter is missing.
+
+
+
+### Multipart Form Data
+
+The [request](https://github.com/mikeal/request) library included in API Copilot supports `multipart/form-data` requests with the [form-data](https://github.com/felixge/node-form-data) library.
+Check out [its documentation about forms](https://github.com/mikeal/request#forms).
+Using only the request library, this is how you would upload a file:
+
+```js
+var fs = require('fs');
+
+var r = request.post('http://example.com/upload', function(err, response, body) {
+  if (err) {
+    return console.error('Upload failed: ' + err);
+  }
+  console.log('Upload successful! Server responded with: ' + body);
+})
+
+var form = r.form()
+form.append('my_file', fs.createReadStream('/path/to/file.ext'));
+```
+
+To retrieve the request object and create a form with API Copilot, you will need to supply a handler function.
+The handler function is called with the request object before the HTTP request starts.
+
+```js
+var fs = require('fs');
+
+function createFileUploadHandler(file) {
+  return function (request) {
+    var form = request.form();
+    form.append('file', fs.createReadStream(file));
+  };
+}
+
+scenario.step('file upload', function() {
+
+  var file = '/path/to/file.ext';
+
+  return this.post({
+    url: 'http://example.com/',
+    handler: createFileUploadHandler(file)
+  });
+});
+```
+
+**Note:** the request handler must be synchronous since the HTTP request will start immediately at the next tick.
 
 
 

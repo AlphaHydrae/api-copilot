@@ -303,5 +303,29 @@ describe("Client", function() {
         });
       });
     });
+
+    describe("with the `handler` option", function() {
+
+      it("should pass the request object to the handler function", function() {
+
+        var req;
+        function handler(request) {
+          req = request;
+        }
+
+        makeRequest(_.extend(minimalRequestOptions, { handler: handler }), simpleResponse);
+
+        runs(function() {
+          // NOTE: this is what is expected to be returned by the mock request function (see ./support/request.mock.js)
+          expect(req).toEqual({ number: 1, options: { method: 'GET', url: '/foo' } });
+        });
+      });
+
+      it("should not accept a non-function handler", function() {
+        expect(function() {
+          client.request(_.extend(minimalRequestOptions, { handler: 'foo' }));
+        }).toThrow('"handler" must be a function, got string');
+      });
+    });
   });
 });

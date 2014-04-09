@@ -1,4 +1,4 @@
-* make sure request file uploads are supported
+* add method to complete scenario
 * expose and document logger
 * handle step timeout (with configurable timeout)
 * set maximum number of steps to execute? detect loops?

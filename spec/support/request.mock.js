@@ -22,10 +22,13 @@ _.extend(RequestMock.prototype, {
         throw new Error('No mock response registered for the current request; call #addResponse(responseObject) or #addError(error)');
       }
 
+
       this.requestCount++;
       this.lastRequestOptions = options;
 
       callback.apply(callback, this.callbackArgs.shift());
+
+      return { number: this.requestCount, options: options };
     }, this);
   }
 });

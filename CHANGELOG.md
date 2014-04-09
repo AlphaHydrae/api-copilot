@@ -6,7 +6,9 @@
 
   * the `-p, --params [name|name=value]` command line option sets a custom parameter;
 
-  * the `param` method of a scenario allows to retrieve these parameters.
+  * the `param` method of a scenario retrieves these parameters.
+
+* **NEW:** [multipart/form-data requests](README.md#multipart-form-data) are now supported.
 
 * Fixed a bug where all steps would be printed as step number 1.
 
