@@ -72,8 +72,20 @@ describe("Client", function() {
       return deferred.promise;
     }
 
+    it("should not accept no options", function() {
+
+      var error;
+      makeRequest(undefined, simpleResponse, false).fail(function(err) {
+        error = err;
+      });
+
+      runs(function() {
+        expect(error).toBeAnError('"method" must be a string, got undefined');
+      });
+    });
+
     it("should not accept options that are not an object", function() {
-      _.each([ null, 'string', [], 4.2 ], function(invalidOptions) {
+      _.each([ 'string', 4.2 ], function(invalidOptions) {
         expect(function() {
           client.request(invalidOptions);
         }).toThrow();
@@ -81,27 +93,51 @@ describe("Client", function() {
     });
 
     it("should require the `method` option", function() {
-      expect(function() {
-        client.request(_.omit(minimalRequestOptions, 'method'));
-      }).toThrow('"method" must be a string, got undefined');
+
+      var error;
+      makeRequest(_.omit(minimalRequestOptions, 'method'), simpleResponse, false).fail(function(err) {
+        error = err;
+      });
+
+      runs(function() {
+        expect(error).toBeAnError('"method" must be a string, got undefined');
+      });
     });
 
     it("should require the `method` option to be a string", function() {
-      expect(function() {
-        client.request(_.extend(minimalRequestOptions, { method: 2.4 }));
-      }).toThrow('"method" must be a string, got 2.4');
+
+      var error;
+      makeRequest(_.extend(minimalRequestOptions, { method: 2.4 }), simpleResponse, false).fail(function(err) {
+        error = err;
+      });
+
+      runs(function() {
+        expect(error).toBeAnError('"method" must be a string, got 2.4');
+      });
     });
 
     it("should require the `url` option", function() {
-      expect(function() {
-        client.request(_.omit(minimalRequestOptions, 'url'));
-      }).toThrow('"url" must be a string, got undefined');
+
+      var error;
+      makeRequest(_.omit(minimalRequestOptions, 'url'), simpleResponse, false).fail(function(err) {
+        error = err;
+      });
+
+      runs(function() {
+        expect(error).toBeAnError('"url" must be a string, got undefined');
+      });
     });
 
     it("should require the `url` option to be a string", function() {
-      expect(function() {
-        client.request(_.extend(minimalRequestOptions, { url: 6.6 }));
-      }).toThrow('"url" must be a string, got 6.6');
+
+      var error;
+      makeRequest(_.extend(minimalRequestOptions, { url: 6.6 }), simpleResponse, false).fail(function(err) {
+        error = err;
+      });
+
+      runs(function() {
+        expect(error).toBeAnError('"url" must be a string, got 6.6');
+      });
     });
 
     it("should return a promise that is resolved if the request succeeds", function() {
@@ -252,6 +288,37 @@ describe("Client", function() {
         runs(function() {
           expect(requestMock.requestCount).toBe(1);
           expect(requestMock.lastRequestOptions).toEqual({ url: '/foo', method: 'GET', foo: 'bar' });
+        });
+      });
+
+      it("should allow filters to fill required options", function() {
+
+        function filter(options) {
+          options.url = '/foo';
+          return options;
+        }
+
+        makeRequest(_.extend(_.omit(minimalRequestOptions, 'url'), { filters: [ filter ] }), simpleResponse);
+
+        runs(function() {
+          expect(requestMock.requestCount).toBe(1);
+          expect(requestMock.lastRequestOptions).toEqual({ url: '/foo', method: 'GET' });
+        });
+      });
+
+      it("should allow filters to fill all options", function() {
+
+        function filter(options) {
+          options.method = 'GET';
+          options.url = '/foo';
+          return options;
+        }
+
+        makeRequest({ filters: [ filter ] }, simpleResponse);
+
+        runs(function() {
+          expect(requestMock.requestCount).toBe(1);
+          expect(requestMock.lastRequestOptions).toEqual({ url: '/foo', method: 'GET' });
         });
       });
 

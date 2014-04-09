@@ -1,3 +1,4 @@
+* make client#request errors more consistent (currently sometimes exceptions are thrown, sometimes a rejected promise is returned)
 * add method to complete scenario
 * expose and document logger
 * handle step timeout (with configurable timeout)

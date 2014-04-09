@@ -1,6 +1,11 @@
 # Changelog
 
-## v0.3.0
+## v0.3.1 - April 9, 2014
+
+* Required request options (`method` and `url`) are now validated after request filters are run.
+  This allows the method or URL to be set by filters.
+
+## v0.3.0 - April 9, 2014
 
 * **NEW:** Scenarios can be [customized with runtime parameters](README.md#custom-parameters):
 
