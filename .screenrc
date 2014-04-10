@@ -1,0 +1,10 @@
+source $HOME/.screenrc
+
+screen -t vim 0
+stuff "\${PROJECT_EDITOR-\$EDITOR}\012"
+screen -t zsh 1
+screen -t spec 2
+stuff "grunt"
+screen -t doc 3
+stuff "docker -c native -i lib"
+select vim
