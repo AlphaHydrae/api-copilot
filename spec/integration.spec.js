@@ -3,7 +3,7 @@ var cp = require('child_process'),
     path = require('path'),
     slice = Array.prototype.slice;
 
-var Scenario = require('../lib/scenario').inject();
+var Scenario = require('../lib/scenario')();
 
 describe("Mock Server Scenario", function() {
 

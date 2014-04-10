@@ -5,7 +5,7 @@ var _ = require('underscore'),
 describe("CLI Command", function() {
 
   var fsMock = require('./support/fs.mock'),
-      commandInjector = require('../lib/cli.command').inject,
+      commandInjector = require('../lib/cli.command'),
       pkg = require('../package');
 
   var command, defaultOptions;

@@ -6,7 +6,7 @@ var METHODS = [ 'get', 'head', 'post', 'put', 'patch', 'delete' ];
 
 describe("Scenario Client Extensions", function() {
 
-  var scenarioInjector = require('../lib/scenario').inject,
+  var scenarioInjector = require('../lib/scenario'),
       log4jsMock = require('./support/log4js.mock'),
       ClientMock = require('./support/client.mock');
 

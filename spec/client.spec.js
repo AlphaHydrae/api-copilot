@@ -7,7 +7,7 @@ describe("Client", function() {
 
   var requestMock, Client;
   var RequestMock = require('./support/request.mock'),
-      clientInjector = require('../lib/client').inject;
+      clientInjector = require('../lib/client');
 
   beforeEach(function() {
 

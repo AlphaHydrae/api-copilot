@@ -165,7 +165,7 @@ The following configuration options are supported:
 
 * `showFullUrl` - command line `--show-full-url`
 
-  Always print full URLs even with a base URL configured (only with debug or trace log levels).
+  Always print full URLs even when a base URL is configured (only with debug or trace log levels).
 
 Additionally, this command line option can be used to load another configuration file:
 

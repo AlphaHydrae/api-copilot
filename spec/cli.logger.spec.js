@@ -8,7 +8,7 @@ describe("CLI Logger", function() {
 
   var log4jsMock = require('./support/log4js.mock'),
       ScenarioMock = require('./support/scenario.mock'),
-      cliLoggerInjector = require('../lib/cli.logger').inject;
+      cliLoggerInjector = require('../lib/cli.logger');
 
   var CliLogger, scenario, cliLogger, sampleRequestOptions, sampleResponse;
   beforeEach(function() {

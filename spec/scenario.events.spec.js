@@ -3,7 +3,7 @@ var _ = require('underscore'),
 
 describe("Scenario Events", function() {
 
-  var scenarioInjector = require('../lib/scenario').inject,
+  var scenarioInjector = require('../lib/scenario'),
       log4jsMock = require('./support/log4js.mock'),
       ClientMock = require('./support/client.mock'),
       EventCollector = require('./support/event.collector');
