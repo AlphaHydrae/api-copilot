@@ -24,7 +24,10 @@
     "grunt-bump": "~0.0.13",
     "grunt-contrib-jshint": "~0.10.0",
     "grunt-jasmine-node": "~0.2.1",
-    "quip": "^0.1.2"
+    "quip": "^0.1.2",
+    "grunt-docker": "0.0.8",
+    "grunt-gh-pages": "~0.9.1",
+    "grunt-contrib-clean": "~0.5.0"
   },
   "homepage": "https://github.com/lotaris/api-copilot",
   "bugs": "https://github.com/lotaris/api-copilot/issues",
