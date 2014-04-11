@@ -1,6 +1,7 @@
 * add request option to check expected status code
 * allow skip message to be null or false
 * make client#request errors more consistent (currently sometimes exceptions are thrown, sometimes a rejected promise is returned)
+* add info command to show the base configuration and parameters of scenarios
 * add method to complete scenario
 * expose and document logger
 * handle step timeout (with configurable timeout)
