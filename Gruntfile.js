@@ -61,5 +61,5 @@ module.exports = function(grunt) {
 
   grunt.registerTask('default', [ 'jshint', 'jasmine_node' ]);
   grunt.registerTask('doc', [ 'clean:doc', 'docker:doc' ]);
-  grunt.registerTask('publish-doc', [ 'clean:ghp', 'docker:ghp', 'gh-pages' ]);
+  grunt.registerTask('ghp', [ 'clean:ghp', 'docker:ghp', 'gh-pages' ]);
 };

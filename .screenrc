@@ -6,5 +6,5 @@ screen -t zsh 1
 screen -t spec 2
 stuff "grunt"
 screen -t doc 3
-stuff "docker -c native -i lib"
+stuff "grunt doc"
 select vim
