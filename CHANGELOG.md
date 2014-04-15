@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.2 - April 15 2014
+
+* Experimental run command (undocumented).
+
 ## v0.3.1 - April 9, 2014
 
 * Required request options (`method` and `url`) are now validated after request filters are run.
