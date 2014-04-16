@@ -1,6 +1,10 @@
 # Changelog
 
-## v0.3.2 - April 15 2014
+## v0.3.3 - April 16, 2014
+
+* Fixed logging bug due to missing colors dependency.
+
+## v0.3.2 - April 15, 2014
 
 * Experimental run command (undocumented).
 

@@ -1,3 +1,5 @@
+* allow to set error message for required param
+* allow to merge rather than extend headers
 * add request option to check expected status code
 * allow skip message to be null or false
 * make client#request errors more consistent (currently sometimes exceptions are thrown, sometimes a rejected promise is returned)
