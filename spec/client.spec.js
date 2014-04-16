@@ -85,10 +85,14 @@ describe("Client", function() {
     });
 
     it("should not accept options that are not an object", function() {
-      _.each([ 'string', 4.2 ], function(invalidOptions) {
-        expect(function() {
-          client.request(invalidOptions);
-        }).toThrow();
+
+      var error;
+      makeRequest(4.2, simpleResponse, false).fail(function(err) {
+        error = err;
+      });
+
+      runs(function() {
+        expect(error).toBeAnError('Request options must be an object, got number');
       });
     });
 
@@ -389,9 +393,15 @@ describe("Client", function() {
       });
 
       it("should not accept a non-function handler", function() {
-        expect(function() {
-          client.request(_.extend(minimalRequestOptions, { handler: 'foo' }));
-        }).toThrow('"handler" must be a function, got string');
+
+        var error;
+        makeRequest(_.extend(minimalRequestOptions, { handler: 4.2 }), simpleResponse, false).fail(function(err) {
+          error = err;
+        });
+
+        runs(function() {
+          expect(error).toBeAnError('"handler" must be a function, got number');
+        });
       });
     });
   });

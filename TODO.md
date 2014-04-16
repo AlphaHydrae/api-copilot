@@ -1,6 +1,6 @@
-* add request option to check expected status code
-* make client#request errors more consistent (currently sometimes exceptions are thrown, sometimes a rejected promise is returned)
 * add info command to show the base configuration and parameters of scenarios
+* allow to configure runtime params (must be a flag or not, description, etc)
+* add request option to check expected status code
 * add method to complete scenario
 * expose and document logger
 * handle step timeout (with configurable timeout)
