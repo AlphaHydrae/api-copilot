@@ -7,4 +7,6 @@ screen -t spec 2
 stuff "grunt"
 screen -t doc 3
 stuff "grunt doc"
+screen -t readme 4
+stuff "markdown-preview README.md"
 select vim
