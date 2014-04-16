@@ -2,6 +2,7 @@
 * allow to configure runtime params (must be a flag or not, description, etc)
 * add request option to check expected status code
 * add method to complete scenario
+* refactor client to avoid bind calls (create request wrapper?)
 * expose and document logger
 * handle step timeout (with configurable timeout)
 * set maximum number of steps to execute? detect loops?
