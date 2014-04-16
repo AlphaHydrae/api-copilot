@@ -112,6 +112,21 @@ describe("Scenario Events", function() {
       });
     });
 
+    it("should emit `step:start` and `step:skip` for a step skipped with no message", function() {
+
+      scenario.step('step', function() { collector.add('executing'); return this.skip(false, 'foo', 'bar'); });
+
+      h.runScenario(scenario);
+
+      runs(function() {
+        expect(events).toEqual([
+          { name: 'step:start', args: [ { name: 'step' } ] },
+          { name: 'executing', args: [] },
+          { name: 'step:skip', args: [ { name: 'step' }, false, 'foo', 'bar' ] }
+        ]);
+      });
+    });
+
     it("should emit `step:start` and `step:error` for a failed step", function() {
 
       var error = new Error('bug');

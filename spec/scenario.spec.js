@@ -213,6 +213,28 @@ describe("Scenario", function() {
         expect(stepArgs).toEqual([ [], [ 'foo' ], [ 'foo', 'bar' ] ]);
       });
     });
+
+    it("should pass arguments after no message to the next step", function() {
+
+      var stepArgs = [];
+      _.each([ 'foo', 'bar', 'baz' ], function(data, i) {
+        scenario.step('step ' + i, function() {
+
+          var args = Array.prototype.slice.call(arguments);
+          stepArgs.push(args.slice());
+          args.unshift(false);
+          args.push(data);
+
+          return this.skip.apply(this, args);
+        });
+      });
+
+      h.runScenario(scenario);
+
+      runs(function() {
+        expect(stepArgs).toEqual([ [], [ 'foo' ], [ 'foo', 'bar' ] ]);
+      });
+    });
   });
 
   describe("#fail", function() {

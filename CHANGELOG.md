@@ -6,6 +6,8 @@
 
 * Allow custom error message for required parameters. See [runtime parameters](README.md#runtime-parameters).
 
+* Fixed a bug where skipping a step would not work with a falsy message.
+
 ## v0.3.3 - April 16, 2014
 
 * Fixed logging bug due to missing colors dependency.
