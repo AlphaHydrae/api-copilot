@@ -605,6 +605,21 @@ scenario.step('step', function() {
 ```
 
 By default, trying to retrieve an unknown parameter will throw an error and stop the scenario.
+
+```js
+scenario.step('step', function() {
+  this.param('unknown'); // throws Error
+});
+```
+
+To customize the error message, use the `message` option when calling `param`:
+
+```js
+scenario.step('step', function() {
+  this.param('unknown', { message: 'can i haz unknown param?' }); // throws new Error('can i haz unknown param?')
+});
+```
+
 To disable this behavior, set the `required` option to false when calling `param`:
 
 ```js

@@ -105,6 +105,12 @@ describe("Scenario Parameters", function() {
       }).toThrow('Unknown parameter "bar"; give it to the Scenario object at construction or from the command line with the -p, --params option');
     });
 
+    it("should throw an error with a custom message if specified", function() {
+      expect(function() {
+        scenario.param('bar', { message: 'foo' });
+      }).toThrow('foo');
+    });
+
     it("should not throw an error if the required option is falsy", function() {
       expect(scenario.param('bar', { required: false })).toBe(undefined);
     });

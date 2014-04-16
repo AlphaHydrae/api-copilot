@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.4
+
+* Allow custom error message for required parameters. See [runtime parameters](README.md#runtime-parameters).
+
 ## v0.3.3 - April 16, 2014
 
 * Fixed logging bug due to missing colors dependency.
@@ -15,7 +19,7 @@
 
 ## v0.3.0 - April 9, 2014
 
-* **NEW:** Scenarios can be [customized with runtime parameters](README.md#custom-parameters):
+* **NEW:** Scenarios can be [customized with runtime parameters](README.md#runtime-parameters):
 
   * the `-p, --params [name|name=value]` command line option sets a custom parameter;
 

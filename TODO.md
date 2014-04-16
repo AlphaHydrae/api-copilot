@@ -1,4 +1,3 @@
-* allow to set error message for required param
 * allow to merge rather than extend headers
 * add request option to check expected status code
 * allow skip message to be null or false
