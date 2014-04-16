@@ -10,13 +10,17 @@
 
 ## Installation
 
-Install the command line utility:
+To set up your project to use API Copilot for the first time, follow the [project setup procedure](#setup-project).
+If you simply want to run API Copilot scenarios in a project where the setup procedure has already been done, jump to the [usage installation procedure](#setup-usage).
 
-    npm install -g api-copilot-cli
+<a name="setup-project"></a>
+### Project Setup Procedure
 
-To set up your Node.js project to use API Copilot, install `api-copilot` as a development dependency:
+To set up a Node.js project to use API Copilot, install `api-copilot` as a development dependency:
 
     npm install --save-dev api-copilot
+
+You can run this again whenever you want to upgrade to the latest version of API Copilot.
 
 If your project is in another language, you can add this minimal `package.json` file to your project:
 
@@ -26,15 +30,14 @@ If your project is in another language, you can add this minimal `package.json` 
   "version": "1.0.0",
   "private": true,
   "devDependencies": {
-    "api-copilot": "^0.1.0"
+    "api-copilot": "^0.3.3"
   }
 }
 ```
 
-Then run `npm install`.
-You may want to add the `node_modules` directory to your version control ignore file.
+You should add the `node_modules` directory to your version control ignore file.
 
-API Copilot expects your project to have an `api` directory containing **scenarios**.
+By default, API Copilot expects your project to have an `api` directory containing **scenarios**.
 Each scenario is a Node.js file that can be run by API Copilot.
 It must end with `.scenario.js`.
 The structure of a project containing only API Copilot scenarios might look like this:
@@ -45,6 +48,21 @@ api/bar.scenario.js
 api/baz.scenario.js
 package.json
 ```
+
+<a name="setup-usage"></a>
+### Usage Installation Procedure
+
+Install the command line interface (you might have to use `sudo`):
+
+    npm install -g api-copilot-cli
+
+In your project's directory, install API Copilot and other dependencies:
+
+    cd /path/to/project
+    npm install
+
+You're now ready to [run API Copilot](#running).
+If you don't have any API scenarios yet, you might want to [write some](#writing-api-scenarios).
 
 
 
@@ -59,7 +77,7 @@ package.json
 ## Usage
 
 * [Writing API Scenarios](#writing-api-scenarios)
-* [Running Scenarios from the Command Line](#running-scenarios-from-the-command-line)
+* [Running Scenarios from the Command Line](#running)
 * [Configuration Options](#configuration-options)
   * [Changing the configuration while a scenario is running](#changing-the-configuration-while-a-scenario-is-running)
 * [Scenario Flow Control](#scenario-flow-control)
@@ -112,6 +130,7 @@ module.exports = scenario;
 
 
 
+<a name="running"></a>
 ### Running Scenarios from the Command Line
 
 The `api-copilot` command is provided by the separate [api-copilot-cli](https://github.com/lotaris/api-copilot-cli) package.
