@@ -480,10 +480,31 @@ scenario.step('step 3', function(response) {
 });
 ```
 
-Clear previously configured default request options with `clearDefaultRequestOptions`:
+If you need to add options to a sub-object, like `headers`, use `mergeDefaultRequestOptions`:
 
 ```js
 scenario.step('step 4', function(response) {
+
+  this.mergeDefaultRequestOptions({
+    headers: {
+      'X-Custom-2': 'value'
+    }
+  });
+
+  // this request will have both the X-Custom and X-Custom-2 headers
+  return this.post({
+    url: '/baz',
+    body: {
+      more: 'data'
+    }
+  });
+});
+```
+
+Clear previously configured default request options with `clearDefaultRequestOptions`:
+
+```js
+scenario.step('step 5', function(response) {
 
   // clear specific request option(s) by name
   this.clearDefaultRequestOptions('headers');
@@ -497,7 +518,7 @@ scenario.step('step 4', function(response) {
   });
 });
 
-scenario.step('step 5', function(response) {
+scenario.step('step 6', function(response) {
 
   // clear all default request options
   this.clearDefaultRequestOptions();

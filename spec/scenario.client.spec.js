@@ -178,6 +178,36 @@ describe("Scenario Client Extensions", function() {
       });
     });
 
+    it("should be mergeable with #mergeDefaultRequestOptions", function() {
+
+      // set defaults
+      scenario.step('step 0', function() {
+        this.setDefaultRequestOptions({ yee: 'haw', headers: { foo: 'bar', baz: 'qux' } });
+        this.get({ url: 'http://example.com' });
+      });
+
+      // extend defaults; previous defaults should not be overriden
+      scenario.step('step 1', function() {
+        this.mergeDefaultRequestOptions({ yee: 'p', headers: { baz: 'corge' } });
+        this.get({ url: 'http://example.com' });
+      });
+
+      // extend defaults with overrides
+      scenario.step('step 2', function() {
+        this.mergeDefaultRequestOptions({ headers: { foo: 'corge', grault: 'garply' } });
+        this.get({ url: 'http://example.com' });
+      });
+
+      h.runScenario(scenario);
+
+      runs(function() {
+        expect(request.calls.length).toBe(3);
+        expect(request.calls[0].args).toEqual([ { method: 'GET', url: 'http://example.com', yee: 'haw', headers: { foo: 'bar', baz: 'qux' } } ]);
+        expect(request.calls[1].args).toEqual([ { method: 'GET', url: 'http://example.com', yee: 'p', headers: { foo: 'bar', baz: 'corge' } } ]);
+        expect(request.calls[2].args).toEqual([ { method: 'GET', url: 'http://example.com', yee: 'p', headers: { foo: 'corge', baz: 'corge', grault: 'garply' } } ]);
+      });
+    });
+
     it("should be clearable with #clearDefaultRequestOptions", function() {
 
       // set defaults

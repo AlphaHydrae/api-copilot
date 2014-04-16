@@ -2,6 +2,8 @@
 
 ## v0.3.4
 
+* Additional request options can now also be added through deep-merge with the [deepmerge](https://github.com/nrf110/deepmerge) library.
+
 * Allow custom error message for required parameters. See [runtime parameters](README.md#runtime-parameters).
 
 ## v0.3.3 - April 16, 2014
