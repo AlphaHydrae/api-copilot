@@ -2,9 +2,11 @@
 
 ## v0.3.4
 
-* An [expected status code](README.md#request-expect) can now be specified when making HTTP requests.
+* **NEW:** An [expected status code](README.md#request-expect) can now be specified when making HTTP requests.
 
-* Additional request options can now also be [added through deep-merge](README.md#defaultRequestOptions-merge) with the [deepmerge](https://github.com/nrf110/deepmerge) library.
+* **NEW:** The scenario can be completed before reaching the final step with the new [complete method](README.md#scenario-complete).
+
+* Additional request options can be [merged without overriding other options](README.md#defaultRequestOptions-merge) with the [deepmerge](https://github.com/nrf110/deepmerge) library.
 
 * Allow custom error message for required parameters. See [runtime parameters](README.md#runtime-parameters).
 

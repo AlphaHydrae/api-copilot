@@ -1,4 +1,3 @@
-* add method to complete scenario
 * add info command to show the base configuration and parameters of scenarios
 * allow to configure runtime params (must be a flag or not, description, etc)
 * run request filters before passing options to client

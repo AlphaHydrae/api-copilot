@@ -84,6 +84,7 @@ If you don't have any API scenarios yet, you might want to [write some](#writing
   * [Completing a step](#step-complete)
   * [Skipping a step](#step-skip)
   * [Failing](#step-fail)
+  * [Completing the scenario](#scenario-complete)
   * [Asynchronous steps](#step-async)
   * [Change step order](#step-goto)
 * [Making HTTP calls](#making-http-calls)
@@ -292,6 +293,21 @@ scenario.step('log data', function(data) {
     throw new Error('data was not computed');
   }
   console.log(data);
+});
+```
+
+<a name="scenario-complete"></a>
+To **complete the scenario** successfully and not run any more steps, use the `complete` method:
+
+```js
+scenario.step('might be done here', function(done) {
+  if (done) {
+    // further steps will not be executed
+    return this.complete();
+  }
+
+  // otherwise continue
+  return computeSomeStuff();
 });
 ```
 

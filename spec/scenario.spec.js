@@ -237,6 +237,50 @@ describe("Scenario", function() {
     });
   });
 
+  describe("#complete", function() {
+
+    it("should complete the scenario without error", function() {
+
+      var data = [];
+      scenario.step('step 0', function() { data.push(0); });
+      scenario.step('step 1', function() { data.push(1); this.complete(); });
+      scenario.step('step 2', function() { data.push(2); });
+      scenario.step('step 3', function() { data.push(3); });
+
+      h.runScenario(scenario);
+
+      runs(function() {
+        expect(data).toEqual([ 0, 1 ]);
+      });
+    });
+
+    it("should wait until the last returned promise is resolved before completing the scenario", function() {
+
+      var data = [];
+
+      scenario.step('step 0', function() {
+
+        var deferred = q.defer();
+        setTimeout(function() {
+          data.push(0);
+          deferred.resolve();
+        }, 100);
+
+        this.complete();
+
+        return deferred.promise;
+      });
+
+      scenario.step('step 1', function() { data.push(1); });
+
+      h.runScenario(scenario, true, { timeout: 150 });
+
+      runs(function() {
+        expect(data).toEqual([ 0 ]);
+      });
+    });
+  });
+
   describe("#fail", function() {
 
     it("should terminate the scenario", function() {
