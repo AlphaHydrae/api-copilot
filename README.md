@@ -483,7 +483,8 @@ scenario.step('step 3', function(response) {
 
   this.extendDefaultRequestOptions({
     headers: {
-      'X-Custom': 'value'
+      'X-Custom': 'value',
+      'X-Custom-2': 'value 2'
     }
   });
 
@@ -505,11 +506,15 @@ scenario.step('step 4', function(response) {
 
   this.mergeDefaultRequestOptions({
     headers: {
-      'X-Custom-2': 'value'
+      // add a header without overriding previous ones
+      'X-Custom-B': 'value B',
+      // also clear a specific header without clearing them all
+      'X-Custom-2': undefined
     }
   });
 
-  // this request will have both the X-Custom and X-Custom-2 headers
+  // this request will have the X-Custom and X-Custom-B headers,
+  // while the X-Custom-2 header was cleared
   return this.post({
     url: '/baz',
     body: {

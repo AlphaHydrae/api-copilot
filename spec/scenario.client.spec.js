@@ -148,7 +148,8 @@ describe("Scenario Client Extensions", function() {
       scenario.step('step 1', function() {
 
         // override previous defaults and set new defaults
-        this.setDefaultRequestOptions({ foo: 'baz', qux: 'corge' });
+        // undefined values should be ignored
+        this.setDefaultRequestOptions({ foo: 'baz', qux: 'corge', grault: undefined });
 
         // request should use new defaults
         return this.post({ url: 'http://example.com' });
@@ -179,6 +180,27 @@ describe("Scenario Client Extensions", function() {
         expect(request.calls[1].args).toEqual([ { method: 'POST', url: 'http://example.com', foo: 'baz', qux: 'corge' } ]);
         expect(request.calls[2].args).toEqual([ { method: 'PATCH', url: 'http://example.com', foo: 'grault', qux: 'corge' } ]);
         expect(request.calls[3].args).toEqual([ { method: 'DELETE', url: 'http://example.com', garply: 'waldo' } ]);
+      });
+    });
+
+    it("should be merged with request options", function() {
+
+      addSampleResponse();
+
+      scenario.step('step', function() {
+      
+        // set defaults
+        this.setDefaultRequestOptions({ foo: 'bar', headers: { baz: 'qux' } });
+
+        // defaults should be merged with options
+        return this.get({ url: 'http://example.com', corge: 'grault', headers: { baz: undefined, garply: 'waldo' } });
+      });
+
+      h.runScenario(scenario);
+
+      runs(function() {
+        expect(request.calls.length).toBe(1);
+        expect(request.calls[0].args).toEqual([ { method: 'GET', url: 'http://example.com', foo: 'bar', corge: 'grault', headers: { garply: 'waldo' } } ]);
       });
     });
 
@@ -223,7 +245,7 @@ describe("Scenario Client Extensions", function() {
 
     it("should be mergeable with #mergeDefaultRequestOptions", function() {
 
-      addSampleResponse(3);
+      addSampleResponse(4);
 
       // set defaults
       scenario.step('step 0', function() {
@@ -243,13 +265,20 @@ describe("Scenario Client Extensions", function() {
         return this.get({ url: 'http://example.com' });
       });
 
+      // clear defaults with undefined
+      scenario.step('step 3', function() {
+        this.mergeDefaultRequestOptions({ yee: undefined, headers: { foo: undefined, grault: 'waldo' } });
+        return this.get({ url: 'http://example.com' });
+      });
+
       h.runScenario(scenario);
 
       runs(function() {
-        expect(request.calls.length).toBe(3);
+        expect(request.calls.length).toBe(4);
         expect(request.calls[0].args).toEqual([ { method: 'GET', url: 'http://example.com', yee: 'haw', headers: { foo: 'bar', baz: 'qux' } } ]);
         expect(request.calls[1].args).toEqual([ { method: 'GET', url: 'http://example.com', yee: 'p', headers: { foo: 'bar', baz: 'corge' } } ]);
         expect(request.calls[2].args).toEqual([ { method: 'GET', url: 'http://example.com', yee: 'p', headers: { foo: 'corge', baz: 'corge', grault: 'garply' } } ]);
+        expect(request.calls[3].args).toEqual([ { method: 'GET', url: 'http://example.com', headers: { baz: 'corge', grault: 'waldo' } } ]);
       });
     });
 

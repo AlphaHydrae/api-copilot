@@ -1,6 +1,10 @@
 # Changelog
 
-## v0.3.4
+## v0.4.0 - April 24, 2014
+
+* **BREAKING:** Request options are now merged with default request options instead of overriding them.
+  For example, if there are headers in both the default request options and the request options, they will be
+  merged instead of only the latter being used.
 
 * **NEW:** An [expected status code](README.md#request-expect) can now be specified when making HTTP requests.
 
