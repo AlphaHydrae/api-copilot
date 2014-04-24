@@ -38,6 +38,20 @@ describe("Scenario Client Extensions", function() {
       });
     });
 
+    it("should be used as the URL if no URL is set", function() {
+
+      scenario.step('step', function() {
+        this.get();
+      });
+
+      h.runScenario(scenario, true, { runOptions: { baseUrl: 'http://example.com' } });
+
+      runs(function() {
+        expect(request.calls.length).toBe(1);
+        expect(request.calls[0].args).toEqual([ { method: 'GET', url: 'http://example.com' } ]);
+      });
+    });
+
     it("should be configurable at construction", function() {
 
       scenario = new Scenario({ name: 'once upon a time', baseUrl: 'http://example.com' });

@@ -6,6 +6,8 @@
 
 * Allow custom error message for required parameters. See [runtime parameters](README.md#runtime-parameters).
 
+* Fixed a bug where setting a base URL and providing no URL when making an HTTP request would cause an undefined string to be appended to the constructed URL.
+
 * Fixed a bug where skipping a step would not work with a falsy message.
 
 ## v0.3.3 - April 16, 2014
