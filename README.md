@@ -74,6 +74,18 @@ If you don't have any API scenarios yet, you might want to [write some](#writing
 
 
 
+## Documentation
+
+This README is the main documentation.
+
+The source is also heavily commentted and run through [Docker](https://github.com/jbt/docker), so you can read the resulting annotated source code for more details about the implementation. It also contains inline examples.
+
+[**View the Annotated Source Code**](http://lotaris.github.io/api-copilot/annotated/index.js.html)
+
+
+
+
+
 ## Usage
 
 * [Writing API Scenarios](#writing-api-scenarios)
