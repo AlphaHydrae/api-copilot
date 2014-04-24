@@ -2,7 +2,7 @@
 
 > Write testing or data population scenarios for your APIs.
 
-[![NPM Version](https://badge.fury.io/js/api-copilot.png)](http://badge.fury.io/js/api-copilot)
+[![NPM version](https://badge.fury.io/js/api-copilot.svg)](http://badge.fury.io/js/api-copilot)
 
 
 
@@ -89,6 +89,7 @@ If you don't have any API scenarios yet, you might want to [write some](#writing
 * [Making HTTP calls](#making-http-calls)
   * [Default Request Options](#default-request-options)
   * [Request Filters](#request-filters)
+  * [Expecting a Specific Response](#request-expect)
 * [Runtime Parameters](#runtime-parameters)
 * [Multipart Form Data](#multipart-form-data)
 
@@ -480,6 +481,7 @@ scenario.step('step 3', function(response) {
 });
 ```
 
+<a name="defaultRequestOptions-merge"></a>
 If you need to add options to a sub-object, like `headers`, use `mergeDefaultRequestOptions`:
 
 ```js
@@ -621,6 +623,64 @@ scenario.step('asynchronous filters', function() {
 
   this.get({
     url: '/foo'
+  });
+});
+```
+
+<a name="request-expect"></a>
+#### Expecting a Specific Response
+
+You can specify expected properties of an HTTP response with the `expect` option.
+
+To check that the status code is the one you expect, specify an expected `statusCode`:
+
+```js
+scenario.step('step', function() {
+
+  return this.post({
+    url: 'http://example.com/foo',
+    body: {
+      some: 'data'
+    },
+    expect: {
+      // the request will fail and the scenario will be interrupted
+      // if the status code of the response is not the expected one
+      statusCode: 201
+    }
+  });
+});
+```
+
+Check that the code is in a given range using a regular expression:
+
+```js
+scenario.step('step', function() {
+
+  return this.post({
+    url: 'http://example.com/foo',
+    body: {
+      some: 'data'
+    },
+    expect: {
+      // the request will fail and the scenario will be interrupted
+      // if the status code of the response is not in the 2xx range
+      statusCode: /^2/
+    }
+  });
+});
+```
+
+You can also specify an array of expected status codes:
+
+```js
+scenario.step('step', function() {
+  return this.get({
+    url: 'http://example.com',
+    expect: {
+      // the request will fail and the scenario will be interrupted
+      // if the status code of the response is not among these
+      statusCode: [ 200, 204, /^3/ ]
+    }
   });
 });
 ```

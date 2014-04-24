@@ -1,8 +1,7 @@
-* BUG: do not append url to baseUrl if url not specified
-* add request option to check expected status code
+* add method to complete scenario
 * add info command to show the base configuration and parameters of scenarios
 * allow to configure runtime params (must be a flag or not, description, etc)
-* add method to complete scenario
+* run request filters before passing options to client
 * refactor client to avoid bind calls (create request wrapper?)
 * expose and document logger
 * handle step timeout (with configurable timeout)

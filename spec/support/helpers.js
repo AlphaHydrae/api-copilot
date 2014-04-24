@@ -62,7 +62,7 @@ exports.addMatchers = function(jasmine) {
       var actual = this.actual,
           isNot = this.isNot,
           classMatches = actual instanceof Error,
-          messageMatches = actual.message === expected;
+          messageMatches = actual && actual.message === expected;
 
       this.message = function() {
 
