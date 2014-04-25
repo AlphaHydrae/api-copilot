@@ -4,6 +4,9 @@ function Log4js() {
   this.reset();
 }
 
+Log4js.prototype.configure = function() {
+};
+
 Log4js.prototype.getLogger = function(name) {
 
   if (!this.loggers[name]) {

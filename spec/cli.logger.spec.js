@@ -4,6 +4,7 @@ RegExp.escape = function(s) {
   return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 };
 
+// TODO: complete this spec
 describe("CLI Logger", function() {
 
   var log4jsMock = require('./support/log4js.mock'),
