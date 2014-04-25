@@ -57,6 +57,19 @@ describe("CLI Program", function() {
     { name: 'list', minArgs: 0, maxArgs: 0 }
   ];
 
+  it("should output the help by default", function() {
+
+    var output = capture(function() {
+      execute();
+    });
+
+    expect(output).toMatch(/Usage:/);
+
+    _.each(spies, function(spy) {
+      expect(spy).not.toHaveBeenCalled();
+    });
+  });
+
   _.each(subCommands, function(subCommand) {
     var command = subCommand.name;
 
@@ -269,20 +282,11 @@ describe("CLI Program", function() {
     var lines;
     beforeEach(function() {
 
-      lines = [];
+      var output = capture(function() {
+        program.buildCommand().outputHelp();
+      });
 
-      var write = process.stdout.write;
-      process.stdout.write = function(string) {
-        if (string) {
-          lines = lines.concat(string.split("\n"));
-        }
-      };
-
-      program.buildCommand().outputHelp();
-
-      process.stdout.write = write;
-
-      lines = _.filter(lines, function(line) {
+      lines = _.filter(output.split("\n"), function(line) {
         return line && line.trim().length;
       });
     });
@@ -333,6 +337,22 @@ describe("CLI Program", function() {
       expect(customParams[1]).toBe('api-copilot -p param1 -p param2=value -p param3=value');
     });
   });
+
+  function capture(fn) {
+
+    var output = [];
+
+    var write = process.stdout.write;
+    process.stdout.write = function(string) {
+      output.push(string ? string : '');
+    };
+
+    fn();
+
+    process.stdout.write = write;
+
+    return output.join("\n");
+  }
 
   function cleanHelp(lines) {
     return _.map(lines, function(line) {
