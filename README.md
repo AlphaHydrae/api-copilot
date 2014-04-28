@@ -61,7 +61,7 @@ In your project's directory, install API Copilot and other dependencies:
     cd /path/to/project
     npm install
 
-You're now ready to [run API Copilot](#running).
+You're now ready to [run API Copilot](#cli).
 If you don't have any API scenarios yet, you might want to [write some](#writing-api-scenarios).
 
 
@@ -89,7 +89,9 @@ The source is also heavily commentted and run through [Docker](https://github.co
 ## Usage
 
 * [Writing API Scenarios](#writing-api-scenarios)
-* [Running Scenarios from the Command Line](#running)
+* [Running Scenarios from the Command Line](#cli)
+  * [Listing available scenarios](#listing)
+  * [Running a scenario](#running)
 * [Configuration Options](#configuration-options)
   * [Changing the configuration while a scenario is running](#changing-the-configuration-while-a-scenario-is-running)
 * [Scenario Flow Control](#scenario-flow-control)
@@ -100,9 +102,9 @@ The source is also heavily commentted and run through [Docker](https://github.co
   * [Asynchronous steps](#step-async)
   * [Change step order](#step-goto)
 * [Making HTTP calls](#making-http-calls)
-  * [Default Request Options](#default-request-options)
-  * [Request Filters](#request-filters)
-  * [Expecting a Specific Response](#request-expect)
+  * [Default request options](#default-request-options)
+  * [Request filters](#request-filters)
+  * [Expecting a specific response](#request-expect)
 * [Runtime Parameters](#runtime-parameters)
 * [Multipart Form Data](#multipart-form-data)
 
@@ -144,16 +146,60 @@ module.exports = scenario;
 
 
 
-<a name="running"></a>
+<a name="cli"></a>
 ### Running Scenarios from the Command Line
 
 The `api-copilot` command is provided by the separate [api-copilot-cli](https://github.com/lotaris/api-copilot-cli) package.
 Install it with `npm install -g api-copilot-cli`.
 
-Running `api-copilot` in your project will list available API scenarios and ask you which one you want to run.
-If there is only one scenario, it will be run automatically.
+API Copilot has two sub-commands which are documented below: `list` and `run`.
+You may run `api-copilot --help` for command line instructions.
 
-Run `api-copilot --help` for instructions.
+<a name="listing"></a>
+#### Listing available scenarios
+
+Use `api-copilot list` to list the scenarios available in the current source directory:
+
+```bash
+$\> cd /path/to/project && api-copilot list
+
+Source directory: /path/to/project/api
+  (use the `-s, --source <dir>` option to list API scenarios from another directory)
+
+Available API scenarios (3):
+1) api/foo.scenario.js       (foo)
+2) api/bar.scenario.js       (bar)
+3) api/sub/baz.scenario.js   (baz)
+
+Run `api-copilot info [scenario]` for more information about a scenario.
+[scenario] may be either the number, path or name of the scenario.
+```
+
+By default, the source directory is the `api` directory relative to the current working directory (where you run API Copilot from).
+For example, if you are in `/path/to/project`, API Copilot will look for scenarios in `/path/to/project/api`.
+You may set a different source directory with the `-s, --source <dir>` option.
+
+<a name="running"></a>
+#### Running a scenario
+
+Use `api-copilot run` to run a scenario in the source directory.
+
+If there is only one scenario available, it will be run automatically.
+If multiple scenarios are found, API Copilot will display the list and ask you which one you want to run:
+
+```bash
+$\> cd /path/to/project && api-copilot run
+
+Source directory: /path/to/project/api
+  (use the `-s, --source <dir>` option to list API scenarios from another directory)
+
+Available API scenarios (3):
+1) api/foo.scenario.js       (foo)
+2) api/bar.scenario.js       (bar)
+3) api/sub/baz.scenario.js   (baz)
+
+Type the number, path or name of the scenario you want to run:
+```
 
 
 

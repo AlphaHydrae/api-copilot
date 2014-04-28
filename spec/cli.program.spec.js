@@ -1,4 +1,6 @@
 var _ = require('underscore'),
+    h = require('./support/helpers'),
+    q = require('q'),
     path = require('path'),
     slice = Array.prototype.slice,
     yaml = require('js-yaml');
@@ -9,9 +11,10 @@ describe("CLI Program", function() {
       programInjector = require('../lib/cli.program'),
       pkg = require('../package');
 
-  var program, defaultOptions, runSpy, infoSpy, listSpy, spies;
+  var Program, program, defaultOptions, runSpy, infoSpy, listSpy, spies;
   beforeEach(function() {
 
+    h.addMatchers(this);
     fsMock.reset();
 
     defaultOptions = {
@@ -51,15 +54,9 @@ describe("CLI Program", function() {
     fsMock.files[file ? path.resolve(cwd, file) : defaultConfigFile] = yaml.safeDump(options);
   }
 
-  var subCommands = [
-    { name: 'run', minArgs: 0, maxArgs: 1 },
-    { name: 'info', minArgs: 0, maxArgs: 1 },
-    { name: 'list', minArgs: 0, maxArgs: 0 }
-  ];
-
   it("should output the help by default", function() {
 
-    var output = capture(function() {
+    var output = h.capture(function() {
       execute();
     });
 
@@ -70,6 +67,31 @@ describe("CLI Program", function() {
     });
   });
 
+  it("should return a resolved promise when outputting the help", function() {
+
+    var promise;
+    h.capture(function() {
+      promise = execute();
+    });
+
+    var fulfilledSpy = jasmine.createSpy();
+    promise.then(fulfilledSpy);
+
+    waitsFor(function() {
+      return fulfilledSpy.calls.length;
+    }, "the program to have finished running", 50);
+
+    runs(function() {
+      expect(fulfilledSpy).toHaveBeenCalledWith(undefined);
+    });
+  });
+
+  var subCommands = [
+    { name: 'run', minArgs: 0, maxArgs: 1 },
+    { name: 'info', minArgs: 0, maxArgs: 1 },
+    { name: 'list', minArgs: 0, maxArgs: 0 }
+  ];
+
   _.each(subCommands, function(subCommand) {
     var command = subCommand.name;
 
@@ -78,6 +100,68 @@ describe("CLI Program", function() {
       var spy;
       beforeEach(function() {
         spy = spies[subCommand.name];
+      });
+
+      it("should return a resolved promise when successful", function() {
+
+        var handlers = {};
+        handlers[command] = function() {
+          return q(command + ' result');
+        };
+
+        program = new Program(handlers);
+
+        var fulfilledSpy = jasmine.createSpy();
+        execute(command).then(fulfilledSpy);
+
+        waitsFor(function() {
+          return fulfilledSpy.calls.length;
+        }, "the program to have finished executing", 50);
+
+        runs(function() {
+          expect(fulfilledSpy).toHaveBeenCalledWith(command + ' result');
+        });
+      });
+
+      it("should return a resolved promise when the handler returns nothing", function() {
+
+        var handlers = {};
+        handlers[command] = function() {};
+
+        program = new Program(handlers);
+
+        var fulfilledSpy = jasmine.createSpy();
+        execute(command).then(fulfilledSpy);
+
+        waitsFor(function() {
+          return fulfilledSpy.calls.length;
+        }, "the program to have finished executing", 50);
+
+        runs(function() {
+          expect(fulfilledSpy).toHaveBeenCalledWith(undefined);
+        });
+      });
+
+      it("should return a rejected promise when failed", function() {
+
+        var handlers = {};
+        handlers[command] = function() {
+          return q.reject(new Error(command + ' bug'));
+        };
+
+        program = new Program(handlers);
+
+        var rejectedSpy = jasmine.createSpy();
+        execute(command).fail(rejectedSpy);
+
+        waitsFor(function() {
+          return rejectedSpy.calls.length;
+        }, "the program to have finished executing", 50);
+
+        runs(function() {
+          expect(rejectedSpy).toHaveBeenCalled();
+          expect(rejectedSpy.calls[0].args[0]).toBeAnError(command + ' bug');
+        });
       });
 
       it("should produce the default options with no arguments", function() {
@@ -282,7 +366,7 @@ describe("CLI Program", function() {
     var lines;
     beforeEach(function() {
 
-      var output = capture(function() {
+      var output = h.capture(function() {
         program.buildCommand().outputHelp();
       });
 
@@ -337,22 +421,6 @@ describe("CLI Program", function() {
       expect(customParams[1]).toBe('api-copilot -p param1 -p param2=value -p param3=value');
     });
   });
-
-  function capture(fn) {
-
-    var output = [];
-
-    var write = process.stdout.write;
-    process.stdout.write = function(string) {
-      output.push(string ? string : '');
-    };
-
-    fn();
-
-    process.stdout.write = write;
-
-    return output.join("\n");
-  }
 
   function cleanHelp(lines) {
     return _.map(lines, function(line) {

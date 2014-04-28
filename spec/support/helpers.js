@@ -55,6 +55,16 @@ exports.runScenario = function(scenario, expectedResult, options) {
   return deferred.promise;
 };
 
+exports.runPromise = function(promise, spy, expectedResult) {
+
+  expectedResult = expectedResult !== undefined ? expectedResult : true;
+  promise[expectedResult ? 'then' : 'fail'](spy);
+
+  waitsFor(function() {
+    return spy.calls.length;
+  }, "the promise to be resolved or rejected", 50);
+};
+
 exports.addMatchers = function(jasmine) {
   jasmine.addMatchers({
     toBeAnError: function(expected) {
@@ -79,6 +89,28 @@ exports.addMatchers = function(jasmine) {
       return classMatches && messageMatches;
     }
   });
+};
+
+exports.capture = function (fn) {
+
+  var output = [];
+
+  var write = process.stdout.write;
+  process.stdout.write = function(string) {
+    output.push(string ? string : '');
+  };
+
+  try {
+    fn();
+  } catch (e) {
+    process.stdout.write = write;
+    process.stdout.write(output.join("\n"));
+    throw e;
+  }
+
+  process.stdout.write = write;
+
+  return output.join("\n");
 };
 
 function MockServer() {
