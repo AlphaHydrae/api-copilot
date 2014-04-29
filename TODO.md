@@ -6,9 +6,12 @@
 * add shared store object and document using global variables
 * show scenario configuration at runtime with trace log level (including config before/after config file)
 * make run the default action, display --help if no scenario available
+* add auto-completer for selector
+* add some colors to listing
 * get rid of new Dependency
 * add q.all parallel requests example
 * provide underscore and q dependencies
+* rename h.mockMethods to spyObjectMethods
 * check TODO/FIXMEs
 * support multiple configuration files with -c, --config FILE
 * make `list` check which files export valid scenarios
