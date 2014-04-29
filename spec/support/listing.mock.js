@@ -23,7 +23,7 @@ _.extend(ListingMock.prototype, {
     this.scenarios = _.map(files, function(file) {
       return {
         file: file,
-        name: path.basename(file)
+        name: path.basename(file).replace(/\.scenario\.js$/, '')
       };
     });
   }

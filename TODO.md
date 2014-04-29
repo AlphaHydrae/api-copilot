@@ -7,6 +7,8 @@
 * show scenario configuration at runtime with trace log level (including config before/after config file)
 * make run the default action, display --help if no scenario available
 * get rid of new Dependency
+* add q.all parallel requests example
+* provide underscore and q dependencies
 * check TODO/FIXMEs
 * support multiple configuration files with -c, --config FILE
 * make `list` check which files export valid scenarios

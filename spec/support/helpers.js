@@ -91,26 +91,48 @@ exports.addMatchers = function(jasmine) {
   });
 };
 
+exports.mockMethods = function(target) {
+  _.each(slice.call(arguments, 1), function(method) {
+    spyOn(target, method).andCallThrough();
+  }, target);
+};
+
 exports.capture = function (fn) {
 
-  var output = [];
-
-  var write = process.stdout.write;
-  process.stdout.write = function(string) {
-    output.push(string ? string : '');
+  var output = {
+    stdout: [],
+    stderr: []
+  }, original = {
+    stdout: process.stdout.write,
+    stderr: process.stderr.write
   };
+
+  function eachStream(fn) {
+    _.each([ 'stdout', 'stderr' ], fn);
+  }
+
+  eachStream(function(stream) {
+    process[stream].write = function(string) {
+      output[stream].push(string ? string : '');
+    };
+  });
 
   try {
     fn();
   } catch (e) {
-    process.stdout.write = write;
-    process.stdout.write(output.join("\n"));
+    eachStream(function(stream) {
+      process[stream].write = original[stream];
+      process[stream].write(output[stream].join("\n"));
+    });
     throw e;
   }
 
-  process.stdout.write = write;
+  eachStream(function(stream) {
+    process[stream].write = original[stream];
+    output[stream] = output[stream].join("\n");
+  });
 
-  return output.join("\n");
+  return output;
 };
 
 function MockServer() {

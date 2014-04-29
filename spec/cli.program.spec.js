@@ -60,7 +60,7 @@ describe("CLI Program", function() {
       execute();
     });
 
-    expect(output).toMatch(/Usage:/);
+    expect(output.stdout).toMatch(/Usage:/);
 
     _.each(spies, function(spy) {
       expect(spy).not.toHaveBeenCalled();
@@ -370,7 +370,7 @@ describe("CLI Program", function() {
         program.buildCommand().outputHelp();
       });
 
-      lines = _.filter(output.split("\n"), function(line) {
+      lines = _.filter(output.stdout.split("\n"), function(line) {
         return line && line.trim().length;
       });
     });

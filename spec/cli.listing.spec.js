@@ -26,7 +26,7 @@ describe("CLI Listing", function() {
       listing.execute();
     });
 
-    return _.filter(output.split("\n"), function(line) {
+    return _.filter(output.stdout.split("\n"), function(line) {
       return line.trim().length;
     });
   }
