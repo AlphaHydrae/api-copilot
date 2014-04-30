@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5.0
+
+* **NEW:** The [listing](README.md#listing) sub-command lists available API scenarios in your project.
+
+* **NEW:** The [info](README.md#info) sub-command prints detailed information about an API scenario.
+
+* Fixed a bug where steps would be numbered starting from 2 in the command line output.
+
 ## v0.4.0 - April 24, 2014
 
 * **BREAKING:** Request options are now merged with default request options instead of overriding them.

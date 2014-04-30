@@ -1,4 +1,3 @@
-* BUG: sample scenario a seems to start with step number 2
 * IMPORTANT: add link to request & q documentation & CHANGELOG && --help option in documentation section of readme
 * IMPORTANT: add documentation links to YAML doc
 * allow to set custom error message for expected response values
@@ -15,6 +14,7 @@
 * add q.all parallel requests example
 * provide underscore and q dependencies
 * rename h.mockMethods to spyObjectMethods
+* use <> instead of [] notation for required command line option args in readme
 * check TODO/FIXMEs
 * replace manual injection by electrolyte module
 * selector should use finder as dependency
