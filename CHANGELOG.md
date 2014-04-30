@@ -1,10 +1,11 @@
 # Changelog
 
-## v0.5.0
+## Edge
 
 * **NEW:** The [listing](README.md#listing) sub-command lists available API scenarios in your project.
 
 * **NEW:** The [info](README.md#info) sub-command prints detailed information about an API scenario.
+  You can also add your own documentation by listening to the [scenario:info even](README.md#documenting).
 
 * Fixed a bug where steps would be numbered starting from 2 in the command line output.
 
