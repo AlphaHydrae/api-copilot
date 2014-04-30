@@ -2,86 +2,63 @@ var _ = require('underscore'),
     colors = require('colors'),
     h = require('./support/helpers'),
     path = require('path'),
-    q = require('q');
+    q = require('q'),
+    slice = Array.prototype.slice;
 
 describe("CLI Listing", function() {
 
-  var ScenarioFinderMock = require('./support/scenario.finder.mock'),
+  var scenarioFinderUtils = require('./support/scenario.finder.utils'),
       listingInjector = require('../lib/cli.listing');
 
-  var Listing, listing, defaultOptions, finderMock, printMock, output;
+  var Listing, mocks, foundScenarios, defaultOptions, lines;
   beforeEach(function() {
 
-    finderMock = new ScenarioFinderMock();
-
-    output = [];
-    printMock = function(text) {
-      output.push(text || '');
-    };
-
+    lines = [];
+    foundScenarios = undefined;
     defaultOptions = { source: 'api' };
 
-    Listing = listingInjector({
-      finder: finderMock.finder,
-      print: printMock
-    });
+    mocks = {
+      finder: function() {
+        return q(foundScenarios);
+      },
+      print: function(text) {
+        lines = lines.concat((text || '').split("\n"));
+      }
+    };
+
+    spyOn(mocks, 'finder').andCallThrough();
+
+    Listing = listingInjector(mocks);
   });
 
-  var lines;
   function list(options, expectedResult) {
-
-    expectedResult = expectedResult !== undefined ? expectedResult : true;
-    listing = new Listing(_.extend({}, defaultOptions, options));
-
-    var result;
-        deferred = q.defer();
-
-    runs(function() {
-      listing.execute().then(function(listingResult) {
-        result = true;
-        deferred.resolve(listingResult);
-      }, function(err) {
-        console.log(err.stack);
-        result = false;
-        deferred.reject(err);
-      });
-    });
-
-    waitsFor(function() {
-      return result !== undefined;
-    }, "the listing to have completed", 50);
-
-    runs(function() {
-      expect(result).toBe(expectedResult);
-      // TODO: check exact output
-      lines = _.filter(output, function(line) {
-        return line.trim().length;
-      });
-    });
-
-    return deferred.promise;
+    var listing = new Listing(_.extend({}, defaultOptions, options));
+    return h.runPromise(listing.execute(), expectedResult);
   }
 
-  it("should return a promise resolved with nothing", function() {
+  function setAvailableScenarios() {
+    foundScenarios = scenarioFinderUtils.parseFiles(slice.call(arguments));
+  }
 
-    finderMock.addResults([]);
-
-    var fulfilledSpy = jasmine.createSpy();
-    list().then(fulfilledSpy);
-
-    runs(function() {
-      expect(fulfilledSpy).toHaveBeenCalledWith(undefined);
+  // TODO: remove this and check exact output
+  function cleanOutput() {
+    lines = _.filter(lines, function(line) {
+      return line.trim().length;
     });
-  });
+  }
 
   it("should show when no scenarios are available", function() {
 
-    finderMock.addResults([]);
+    setAvailableScenarios();
 
-    list();
+    var fulfilledSpy = list();
 
     runs(function() {
+
+      expectListingSuccessful(fulfilledSpy);
       expectFinderCalled();
+
+      cleanOutput();
       expectSource(lines, 'api');
       expect(lines.length).toBe(3);
       expect(lines[2]).toBe('Available API scenarios: none'.yellow);
@@ -90,12 +67,16 @@ describe("CLI Listing", function() {
 
   it("should list one scenario", function() {
 
-    finderMock.addResults([ 'api/a.scenario.js' ]);
+    setAvailableScenarios('api/a.scenario.js');
 
-    list();
+    var fulfilledSpy = list();
 
     runs(function() {
+
+      expectListingSuccessful(fulfilledSpy);
       expectFinderCalled();
+
+      cleanOutput();
       expect(lines.length).toBe(6);
       expectSource(lines, 'api');
       expectAvailable(lines, [ { file: 'api/a.scenario.js', name: 'a' } ]);
@@ -105,12 +86,16 @@ describe("CLI Listing", function() {
 
   it("should list multiple scenarios", function() {
 
-    finderMock.addResults([ 'api/a.scenario.js', 'api/b.scenario.js', 'api/c.scenario.js' ]);
+    setAvailableScenarios('api/a.scenario.js', 'api/b.scenario.js', 'api/c.scenario.js');
 
-    list();
+    var fulfilledSpy = list();
 
     runs(function() {
+
+      expectListingSuccessful(fulfilledSpy);
       expectFinderCalled();
+
+      cleanOutput();
       expect(lines.length).toBe(8);
       expectSource(lines, 'api');
       expectAvailable(lines, [
@@ -124,12 +109,16 @@ describe("CLI Listing", function() {
 
   it("should list scenarios from a custom source", function() {
 
-    finderMock.addResults([ 'custom/a.scenario.js', 'custom/b.scenario.js' ]);
+    setAvailableScenarios('custom/a.scenario.js', 'custom/b.scenario.js');
 
-    list({ source: 'custom' });
+    var fulfilledSpy = list({ source: 'custom' });
 
     runs(function() {
+
+      expectListingSuccessful(fulfilledSpy);
       expectFinderCalled({ source: 'custom' });
+
+      cleanOutput();
       expect(lines.length).toBe(7);
       expectSource(lines, 'custom');
       expectAvailable(lines, [
@@ -142,12 +131,16 @@ describe("CLI Listing", function() {
 
   it("should list scenarios from an absolute source", function() {
 
-    finderMock.addResults([ '/custom/a.scenario.js', '/custom/b.scenario.js' ]);
+    setAvailableScenarios('/custom/a.scenario.js', '/custom/b.scenario.js');
 
-    list({ source: '/custom' });
+    var fulfilledSpy = list({ source: '/custom' });
 
     runs(function() {
+
+      expectListingSuccessful(fulfilledSpy);
       expectFinderCalled({ source: '/custom' });
+
+      cleanOutput();
       expect(lines.length).toBe(7);
       expectSource(lines, '/custom');
       expectAvailable(lines, [
@@ -160,15 +153,19 @@ describe("CLI Listing", function() {
 
   it("should use file basenames as scenario names", function() {
 
-    finderMock.addResults([
+    setAvailableScenarios(
       'api/a.scenario.js', 'api/b.scenario.js',
       'api/sub/c.scenario.js', 'api/sub/sub/d.scenario.js'
-    ]);
+    );
 
-    list();
+    var fulfilledSpy = list();
 
     runs(function() {
+
+      expectListingSuccessful(fulfilledSpy);
       expectFinderCalled();
+
+      cleanOutput();
       expect(lines.length).toBe(9);
       expectSource(lines, 'api');
       expectAvailable(lines, [
@@ -183,16 +180,20 @@ describe("CLI Listing", function() {
 
   it("should show only unique scenario names", function() {
 
-    finderMock.addResults([
+    setAvailableScenarios(
       'api/a.scenario.js', 'api/b.scenario.js',
       'api/sub/b.scenario.js', 'api/sub/c.scenario.js',
       'api/svb/c.scenario.js'
-    ]);
+    );
 
-    list();
+    var fulfilledSpy = list();
 
     runs(function() {
+
+      expectListingSuccessful(fulfilledSpy);
       expectFinderCalled();
+
+      cleanOutput();
       expect(lines.length).toBe(10);
       expectSource(lines, 'api');
       expectAvailable(lines, [
@@ -206,8 +207,12 @@ describe("CLI Listing", function() {
     });
   });
 
+  function expectListingSuccessful(fulfilledSpy) {
+    expect(fulfilledSpy).toHaveBeenCalledWith(undefined);
+  }
+
   function expectFinderCalled(options) {
-    expect(finderMock.finder).toHaveBeenCalledWith(_.extend({}, defaultOptions, options));
+    expect(mocks.finder).toHaveBeenCalledWith(_.extend({}, defaultOptions, options));
   }
 
   function expectSource(lines, source) {

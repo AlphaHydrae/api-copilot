@@ -13,6 +13,7 @@
 * provide underscore and q dependencies
 * rename h.mockMethods to spyObjectMethods
 * check TODO/FIXMEs
+* replace manual injection by electrolyte module
 * support multiple configuration files with -c, --config FILE
 * make `list` check which files export valid scenarios
 * run request filters before passing options to client

@@ -55,14 +55,20 @@ exports.runScenario = function(scenario, expectedResult, options) {
   return deferred.promise;
 };
 
-exports.runPromise = function(promise, spy, expectedResult) {
+exports.runPromise = function(promise, expectedResult) {
 
-  expectedResult = expectedResult !== undefined ? expectedResult : true;
+  if (expectedResult === undefined) {
+    expectedResult = true;
+  }
+
+  var spy = jasmine.createSpy();
   promise[expectedResult ? 'then' : 'fail'](spy);
 
   waitsFor(function() {
     return spy.calls.length;
-  }, "the promise to be resolved or rejected", 50);
+  }, 'the promise to be ' + (expectedResult ? 'resolved' : 'rejected'), 50);
+
+  return spy;
 };
 
 exports.addMatchers = function(jasmine) {

@@ -6,48 +6,62 @@ var _ = require('underscore'),
 describe("CLI Selector", function() {
 
   var CliListingMock = require('./support/cli.listing.mock'),
-      ReadlineMock = require('./support/readline.mock'),
-      ScenarioFinderMock = require('./support/scenario.finder.mock'),
-      ScenarioLoaderMock = require('./support/scenario.loader.mock'),
+      scenarioFinderUtils = require('./support/scenario.finder.utils'),
       cliSelectorInjector = require('../lib/cli.selector');
 
-  var selector, listingMock, readlineMock, loaderMock, scenarios, choice;
+  var selector, mocks, loadedScenario, listingMock, readlineAnswer, scenarios, choice;
   beforeEach(function() {
 
     h.addMatchers(this);
 
-    readlineMock = new ReadlineMock();
-    loaderMock = new ScenarioLoaderMock();
+    loadedScenario = undefined;
+    readlineAnswer = undefined;
+
+    mocks = {
+      loader: function() {
+        return loadedScenario;
+      },
+      readlineInterface: {
+        question: function(query, callback) {
+          callback(readlineAnswer);
+        },
+        close: function() {}
+      },
+      readline: {
+        createInterface: function() {
+          return mocks.readlineInterface;
+        }
+      }
+    };
+
+    spyOn(mocks, 'loader').andCallThrough();
+    spyOn(mocks.readlineInterface, 'question').andCallThrough();
+    spyOn(mocks.readlineInterface, 'close');
+    spyOn(mocks.readline, 'createInterface').andCallThrough();
+
     CliListingMock.instances.length = 0;
 
     choice = undefined;
     scenarios = undefined;
 
     selector = cliSelectorInjector({
-      readline: readlineMock,
-      scenarioLoader: loaderMock.loader,
+      readline: mocks.readline,
+      scenarioLoader: mocks.loader,
       Listing: CliListingMock
     });
   });
 
-  function select(spy, expectedResult, options) {
+  function select(expectedResult, options) {
     if (!scenarios) {
       throw new Error('No scenarios mocked');
     }
 
-    expectedResult = expectedResult !== undefined ? expectedResult : true;
-
-    runs(function() {
-      selector(scenarios, choice, _.extend({}, options))[expectedResult ? 'then' : 'fail'](spy);
-    });
-
-    waitsFor(function() {
-      return spy.calls.length;
-    }, "the selector to have finished selecting", 50);
+    var promise = selector(scenarios, choice, _.extend({}, options));
+    return h.runPromise(promise, expectedResult);
   }
 
   function setScenarios() {
-    scenarios = ScenarioFinderMock.parseFiles(slice.call(arguments));
+    scenarios = scenarioFinderUtils.parseFiles(slice.call(arguments));
   }
 
   function setChoice(newChoice) {
@@ -55,12 +69,59 @@ describe("CLI Selector", function() {
   }
 
   function setLoadedScenario(scenario) {
-    loaderMock.addResult(scenario);
+    loadedScenario = scenario;
   }
 
-  describe("with a scenario argument", function() {
+  function setReadlineAnswer(answer) {
+    readlineAnswer = answer;
+  }
 
-    var files;
+  it("should select nothing if there are no available scenarios", function() {
+
+    setScenarios();
+
+    var fulfilledSpy = select();
+
+    runs(function() {
+      expectListingDisplayed(true);
+      expectReadlineCalled(false);
+      expectLoaderCalled(false);
+      expectScenarioSelected(fulfilledSpy, undefined);
+    });
+  });
+
+  it("should automatically run a single available scenario", function() {
+
+    setScenarios('api/a.scenario.js');
+    setLoadedScenario('single');
+
+    var fulfilledSpy = select();
+
+    runs(function() {
+      expectListingDisplayed(false);
+      expectReadlineCalled(false);
+      expectLoaderCalled('api/a.scenario.js');
+      expectScenarioSelected(fulfilledSpy, 'single');
+    });
+  });
+
+  it("should automatically run a single available scenario with custom options", function() {
+
+    setScenarios('api/b.scenario.js');
+    setLoadedScenario('single with custom options');
+
+    var fulfilledSpy = select(true, { foo: 'bar' });
+
+    runs(function() {
+      expectListingDisplayed(false, { foo: 'bar' });
+      expectReadlineCalled(false);
+      expectLoaderCalled('api/b.scenario.js');
+      expectScenarioSelected(fulfilledSpy, 'single with custom options');
+    });
+  });
+
+  describe("with a provided argument", function() {
+
     beforeEach(function() {
       setScenarios('api/a.scenario.js', 'api/b.scenario.js', 'api/c.scenario.js', 'api/sub/d.scenario.js');
     });
@@ -70,13 +131,13 @@ describe("CLI Selector", function() {
       setChoice('2');
       setLoadedScenario('by number');
 
-      var fulfilledSpy = jasmine.createSpy();
-      select(fulfilledSpy);
+      var fulfilledSpy = select();
 
       runs(function() {
         expectListingDisplayed(false);
+        expectReadlineCalled(false);
         expectLoaderCalled('api/b.scenario.js');
-        expectedScenarioSelected(fulfilledSpy, 'by number');
+        expectScenarioSelected(fulfilledSpy, 'by number');
       });
     });
 
@@ -85,13 +146,13 @@ describe("CLI Selector", function() {
       setChoice('api/c.scenario.js');
       setLoadedScenario('by path');
 
-      var fulfilledSpy = jasmine.createSpy();
-      select(fulfilledSpy);
+      var fulfilledSpy = select();
 
       runs(function() {
         expectListingDisplayed(false);
+        expectReadlineCalled(false);
         expectLoaderCalled('api/c.scenario.js');
-        expectedScenarioSelected(fulfilledSpy, 'by path');
+        expectScenarioSelected(fulfilledSpy, 'by path');
       });
     });
 
@@ -100,13 +161,13 @@ describe("CLI Selector", function() {
       setChoice('a');
       setLoadedScenario('by name');
 
-      var fulfilledSpy = jasmine.createSpy();
-      select(fulfilledSpy);
+      var fulfilledSpy = select();
 
       runs(function() {
         expectListingDisplayed(false);
+        expectReadlineCalled(false);
         expectLoaderCalled('api/a.scenario.js');
-        expectedScenarioSelected(fulfilledSpy, 'by name');
+        expectScenarioSelected(fulfilledSpy, 'by name');
       });
     });
 
@@ -115,13 +176,13 @@ describe("CLI Selector", function() {
       setChoice('d');
       setLoadedScenario('by name with custom options');
 
-      var fulfilledSpy = jasmine.createSpy();
-      select(fulfilledSpy, true, { baz: 'qux' });
+      var fulfilledSpy = select(true, { baz: 'qux' });
 
       runs(function() {
         expectListingDisplayed(false, { baz: 'qux' });
+        expectReadlineCalled(false);
         expectLoaderCalled('api/sub/d.scenario.js');
-        expectedScenarioSelected(fulfilledSpy, 'by name with custom options');
+        expectScenarioSelected(fulfilledSpy, 'by name with custom options');
       });
     });
 
@@ -130,13 +191,13 @@ describe("CLI Selector", function() {
       setChoice('d');
       setLoadedScenario('by name in subdir');
 
-      var fulfilledSpy = jasmine.createSpy();
-      select(fulfilledSpy);
+      var fulfilledSpy = select();
 
       runs(function() {
         expectListingDisplayed(false);
+        expectReadlineCalled(false);
         expectLoaderCalled('api/sub/d.scenario.js');
-        expectedScenarioSelected(fulfilledSpy, 'by name in subdir');
+        expectScenarioSelected(fulfilledSpy, 'by name in subdir');
       });
     });
 
@@ -144,11 +205,11 @@ describe("CLI Selector", function() {
 
       setChoice('unknown');
 
-      var rejectedSpy = jasmine.createSpy();
-      select(rejectedSpy, false);
+      var rejectedSpy = select(false);
 
       runs(function() {
         expectListingDisplayed(true);
+        expectReadlineCalled(false);
         expectLoaderCalled(false);
         expectError(rejectedSpy, 'No such scenario "unknown"');
       });
@@ -158,11 +219,11 @@ describe("CLI Selector", function() {
 
       setChoice('0');
 
-      var rejectedSpy = jasmine.createSpy();
-      select(rejectedSpy, false);
+      var rejectedSpy = select(false);
 
       runs(function() {
         expectListingDisplayed(true);
+        expectReadlineCalled(false);
         expectLoaderCalled(false);
         expectError(rejectedSpy, 'No such scenario "0"');
       });
@@ -172,143 +233,147 @@ describe("CLI Selector", function() {
 
       setChoice('5');
 
-      var rejectedSpy = jasmine.createSpy();
-      select(rejectedSpy, false);
+      var rejectedSpy = select(false);
 
       runs(function() {
         expectListingDisplayed(true);
+        expectReadlineCalled(false);
         expectLoaderCalled(false);
         expectError(rejectedSpy, 'No such scenario "5"');
       });
     });
   });
 
-  /*describe("without a scenario argument", function() {
+  describe("after asking the user which scenario to run", function() {
 
-    var files, filesPre;
     beforeEach(function() {
-      files = [ 'api/a.scenario.js', 'api/b.scenario.js', 'api/c.scenario.js', 'api/sub/d.scenario.js' ];
-      filesPre = setListingFiles.apply(undefined, files);
+      setScenarios('api/a.scenario.js', 'api/b.scenario.js', 'api/c.scenario.js', 'api/sub/d.scenario.js');
     });
 
     it("should run a scenario by number", function() {
 
-      setScenario('number arg');
-      readlineMock.addAnswer('2');
+      setReadlineAnswer('2');
+      setLoadedScenario('by number');
 
-      var fulfilledSpy = jasmine.createSpy();
-      h.runPromise(run({}, { pre: filesPre }), fulfilledSpy);
+      var fulfilledSpy = select();
 
       runs(function() {
-        expectScenarioSelectedByUser();
-        expectedScenarioSelected(fulfilledSpy, 'api/b.scenario.js', 'number arg');
+        expectListingDisplayed(true);
+        expectReadlineCalled(true);
+        expectLoaderCalled('api/b.scenario.js');
+        expectScenarioSelected(fulfilledSpy, 'by number');
       });
     });
 
     it("should run a scenario by path", function() {
 
-      setScenario('path arg');
-      readlineMock.addAnswer('api/c.scenario.js');
+      setReadlineAnswer('api/c.scenario.js');
+      setLoadedScenario('by path');
 
-      var fulfilledSpy = jasmine.createSpy();
-      h.runPromise(run({}, { pre: filesPre }), fulfilledSpy);
+      var fulfilledSpy = select();
 
       runs(function() {
-        expectScenarioSelectedByUser();
-        expectedScenarioSelected(fulfilledSpy, 'api/c.scenario.js', 'path arg');
+        expectListingDisplayed(true);
+        expectReadlineCalled(true);
+        expectLoaderCalled('api/c.scenario.js');
+        expectScenarioSelected(fulfilledSpy, 'by path');
       });
     });
 
     it("should run a scenario by name", function() {
 
-      setScenario('name arg');
-      readlineMock.addAnswer('a');
+      setReadlineAnswer('a');
+      setLoadedScenario('by name');
 
-      var fulfilledSpy = jasmine.createSpy();
-      h.runPromise(run({}, { pre: filesPre }), fulfilledSpy);
+      var fulfilledSpy = select();
 
       runs(function() {
-        expectScenarioSelectedByUser();
-        expectedScenarioSelected(fulfilledSpy, 'api/a.scenario.js', 'name arg');
+        expectListingDisplayed(true);
+        expectReadlineCalled(true);
+        expectLoaderCalled('api/a.scenario.js');
+        expectScenarioSelected(fulfilledSpy, 'by name');
       });
     });
 
     it("should run a scenario with custom options", function() {
 
-      setScenario('name arg with custom options');
-      readlineMock.addAnswer('d');
+      setReadlineAnswer('d');
+      setLoadedScenario('by name with custom options');
 
-      var fulfilledSpy = jasmine.createSpy();
-      h.runPromise(run({ qux: 'baz' }, { pre: filesPre }), fulfilledSpy);
+      var fulfilledSpy = select(true, { qux: 'baz' });
 
       runs(function() {
-        expectScenarioSelectedByUser();
-        expectedScenarioSelected(fulfilledSpy, 'api/sub/d.scenario.js', 'name arg with custom options', { qux: 'baz' });
+        expectListingDisplayed(true, { qux: 'baz' });
+        expectReadlineCalled(true);
+        expectLoaderCalled('api/sub/d.scenario.js');
+        expectScenarioSelected(fulfilledSpy, 'by name with custom options');
       });
     });
 
     it("should not run anything if the user gives no answer", function() {
 
-      readlineMock.addAnswer('');
+      setReadlineAnswer('');
 
-      var rejectedSpy = jasmine.createSpy();
-      h.runPromise(run({}, { expectedResult: false, pre: filesPre }), rejectedSpy, false);
+      var rejectedSpy = select(false);
 
       runs(function() {
-        expectScenarioSelectedByUser();
-        expectNoScenarioCalled();
-        expectRunError(rejectedSpy, 'No such scenario ""');
+        expectListingDisplayed(true);
+        expectReadlineCalled(true);
+        expectLoaderCalled(false);
+        expectError(rejectedSpy, 'No such scenario ""');
       });
     });
 
     it("should not run anything if the user gives 0 as the answer", function() {
 
-      readlineMock.addAnswer('0');
+      setReadlineAnswer('0');
 
-      var rejectedSpy = jasmine.createSpy();
-      h.runPromise(run({}, { expectedResult: false, pre: filesPre }), rejectedSpy, false);
+      var rejectedSpy = select(false);
 
       runs(function() {
-        expectScenarioSelectedByUser();
-        expectNoScenarioCalled();
-        expectRunError(rejectedSpy, 'No such scenario "0"');
+        expectListingDisplayed(true);
+        expectReadlineCalled(true);
+        expectLoaderCalled(false);
+        expectError(rejectedSpy, 'No such scenario "0"');
       });
     });
 
     it("should not run anything if the user gives a scenario number that is out of bounds", function() {
 
-      readlineMock.addAnswer('5');
+      setReadlineAnswer('5');
 
-      var rejectedSpy = jasmine.createSpy();
-      h.runPromise(run({}, { expectedResult: false, pre: filesPre }), rejectedSpy, false);
+      var rejectedSpy = select(false);
 
       runs(function() {
-        expectScenarioSelectedByUser();
-        expectNoScenarioCalled();
-        expectRunError(rejectedSpy, 'No such scenario "5"');
+        expectListingDisplayed(true);
+        expectReadlineCalled(true);
+        expectLoaderCalled(false);
+        expectError(rejectedSpy, 'No such scenario "5"');
       });
     });
 
     it("should not run anything if the user gives an invalid answer", function() {
 
-      readlineMock.addAnswer('unknown');
+      setReadlineAnswer('unknown');
 
-      var rejectedSpy = jasmine.createSpy();
-      h.runPromise(run({}, { expectedResult: false, pre: filesPre }), rejectedSpy, false);
+      var rejectedSpy = select(false);
 
       runs(function() {
-        expectScenarioSelectedByUser();
-        expectNoScenarioCalled();
-        expectRunError(rejectedSpy, 'No such scenario "unknown"');
+        expectListingDisplayed(true);
+        expectReadlineCalled(true);
+        expectLoaderCalled(false);
+        expectError(rejectedSpy, 'No such scenario "unknown"');
       });
     });
-  });*/
+  });
 
   function expectListingDisplayed(displayed, options) {
 
+    // check that one logger was created with the correct options
     expect(CliListingMock.instances.length).toBe(1);
     expect(CliListingMock.instances[0].args).toEqual([ _.extend({}, options) ]);
 
+    // check that the logger was called (or not)
     displayed = displayed !== undefined ? displayed : true;
     if (displayed) {
       expect(CliListingMock.instances[0].display).toHaveBeenCalledWith(scenarios);
@@ -319,36 +384,40 @@ describe("CLI Selector", function() {
 
   function expectLoaderCalled(file) {
     if (file) {
-      expect(loaderMock.loader).toHaveBeenCalledWith(path.resolve(file));
+      expect(mocks.loader).toHaveBeenCalledWith(path.resolve(file));
     } else {
-      expect(loaderMock.loader).not.toHaveBeenCalled();
+      expect(mocks.loader).not.toHaveBeenCalled();
     }
   }
 
-  function expectedScenarioSelected(fulfilledSpy, result) {
+  function expectReadlineCalled(called) {
+
+    if (!called || called === undefined) {
+      expect(mocks.readline.createInterface).not.toHaveBeenCalled();
+      return;
+    }
+
+    // check that a readline interface was created
+    expect(mocks.readline.createInterface).toHaveBeenCalledWith({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    // check that the readline interface was used to ask the user which scenario to run
+    var rl = mocks.readlineInterface;
+    expect(rl.question).toHaveBeenCalled();
+    expect(rl.question.calls[0].args[0]).toBe('\nType the number of the scenario you want to run: ');
+
+    // check that the readline interface was closed
+    expect(rl.close).toHaveBeenCalled();
+  }
+
+  function expectScenarioSelected(fulfilledSpy, result) {
     expect(fulfilledSpy).toHaveBeenCalledWith(result);
   }
 
   function expectError(rejectedSpy, message) {
     expect(rejectedSpy).toHaveBeenCalled();
     expect(rejectedSpy.calls[0].args[0]).toBeAnError(message);
-  }
-
-  function expectScenarioSelectedByUser() {
-
-    // check that a readline interface was created
-    expect(readlineMock.interfaces.length).toBe(1);
-    expect(readlineMock.createInterface).toHaveBeenCalledWith({
-      input: process.stdin,
-      output: process.stdout
-    });
-
-    // check that the readline interface was used to ask the user which scenario to run
-    var rl = readlineMock.getLatestInterface();
-    expect(rl.question).toHaveBeenCalled();
-    expect(rl.question.calls[0].args[0]).toBe('Type the number of the scenario you want to run: ');
-
-    // check that the readline interface was closed
-    expect(rl.close).toHaveBeenCalled();
   }
 });
