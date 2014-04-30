@@ -108,6 +108,7 @@ The source is also heavily commentted and run through [Docker](https://github.co
   * [Expecting a specific response](#request-expect)
 * [Runtime Parameters](#runtime-parameters)
 * [Multipart Form Data](#multipart-form-data)
+* [Documenting Your Scenarios](#documenting)
 
 
 
@@ -909,6 +910,30 @@ scenario.step('file upload', function() {
 ```
 
 **Note:** the request handler must be synchronous since the HTTP request will start immediately at the next tick.
+
+
+
+<a name="documenting"></a>
+### Documenting Your Scenarios
+
+Scenarios with many parameters can become quite complicated to understand and use.
+To add additional documentation at the end of the [info command](#info) output, listen to the `scenario:info` event on the scenario object:
+
+```js
+var copilot = require('api-copilot');
+
+var scenario = new copilot.Scenario({
+  name: 'My Complex Scenario'
+});
+
+scenario.on('scenario:info', function() {
+  console.log('Additional Information:');
+  console.log();
+  console.log('  To use this scenario, you must ... and ... first.');
+  console.log();
+});
+
+```
 
 
 
