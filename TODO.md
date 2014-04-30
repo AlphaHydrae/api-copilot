@@ -8,6 +8,9 @@
 * make run the default action, display --help if no scenario available
 * add auto-completer for selector
 * add some colors to listing
+* add info sub-command information about modifying configuration file and command line options
+* do not show source directory in info sub-command output
+* show loaded configuration file path in info sub-command
 * get rid of new Dependency
 * add q.all parallel requests example
 * provide underscore and q dependencies

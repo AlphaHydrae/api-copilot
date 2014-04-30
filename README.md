@@ -91,6 +91,7 @@ The source is also heavily commentted and run through [Docker](https://github.co
 * [Writing API Scenarios](#writing-api-scenarios)
 * [Running Scenarios from the Command Line](#cli)
   * [Listing available scenarios](#listing)
+  * [Getting information about a scenario](#info)
   * [Running a scenario](#running)
 * [Configuration Options](#configuration-options)
   * [Changing the configuration while a scenario is running](#changing-the-configuration-while-a-scenario-is-running)
@@ -172,6 +173,7 @@ Available API scenarios (3):
 3) api/sub/baz.scenario.js   (baz)
 
 Run `api-copilot info [scenario]` for more information about a scenario.
+Run `api-copilot run [scenario]` to run a scenario.
 [scenario] may be either the number, path or name of the scenario.
 ```
 
@@ -179,10 +181,43 @@ By default, the source directory is the `api` directory relative to the current 
 For example, if you are in `/path/to/project`, API Copilot will look for scenarios in `/path/to/project/api`.
 You may set a different source directory with the `-s, --source <dir>` option.
 
+<a name="info"></a>
+#### Getting information about a scenario
+
+Use `api-copilot info [scenario]` to get detailed information about a scenario.
+
+```bash
+$\> cd /path/to/project && api-copilot info api/my.scenario.js
+
+My Scenario
+/path/to/project/api/my.scenario.js
+
+Base configuration of scenario object:
+  {
+    "name": "My Scenario"
+  }
+
+Effective configuration including file and command line options:
+  {
+    "name": "My Scenario",
+    "log": "info",
+    "source": "api"
+  }
+
+Steps (3):
+
+  1. do stuff
+  2. do more stuff
+  3. check stuff
+```
+
+The `info` command without a scenario argument will behave like the [run command](#running).
+It will automatically run a single available scenario, or ask you which one you want to run if multiple scenarios are available.
+
 <a name="running"></a>
 #### Running a scenario
 
-Use `api-copilot run` to run a scenario in the source directory.
+Use `api-copilot run [scenario]` to run a scenario in the source directory.
 
 If there is only one scenario available, it will be run automatically.
 If multiple scenarios are found, API Copilot will display the list and ask you which one you want to run:
@@ -199,6 +234,14 @@ Available API scenarios (3):
 3) api/sub/baz.scenario.js   (baz)
 
 Type the number, path or name of the scenario you want to run:
+```
+
+If multiple scenarios are available, you can also directly run one by specifying its number, path or name as argument to the `run` command:
+
+```bash
+api-copilot run 1
+api-copilot run api/foo.scenario.js
+api-copilot run foo
 ```
 
 

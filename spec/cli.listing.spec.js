@@ -79,7 +79,7 @@ describe("CLI Listing", function() {
       expectFinderCalled();
 
       cleanOutput();
-      expect(lines.length).toBe(6);
+      expect(lines.length).toBe(7);
       expectSource(lines, 'api');
       expectAvailable(lines, [ { file: 'api/a.scenario.js', name: 'a' } ]);
       expectInfoNotice(lines);
@@ -98,7 +98,7 @@ describe("CLI Listing", function() {
       expectFinderCalled();
 
       cleanOutput();
-      expect(lines.length).toBe(8);
+      expect(lines.length).toBe(9);
       expectSource(lines, 'api');
       expectAvailable(lines, [
         { file: 'api/a.scenario.js', name: 'a' },
@@ -121,7 +121,7 @@ describe("CLI Listing", function() {
       expectFinderCalled({ source: 'custom' });
 
       cleanOutput();
-      expect(lines.length).toBe(7);
+      expect(lines.length).toBe(8);
       expectSource(lines, 'custom');
       expectAvailable(lines, [
         { file: 'custom/a.scenario.js', name: 'a' },
@@ -143,7 +143,7 @@ describe("CLI Listing", function() {
       expectFinderCalled({ source: '/custom' });
 
       cleanOutput();
-      expect(lines.length).toBe(7);
+      expect(lines.length).toBe(8);
       expectSource(lines, '/custom');
       expectAvailable(lines, [
         { file: '/custom/a.scenario.js', name: 'a' },
@@ -168,7 +168,7 @@ describe("CLI Listing", function() {
       expectFinderCalled();
 
       cleanOutput();
-      expect(lines.length).toBe(9);
+      expect(lines.length).toBe(10);
       expectSource(lines, 'api');
       expectAvailable(lines, [
         { file: 'api/a.scenario.js', name: 'a' },
@@ -196,7 +196,7 @@ describe("CLI Listing", function() {
       expectFinderCalled();
 
       cleanOutput();
-      expect(lines.length).toBe(10);
+      expect(lines.length).toBe(11);
       expectSource(lines, 'api');
       expectAvailable(lines, [
         { file: 'api/a.scenario.js', name: 'a' },
@@ -251,7 +251,8 @@ describe("CLI Listing", function() {
   }
 
   function expectInfoNotice(lines) {
-    expect(lines[lines.length - 2]).toBe('Run `api-copilot info [scenario]` for more information about a scenario.');
+    expect(lines[lines.length - 3]).toBe('Use `api-copilot info [scenario]` for more information about a scenario.');
+    expect(lines[lines.length - 2]).toBe('Use `api-copilot run [scenario]` to run a scenario.');
     expect(lines[lines.length - 1]).toBe('[scenario] may be either the number, path or name of the scenario.');
   }
 });

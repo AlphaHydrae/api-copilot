@@ -251,7 +251,7 @@ describe("CLI Info", function() {
 
     var i = expectLines(index, [
       '',
-      'Current configuration including file and command line options:'
+      'Effective configuration including file and command line options:'
     ]);
 
     return expectJson(i, options);
