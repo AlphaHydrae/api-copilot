@@ -69,7 +69,7 @@ describe("CLI Selector", function() {
   }
 
   function setLoadedScenario(scenario) {
-    loadedScenario = scenario;
+    loadedScenario = { result: scenario };
   }
 
   function setReadlineAnswer(answer) {
@@ -101,7 +101,7 @@ describe("CLI Selector", function() {
       expectListingDisplayed(false);
       expectReadlineCalled(false);
       expectLoaderCalled('api/a.scenario.js');
-      expectScenarioSelected(fulfilledSpy, 'single');
+      expectScenarioSelected(fulfilledSpy, 'single', 'api/a.scenario.js');
     });
   });
 
@@ -116,7 +116,7 @@ describe("CLI Selector", function() {
       expectListingDisplayed(false, { foo: 'bar' });
       expectReadlineCalled(false);
       expectLoaderCalled('api/b.scenario.js');
-      expectScenarioSelected(fulfilledSpy, 'single with custom options');
+      expectScenarioSelected(fulfilledSpy, 'single with custom options', 'api/b.scenario.js');
     });
   });
 
@@ -137,7 +137,7 @@ describe("CLI Selector", function() {
         expectListingDisplayed(false);
         expectReadlineCalled(false);
         expectLoaderCalled('api/b.scenario.js');
-        expectScenarioSelected(fulfilledSpy, 'by number');
+        expectScenarioSelected(fulfilledSpy, 'by number', 'api/b.scenario.js');
       });
     });
 
@@ -152,7 +152,7 @@ describe("CLI Selector", function() {
         expectListingDisplayed(false);
         expectReadlineCalled(false);
         expectLoaderCalled('api/c.scenario.js');
-        expectScenarioSelected(fulfilledSpy, 'by path');
+        expectScenarioSelected(fulfilledSpy, 'by path', 'api/c.scenario.js');
       });
     });
 
@@ -167,7 +167,7 @@ describe("CLI Selector", function() {
         expectListingDisplayed(false);
         expectReadlineCalled(false);
         expectLoaderCalled('api/a.scenario.js');
-        expectScenarioSelected(fulfilledSpy, 'by name');
+        expectScenarioSelected(fulfilledSpy, 'by name', 'api/a.scenario.js');
       });
     });
 
@@ -182,7 +182,7 @@ describe("CLI Selector", function() {
         expectListingDisplayed(false, { baz: 'qux' });
         expectReadlineCalled(false);
         expectLoaderCalled('api/sub/d.scenario.js');
-        expectScenarioSelected(fulfilledSpy, 'by name with custom options');
+        expectScenarioSelected(fulfilledSpy, 'by name with custom options', 'api/sub/d.scenario.js');
       });
     });
 
@@ -197,7 +197,7 @@ describe("CLI Selector", function() {
         expectListingDisplayed(false);
         expectReadlineCalled(false);
         expectLoaderCalled('api/sub/d.scenario.js');
-        expectScenarioSelected(fulfilledSpy, 'by name in subdir');
+        expectScenarioSelected(fulfilledSpy, 'by name in subdir', 'api/sub/d.scenario.js');
       });
     });
 
@@ -261,7 +261,7 @@ describe("CLI Selector", function() {
         expectListingDisplayed(true);
         expectReadlineCalled(true);
         expectLoaderCalled('api/b.scenario.js');
-        expectScenarioSelected(fulfilledSpy, 'by number');
+        expectScenarioSelected(fulfilledSpy, 'by number', 'api/b.scenario.js');
       });
     });
 
@@ -276,7 +276,7 @@ describe("CLI Selector", function() {
         expectListingDisplayed(true);
         expectReadlineCalled(true);
         expectLoaderCalled('api/c.scenario.js');
-        expectScenarioSelected(fulfilledSpy, 'by path');
+        expectScenarioSelected(fulfilledSpy, 'by path', 'api/c.scenario.js');
       });
     });
 
@@ -291,7 +291,7 @@ describe("CLI Selector", function() {
         expectListingDisplayed(true);
         expectReadlineCalled(true);
         expectLoaderCalled('api/a.scenario.js');
-        expectScenarioSelected(fulfilledSpy, 'by name');
+        expectScenarioSelected(fulfilledSpy, 'by name', 'api/a.scenario.js');
       });
     });
 
@@ -306,7 +306,7 @@ describe("CLI Selector", function() {
         expectListingDisplayed(true, { qux: 'baz' });
         expectReadlineCalled(true);
         expectLoaderCalled('api/sub/d.scenario.js');
-        expectScenarioSelected(fulfilledSpy, 'by name with custom options');
+        expectScenarioSelected(fulfilledSpy, 'by name with custom options', 'api/sub/d.scenario.js');
       });
     });
 
@@ -412,8 +412,12 @@ describe("CLI Selector", function() {
     expect(rl.close).toHaveBeenCalled();
   }
 
-  function expectScenarioSelected(fulfilledSpy, result) {
-    expect(fulfilledSpy).toHaveBeenCalledWith(result);
+  function expectScenarioSelected(fulfilledSpy, result, file) {
+    if (result === undefined) {
+      expect(fulfilledSpy).toHaveBeenCalledWith(undefined);
+    } else {
+      expect(fulfilledSpy).toHaveBeenCalledWith({ result: result, file: file });
+    }
   }
 
   function expectError(rejectedSpy, message) {

@@ -13,13 +13,15 @@ describe("CLI Listing", function() {
   var Listing, mocks, foundScenarios, defaultOptions, lines;
   beforeEach(function() {
 
+    h.addMatchers(this);
+
     lines = [];
     foundScenarios = undefined;
     defaultOptions = { source: 'api' };
 
     mocks = {
       finder: function() {
-        return q(foundScenarios);
+        return foundScenarios instanceof Error ? q.reject(foundScenarios) : q(foundScenarios);
       },
       print: function(text) {
         lines = lines.concat((text || '').split("\n"));
@@ -207,8 +209,28 @@ describe("CLI Listing", function() {
     });
   });
 
+  it("should forward an error from the finder", function() {
+
+    foundScenarios = new Error('finder bug');
+
+    var rejectedSpy = list({}, false);
+
+    runs(function() {
+
+      expectListingFailed(rejectedSpy, 'finder bug');
+      expectFinderCalled();
+
+      expect(lines.length).toBe(0);
+    });
+  });
+
   function expectListingSuccessful(fulfilledSpy) {
     expect(fulfilledSpy).toHaveBeenCalledWith(undefined);
+  }
+
+  function expectListingFailed(rejectedSpy, message) {
+    expect(rejectedSpy).toHaveBeenCalled();
+    expect(rejectedSpy.calls[0].args[0]).toBeAnError(message);
   }
 
   function expectFinderCalled(options) {
