@@ -76,11 +76,18 @@ If you don't have any API scenarios yet, you might want to [write some](#writing
 
 ## Documentation
 
-This README is the main documentation.
+This README is the main usage documentation.
 
-The source is also heavily commentted and run through [Docker](https://github.com/jbt/docker), so you can read the resulting annotated source code for more details about the implementation. It also contains inline examples.
+Run `api-copilot --help` for command line usage information.
 
-[**View the Annotated Source Code**](http://lotaris.github.io/api-copilot/annotated/index.js.html)
+API Copilot uses external libraries to provide some of its functionality; refer to their documentation for more information:
+
+* [HTTP requests with the request library](https://github.com/mikeal/request)
+* [Promises with the q library](https://github.com/kriskowal/q)
+
+The source code is also heavily commented and run through [Docker](https://github.com/jbt/docker), so you can read the resulting [**annotated source code**](http://lotaris.github.io/api-copilot/annotated/index.js.html) for more details about the implementation. It also contains inline examples.
+
+Check the [CHANGELOG](CHANGELOG.md) for information about new features and breaking changes.
 
 
 
@@ -252,7 +259,7 @@ api-copilot run foo
 API Copilot can be given configuration options in three ways:
 
 * as options to the Scenario object;
-* from the `api-copilot.yml` file in the current working directory;
+* from the `api-copilot.yml` [YAML](http://www.yaml.org) file in the current working directory;
 * as options on the command line (run `api-copilot --help` to see available options).
 
 Command line options override options from the configuration file and both override the Scenario object options.

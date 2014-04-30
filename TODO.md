@@ -1,5 +1,3 @@
-* IMPORTANT: add link to request & q documentation & CHANGELOG && --help option in documentation section of readme
-* IMPORTANT: add documentation links to YAML doc
 * allow to set custom error message for expected response values
 * allow to configure runtime params (must be a flag or not, description, etc)
 * add shared store object and document using global variables
