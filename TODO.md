@@ -1,5 +1,6 @@
 * allow to set custom error message for expected response values
-* allow to configure runtime params (must be a flag or not, description, etc)
+* allow to configure runtime params (required, must be a flag or not, description, etc)
+* allow to customize param loading so that they may also be taken from an additional source yet remain mandatory
 * add shared store object and document using global variables
 * show scenario configuration at runtime with trace log level (including config before/after config file)
 * make run the default action, display --help if no scenario available
