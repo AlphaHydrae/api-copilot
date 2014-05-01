@@ -21,9 +21,15 @@ describe("Scenario Parameters", function() {
     scenario = new Scenario({ name: 'once upon a time' });
   });
 
+  function runScenario(expectedResult, runOptions) {
+    return h.runPromise(scenario.run(runOptions || {}), expectedResult);
+  }
+
   it("should be configurable at construction", function() {
 
     scenario = new Scenario({ name: 'once upon a time', params: { foo: 'bar', baz: 'qux' } });
+    scenario.addParam('foo');
+    scenario.addParam('baz');
 
     var values = [];
     scenario.step('step', function() {
@@ -31,9 +37,10 @@ describe("Scenario Parameters", function() {
       values.push(this.param('baz'));
     });
 
-    h.runScenario(scenario);
+    var fulfilledSpy = runScenario();
 
     runs(function() {
+      expectSuccess(fulfilledSpy);
       expect(values).toEqual([ 'bar', 'qux' ]);
     });
   });
@@ -41,6 +48,8 @@ describe("Scenario Parameters", function() {
   it("should be configurable at runtime", function() {
 
     scenario = new Scenario({ name: 'once upon a time' });
+    scenario.addParam('foo');
+    scenario.addParam('baz');
 
     var values = [];
     scenario.step('step', function() {
@@ -48,9 +57,10 @@ describe("Scenario Parameters", function() {
       values.push(this.param('baz'));
     });
 
-    h.runScenario(scenario, true, { runOptions: { params: { foo: 'bar', baz: 'qux' } } });
+    var fulfilledSpy = runScenario(true, { params: { foo: 'bar', baz: 'qux' } });
 
     runs(function() {
+      expectSuccess(fulfilledSpy);
       expect(values).toEqual([ 'bar', 'qux' ]);
     });
   });
@@ -58,6 +68,9 @@ describe("Scenario Parameters", function() {
   it("should override construction params with runtime params", function() {
 
     scenario = new Scenario({ name: 'once upon a time', params: { foo: 'bar', baz: 'qux' } });
+    scenario.addParam('foo');
+    scenario.addParam('baz');
+    scenario.addParam('grault');
 
     var values = [];
     scenario.step('step', function() {
@@ -66,9 +79,10 @@ describe("Scenario Parameters", function() {
       values.push(this.param('grault'));
     });
 
-    h.runScenario(scenario, true, { runOptions: { params: { foo: 'corge', grault: 'garply' } } });
+    var fulfilledSpy = runScenario(true, { params: { foo: 'corge', grault: 'garply' } });
 
     runs(function() {
+      expectSuccess(fulfilledSpy);
       expect(values).toEqual([ 'corge', 'qux', 'garply' ]);
     });
   });
@@ -79,13 +93,10 @@ describe("Scenario Parameters", function() {
       this.param('unknown');
     });
 
-    var error;
-    h.runScenario(scenario, false).fail(function(err) {
-      error = err;
-    });
+    var rejectedSpy = runScenario(false);
 
     runs(function() {
-      expect(error).toBeAnError('Unknown parameter "unknown"; add it to Scenario object with the `addParam` method');
+      expectFailure(rejectedSpy, 'Unknown parameter "unknown"; add it to the Scenario object with the `addParam` method');
     });
   });
 
@@ -93,30 +104,26 @@ describe("Scenario Parameters", function() {
 
     beforeEach(function() {
       scenario = new Scenario({ name: 'once upon a time', params: { foo: 'bar' } });
+      scenario.addParam('foo');
+      scenario.addParam('bar');
     });
 
     it("should retrieve a param by name", function() {
-      expect(scenario.param('foo')).toEqual('bar');
+      expect(scenario.param('foo')).toBe('bar');
     });
 
-    it("should throw an error for unknown params by default", function() {
+    it("should retrieve a param with no value", function() {
+      expect(scenario.param('bar')).toBe(undefined);
+    });
+
+    it("should throw an error for unknown params", function() {
       expect(function() {
-        scenario.param('bar');
-      }).toThrow('Unknown parameter "bar"; give it to the Scenario object at construction or from the command line with the -p, --params option');
-    });
-
-    it("should throw an error with a custom message if specified", function() {
-      expect(function() {
-        scenario.param('bar', { message: 'foo' });
-      }).toThrow('foo');
-    });
-
-    it("should not throw an error if the required option is falsy", function() {
-      expect(scenario.param('bar', { required: false })).toBe(undefined);
+        scenario.param('baz');
+      }).toThrow('Unknown parameter "baz"; add it to the Scenario object with the `addParam` method');
     });
   });
 
-  describe("#requireParameters", function() {
+  /*describe("#requireParameters", function() {
 
     beforeEach(function() {
       scenario.step('step', function() {});
@@ -132,5 +139,14 @@ describe("Scenario Parameters", function() {
     it("should not do anything if the parameters are present", function() {
       h.runScenario(scenario, true, { runOptions: { params: { foo: true, bar: true } } });
     });
-  });
+  });*/
+
+  function expectSuccess(fulfilledSpy) {
+    expect(fulfilledSpy).toHaveBeenCalledWith(undefined);
+  }
+
+  function expectFailure(rejectedSpy, message) {
+    expect(rejectedSpy).toHaveBeenCalled();
+    expect(rejectedSpy.calls[0].args[0]).toBeAnError(message);
+  }
 });
