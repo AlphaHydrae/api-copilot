@@ -1,14 +1,13 @@
-* allow to set custom error message for expected response values
-* allow to configure runtime params (required, must be a flag or not, description, etc)
 * allow to customize param loading so that they may also be taken from an additional source yet remain mandatory
 * add summary option to scenario to display in info output and when running
+* allow to set custom error message for expected response values
 * add shared store object and document using global variables
 * show scenario configuration at runtime with trace log level (including config before/after config file)
+* add info sub-command information about modifying configuration file and command line options
+* do not show source directory in info sub-command output (do not give this option to the scenario when running or showing info)
 * make run the default action, display --help if no scenario available
 * add auto-completer for selector
 * add some colors to listing
-* add info sub-command information about modifying configuration file and command line options
-* do not show source directory in info sub-command output (do not give this option to the scenario when running or showing info)
 * show loaded configuration file path in info sub-command
 * get rid of new Dependency
 * add q.all parallel requests example
