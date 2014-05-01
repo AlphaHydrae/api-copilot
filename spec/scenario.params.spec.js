@@ -85,7 +85,7 @@ describe("Scenario Parameters", function() {
     });
 
     runs(function() {
-      expect(error).toBeAnError('Unknown parameter "unknown"; give it to the Scenario object at construction or from the command line with the -p, --params option');
+      expect(error).toBeAnError('Unknown parameter "unknown"; add it to Scenario object with the `addParam` method');
     });
   });
 

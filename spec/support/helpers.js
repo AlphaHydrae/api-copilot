@@ -61,10 +61,20 @@ exports.runPromise = function(promise, expectedResult) {
     expectedResult = true;
   }
 
-  var spy = jasmine.createSpy();
-  promise[expectedResult ? 'then' : 'fail'](spy);
+  var spy = jasmine.createSpy(),
+      unexpectedSpy = jasmine.createSpy();
 
+  promise[expectedResult ? 'then' : 'fail'](spy);
+  promise[expectedResult ? 'fail' : 'then'](unexpectedSpy);
+
+  var warning;
   waitsFor(function() {
+    if (!warning && unexpectedSpy.calls.length) {
+      var result = unexpectedSpy.calls[0].args[0];
+      console.log('Promise was unexpectedly ' + (expectedResult ? 'rejected' : 'resolved') + ' with ' + (result instanceof Error ? result.stack : result));
+      warning = true;
+    }
+
     return spy.calls.length;
   }, 'the promise to be ' + (expectedResult ? 'resolved' : 'rejected'), 50);
 

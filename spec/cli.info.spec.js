@@ -101,7 +101,8 @@ describe("CLI Info", function() {
         name: 'Sample',
         file: path.resolve('api/b.scenario.js'),
         baseOptions: {},
-        steps: []
+        steps: [],
+        parameters: []
       };
     });
 
@@ -126,6 +127,7 @@ describe("CLI Info", function() {
 
         var i = 0;
         i = expectHeader(i, 'Sample', 'api/b.scenario.js');
+        i = expectParametersHeader(i, 0);
         i = expectBaseConfiguration(i, {});
         i = expectCurrentConfiguration(i, {});
         i = expectSteps(i, []);
@@ -144,6 +146,7 @@ describe("CLI Info", function() {
 
         var i = 0;
         i = expectHeader(i, 'Sample', 'api/b.scenario.js');
+        i = expectParametersHeader(i, 0);
         i = expectBaseConfiguration(i, { foo: 'bar' });
         i = expectCurrentConfiguration(i, { foo: 'bar' });
         i = expectSteps(i, []);
@@ -165,6 +168,7 @@ describe("CLI Info", function() {
 
         var i = 0;
         i = expectHeader(i, 'Sample', 'api/b.scenario.js');
+        i = expectParametersHeader(i, 0);
         i = expectBaseConfiguration(i, { foo: 'bar' });
         i = expectCurrentConfiguration(i, { foo: 'bar', baz: 'qux', corge: 'grault' });
         i = expectSteps(i, []);
@@ -187,6 +191,7 @@ describe("CLI Info", function() {
 
         var i = 0;
         i = expectHeader(i, 'Sample', 'api/b.scenario.js');
+        i = expectParametersHeader(i, 0);
         i = expectBaseConfiguration(i, {});
         i = expectCurrentConfiguration(i, {});
         i = expectSteps(i, [
@@ -194,6 +199,37 @@ describe("CLI Info", function() {
           { name: 'bar' },
           { name: 'baz' }
         ]);
+
+        expectNothingMore(i);
+      });
+    });
+
+    it("should display parameter information", function() {
+
+      displayInfo({
+        parameters: [
+          mockParam('foo=value'),
+          mockParam('bar=/^regexp/ (required)\n  More documentation.'),
+          mockParam('baz boolean flag', function(event, print) {
+            if (event == 'describe') {
+              print('Additional\nindented\ndocumentation.');
+              print('And more.');
+            }
+          })
+        ]
+      });
+
+      runs(function() {
+
+        var i = 0;
+        i = expectHeader(i, 'Sample', 'api/b.scenario.js');
+        i = expectParametersHeader(i, 3);
+        i = expectParameter(i, 'foo=value');
+        i = expectParameter(i, 'bar=/^regexp/ (required)\n  More documentation.');
+        i = expectParameter(i, 'baz boolean flag\n  Additional\n  indented\n  documentation.\n  And more.');
+        i = expectBaseConfiguration(i, {});
+        i = expectCurrentConfiguration(i, {});
+        i = expectSteps(i, []);
 
         expectNothingMore(i);
       });
@@ -229,29 +265,76 @@ describe("CLI Info", function() {
     });
   });
 
+  function mockParam(description, listener) {
+
+    var param = {
+      emit: function() {
+        if (listener) {
+          listener.apply(undefined, slice.call(arguments));
+        }
+      },
+      describe: function() {}
+    };
+
+    spyOn(param, 'emit').andCallThrough();
+    spyOn(param, 'describe').andReturn(description);
+
+    return param;
+  }
+
   function expectHeader(index, name, file) {
     return expectLines(index, [
       '',
-      name.bold,
-      path.resolve(file)
+      'API COPILOT SCENARIO'.bold,
+      '',
+      '  Name: ' + name,
+      '  File: ' + path.resolve(file)
     ]);
+  }
+
+  function expectParametersHeader(index, n) {
+
+    if (!n) {
+      return expectLines(index, [
+        '',
+        'PARAMETERS'.bold,
+        '  None'
+      ]);
+    }
+
+    return expectLines(index, [
+      '',
+      ('PARAMETERS (' + n + ')').bold
+    ]);
+  }
+
+  function expectParameter(index, description) {
+
+      var paramLines = [
+        ''
+      ];
+
+      return expectLines(index, paramLines.concat(description.replace(/^/gm, '  ').split("\n")));
   }
 
   function expectBaseConfiguration(index, options) {
 
     var i = expectLines(index, [
       '',
-      'Base configuration of scenario object:'
+      'BASE CONFIGURATION'.bold,
+      '',
+      '  Options given to the scenario object:'
     ]);
 
-    return expectJson(i, options);
+    return expectJson(i, options, 4);
   }
 
   function expectCurrentConfiguration(index, options) {
 
     var i = expectLines(index, [
       '',
-      'Effective configuration including file and command line options:'
+      'EFFECTIVE CONFIGURATION'.bold,
+      ''
     ]);
 
     return expectJson(i, options);
@@ -262,13 +345,14 @@ describe("CLI Info", function() {
     if (!steps.length) {
       return expectLines(index, [
         '',
-        'Steps: none'
+        'STEPS'.bold,
+        '  None'
       ]);
     }
 
     var i = expectLines(index, [
       '',
-      'Steps (' + steps.length + '):',
+      ('STEPS (' + steps.length + ')').bold,
       ''
     ]);
 
@@ -282,9 +366,9 @@ describe("CLI Info", function() {
     expect(lines.length).toBe(i);
   }
 
-  function expectJson(index, data) {
+  function expectJson(index, data, indent) {
 
-    var displayedJson = JSON.stringify(data, undefined, 2).replace(/^/mg, '  '),
+    var displayedJson = JSON.stringify(data, undefined, 2).replace(/^/mg, new Array((indent || 2) + 1).join(' ')),
         jsonLines = displayedJson.split("\n"),
         comparedLines = lines.slice(index, index + jsonLines.length);
 
