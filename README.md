@@ -95,6 +95,8 @@ Check the [CHANGELOG](CHANGELOG.md) for information about new features and break
 
 ## Usage
 
+<a name="toc"></a>
+
 * [Writing API Scenarios](#writing-api-scenarios)
 * [Running Scenarios from the Command Line](#cli)
   * [Listing available scenarios](#listing)
@@ -114,6 +116,9 @@ Check the [CHANGELOG](CHANGELOG.md) for information about new features and break
   * [Request filters](#request-filters)
   * [Expecting a specific response](#request-expect)
 * [Runtime Parameters](#runtime-parameters)
+  * [Parameter options](#parameter-options)
+  * [Loading parameters from another source](#loading-parameters)
+  * [Documenting parameters](#documenting-parameters)
 * [Multipart Form Data](#multipart-form-data)
 * [Documenting Your Scenarios](#documenting)
 
@@ -153,6 +158,8 @@ At the end of the file, you should export the scenario object:
 module.exports = scenario;
 ```
 
+<a href="#toc" style="float:right;">Back to top</a>
+
 
 
 <a name="cli"></a>
@@ -189,6 +196,8 @@ By default, the source directory is the `api` directory relative to the current 
 For example, if you are in `/path/to/project`, API Copilot will look for scenarios in `/path/to/project/api`.
 You may set a different source directory with the `-s, --source <dir>` option.
 
+<a href="#toc" style="float:right;">Back to top</a>
+
 <a name="info"></a>
 #### Getting information about a scenario
 
@@ -197,30 +206,48 @@ Use `api-copilot info [scenario]` to get detailed information about a scenario.
 ```bash
 $\> cd /path/to/project && api-copilot info api/my.scenario.js
 
-My Scenario
-/path/to/project/api/my.scenario.js
+API COPILOT SCENARIO
 
-Base configuration of scenario object:
-  {
-    "name": "My Scenario"
-  }
+  Name: My Scenario
+  File: /path/to/project/api/my.scenario.js
 
-Effective configuration including file and command line options:
+PARAMETERS (3)
+
+  foo=value (required)
+    This is a required parameter.
+
+  bar=/^https?:/
+    This should be an HTTP or HTTPS URL.
+
+  baz
+    Activate some feature with this flag.
+
+BASE CONFIGURATION
+
+  Options given to the scenario object:
+    {
+      "name": "My Scenario"
+    }
+
+EFFECTIVE CONFIGURATION
+
   {
     "name": "My Scenario",
     "log": "info",
-    "source": "api"
+    "source": "samples"
   }
 
-Steps (3):
+STEPS (3)
 
   1. do stuff
   2. do more stuff
   3. check stuff
 ```
 
-The `info` command without a scenario argument will behave like the [run command](#running).
-It will automatically run a single available scenario, or ask you which one you want to run if multiple scenarios are available.
+The `info` command without a scenario argument will behave like the [run command](#running):
+it will automatically run a single available scenario, or ask you which one you want to run if multiple scenarios are available.
+
+<a href="#toc" style="float:right;">Back to top</a>
 
 <a name="running"></a>
 #### Running a scenario
@@ -251,6 +278,8 @@ api-copilot run 1
 api-copilot run api/foo.scenario.js
 api-copilot run foo
 ```
+
+<a href="#toc" style="float:right;">Back to top</a>
 
 
 
@@ -305,6 +334,8 @@ Additionally, this command line option can be used to load another configuration
   The default path is `api-copilot.yml`.
   The path can be absolute or relative to the current working directory.
 
+<a href="#toc" style="float:right;">Back to top</a>
+
 
 
 #### Changing the Configuration while a Scenario is Running
@@ -332,6 +363,8 @@ scenario.step('second step', function(response) {
   return this.get({ url: '/' });
 });
 ```
+
+<a href="#toc" style="float:right;">Back to top</a>
 
 
 
@@ -479,6 +512,8 @@ scenario.step('third step', function(data) {
 });
 ```
 
+<a href="#toc" style="float:right;">Back to top</a>
+
 
 
 ### Making HTTP Calls
@@ -551,6 +586,8 @@ scenario.step('handle API data', function(response) {
 ```
 
 Read the [request documentation](https://github.com/mikeal/request#requestoptions-callback) for more HTTP configuration options.
+
+<a href="#toc" style="float:right;">Back to top</a>
 
 #### Default Request Options
 
@@ -663,6 +700,8 @@ scenario.step('step 6', function(response) {
 });
 ```
 
+<a href="#toc" style="float:right;">Back to top</a>
+
 #### Request Filters
 
 Request filters are run just before an HTTP call is made, allowing you to customize the request based on all its options:
@@ -757,6 +796,8 @@ scenario.step('asynchronous filters', function() {
 });
 ```
 
+<a href="#toc" style="float:right;">Back to top</a>
+
 <a name="request-expect"></a>
 #### Expecting a Specific Response
 
@@ -815,26 +856,40 @@ scenario.step('step', function() {
 });
 ```
 
+<a href="#toc" style="float:right;">Back to top</a>
+
 
 
 ### Runtime Parameters
 
-Scenarios can be given runtime parameters on the command line:
+Scenarios can be configured to take custom runtime parameters with the `addParam` method:
+
+```js
+var scenario = new Scenario({
+  name: 'scenario with parameters'
+});
+
+scenario.addParam('foo');
+scenario.addParam('bar', { flag: true });
+```
+
+These parameters can then be supplied on the command line:
 
 ```
-#> api-copilot -p foo -p bar=baz
+#> api-copilot -p foo=value -p bar
 ```
 
-These parameters can then be retrieved with the `param` method:
+Retrieve them with the `param` method when running the scenario:
 
 ```js
 scenario.step('step', function() {
-  this.param('foo');   // true
-  this.param('bar');   // "baz"
+  this.param('foo');   // "value"
+  this.param('bar');   // true
 });
 ```
 
-By default, trying to retrieve an unknown parameter will throw an error and stop the scenario.
+Note that all parameters must be registered with the `addParam` method.
+Trying to retrieve unknown parameters will throw an error and stop the scenario.
 
 ```js
 scenario.step('step', function() {
@@ -842,33 +897,196 @@ scenario.step('step', function() {
 });
 ```
 
-To customize the error message, use the `message` option when calling `param`:
+Use the [info command](#info) to obtain a list of the parameters for a scenario.
+See [parameter options](#parameter-options) on how to configure and document parameters.
+
+<a href="#toc" style="float:right;">Back to top</a>
+
+<a name="parameter-options"></a>
+#### Parameter options
+
+* **required** - `boolean, default: true`
+
+  Parameters are required by default.
+  Set this option to `false` to make them optional.
 
 ```js
-scenario.step('step', function() {
-  this.param('unknown', { message: 'can i haz unknown param?' }); // throws new Error('can i haz unknown param?')
+scenario.addParam('optionalFeature', {
+  required: false
 });
 ```
 
-To disable this behavior, set the `required` option to false when calling `param`:
+  If you try to run a scenario without giving a value for a required parameter, you will be prompted to enter a value:
+
+```
+The scenario cannot be run because the following parameters are either missing or invalid:
+- foo is required; set it with `-p foo=value` or `--param foo=value`
+
+You will now be asked for the missing or corrected values.
+Press Ctrl-C to quit.
+
+foo=value (required)
+  This is a required parameter.
+
+Enter a value for foo: 
+```
+
+* **flag** - `boolean, default: false`
+
+  Set this option to `true` to make your parameter a boolean flag.
+
+  Boolean flags are specified without a value on the command line: `-p foo` or `--params foo`.
+  Trying to give them a value will produce an error and prevent the scenario from running.
+
+  When retrieving the value with the `param` method in a scenario, it will be either `true` or `undefined` (if the flag was not given).
 
 ```js
-scenario.step('step', function() {
-  this.param('qux', { required: false });   // undefined
+scenario.addParam('coolFeature', {
+  flag: true
 });
 ```
 
-If you want to make sure certain parameters are present before running your scenario, use the `requireParameters` method before defining steps:
+* **pattern** - `regexp, default: none`
+
+  Validate your parameter with a regular expression.
+
+  The scenario will only run if the supplied parameter value matches;
+  otherwise, you will be prompted for a new value.
 
 ```js
-scenario.requireParameters('foo', 'bar');
-
-scenario.step('step 0', function() {
-  // ...
+scenario.addParam('backendUrl', {
+  pattern: /^https?:/
 });
 ```
 
-An error will be thrown immediately upon trying to start the scenario if any required parameter is missing.
+<a name="parameters-description"></a>
+
+* **description** - `string, default: none`
+
+  Additional documentation for your parameter.
+  It will be displayed in the [info command](#info) output.
+
+```js
+scenario.addParam('backendUrl', {
+  description: 'The URL to our cool backend. Must be HTTPS.'
+});
+```
+
+Sample output:
+
+```
+backendUrl=value (required)
+  The URL to our cool backend. Must be HTTPS.
+```
+
+* **valueDescription** - `string, default: none`
+
+  Custom value description for your parameter.
+
+  The default description of a parameter is `foo=value`.
+  If you specified a `pattern` option, it will print the pattern instead, e.g. `backendUrl=/^https?:/`.
+
+  Set a `valueDescription` to customize this.
+
+```js
+scenario.addParam('backendUrl', {
+  valueDescription='url'
+});
+```
+
+Sample output:
+
+```
+backendUrl=url
+```
+
+<a href="#toc" style="float:right;">Back to top</a>
+
+<a name="loading-parameters"></a>
+#### Loading parameters from another source
+
+By default, runtime parameters can come from three sources:
+
+* the options given to the scenario object;
+* the YAML configuration file;
+* command line parameters.
+
+To load more parameters from elsewhere, add a **loading function** to your scenario object with the `loadParametersWith` method:
+
+```js
+var scenario = new Scenario({
+  name: 'scenario with lots of parameters',
+  params: { some: 'initial', parameter: 'values' }
+});
+
+// load more parameters from anywhere
+scenario.loadParametersWith(function(params) {
+
+  // each loading function is passed all previously loaded parameters,
+  // including those from options, the configuration file and the command line
+  params.more = 'parameters';
+
+  // each loading function must return the updated parameters
+  return params;
+});
+
+// return a promise to support asynchronous parameter loading
+scenario.loadParametersWith(function() {
+
+  var deferred = q.defer(); // promises with the q library
+
+  loadParametersAsynchronously(function(err, moreParams) {
+    if (err) {
+      return deferred.reject(err);
+    }
+
+    // resolve the promise once the parameters have been loaded
+    deferred.resolve(moreParams);
+  });
+
+  // return a promise for the updated parameters
+  return deferred.promise;
+});
+```
+
+Parameter loading functions are run in the order they are added to the scenario object.
+
+<a href="#toc" style="float:right;">Back to top</a>
+
+<a name="documenting-parameters"></a>
+#### Documenting parameters
+
+In addition to the [description option](#parameters-description) shown above,
+the `addParam` method returns a parameter object which will emit a `describe` event when its documentation is printed.
+
+You can listen to this event to print more documentation:
+
+```js
+var myParam = scenario.addParam('myParam');
+
+myParam.on('describe', function(print) {
+
+  // use the provided print function to have your text correctly indented
+  print('More');
+  print('information.');
+
+  // it supports new lines as well
+  print('Even\nmore\ninformation.');
+});
+```
+
+Sample info output:
+
+```
+myParam=value
+  More
+  information.
+  Even
+  more
+  information.
+```
+
+<a href="#toc" style="float:right;">Back to top</a>
 
 
 
@@ -918,12 +1136,16 @@ scenario.step('file upload', function() {
 
 **Note:** the request handler must be synchronous since the HTTP request will start immediately at the next tick.
 
+<a href="#toc" style="float:right;">Back to top</a>
+
 
 
 <a name="documenting"></a>
 ### Documenting Your Scenarios
 
 Scenarios with many parameters can become quite complicated to understand and use.
+Start by documenting your parameters with the [description option](#parameters-description) and the [describe event](#documenting-parameters).
+
 To add additional documentation at the end of the [info command](#info) output, listen to the `scenario:info` event on the scenario object:
 
 ```js
@@ -941,6 +1163,8 @@ scenario.on('scenario:info', function() {
 });
 
 ```
+
+<a href="#toc" style="float:right;">Back to top</a>
 
 
 

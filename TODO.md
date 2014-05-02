@@ -14,6 +14,7 @@
 * rename h.mockMethods to spyObjectMethods
 * use <> instead of [] notation for required command line option args in readme
 * check TODO/FIXMEs
+* coerge undefined flag value to false, do not allow required in conjunction with flag option
 * replace manual injection by electrolyte module
 * selector should use finder as dependency
 * make scenario name optional

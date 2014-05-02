@@ -2,6 +2,8 @@
 
 ## Edge
 
+* **BREAKING!** [Runtime parameters](README.md#runtime-parameters) have been completely overhauled.
+
 * **NEW:** The [listing](README.md#listing) sub-command lists available API scenarios in your project.
 
 * **NEW:** The [info](README.md#info) sub-command prints detailed information about an API scenario.
@@ -11,7 +13,7 @@
 
 ## v0.4.0 - April 24, 2014
 
-* **BREAKING:** Request options are now merged with default request options instead of overriding them.
+* **BREAKING!** Request options are now merged with default request options instead of overriding them.
   For example, if there are headers in both the default request options and the request options, they will be
   merged instead of only the latter being used.
 
