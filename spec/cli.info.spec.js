@@ -136,6 +136,25 @@ describe("CLI Info", function() {
       });
     });
 
+    it("should display scenario information with a summary", function() {
+
+      displayInfo({
+        summary: 'Short description\nof the scenario.'
+      });
+
+      runs(function() {
+
+        var i = 0;
+        i = expectHeader(i, 'Sample', 'api/b.scenario.js', { summary: 'Short description\nof the scenario.' });
+        i = expectParametersHeader(i, 0);
+        i = expectBaseConfiguration(i, {});
+        i = expectCurrentConfiguration(i, {});
+        i = expectSteps(i, []);
+
+        expectNothingMore(i);
+      });
+    });
+
     it("should display the base and current configuration", function() {
 
       displayInfo({
@@ -282,14 +301,26 @@ describe("CLI Info", function() {
     return param;
   }
 
-  function expectHeader(index, name, file) {
-    return expectLines(index, [
+  function expectHeader(index, name, file, options) {
+
+    var lines = [
       '',
-      'API COPILOT SCENARIO'.bold,
+      'API COPILOT SCENARIO'.bold
+    ];
+
+    if (options && options.summary) {
+      lines = lines.concat([
+        ''
+      ]).concat(options.summary.replace(/^/gm, '  ').bold.split("\n"));
+    }
+
+    lines = lines.concat([
       '',
       '  Name: ' + name,
       '  File: ' + path.resolve(file)
     ]);
+
+    return expectLines(index, lines);
   }
 
   function expectParametersHeader(index, n) {

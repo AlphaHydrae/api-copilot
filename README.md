@@ -208,6 +208,8 @@ $\> cd /path/to/project && api-copilot info api/my.scenario.js
 
 API COPILOT SCENARIO
 
+  Populates some data into my API.
+
   Name: My Scenario
   File: /path/to/project/api/my.scenario.js
 
@@ -326,6 +328,15 @@ The following configuration options are supported:
 
   Always print full URLs even when a base URL is configured (only with debug or trace log levels).
 
+  <a name="summary-option"></a>
+
+* `summary`
+
+  Short summary explaining what your scenario does.
+  This will be displayed in the [info command](#info) output.
+
+  This option cannot be changed on the command line.
+
 Additionally, this command line option can be used to load another configuration file:
 
 * `-c, --config [file]`
@@ -344,7 +355,8 @@ In any step of the scenario, you may change the configuration with the `configur
 
 ```js
 var scenario = new Scenario({
-  name: 'once upon a time',
+  name: 'myScenario',
+  summary: 'Populates some data into my API.',
   baseUrl: 'http://example.com/foo'
 });
 
@@ -1144,7 +1156,9 @@ scenario.step('file upload', function() {
 ### Documenting Your Scenarios
 
 Scenarios with many parameters can become quite complicated to understand and use.
-Start by documenting your parameters with the [description option](#parameters-description) and the [describe event](#documenting-parameters).
+
+Start by specifying a short [summary](#summary-option).
+Then document your parameters with the [description option](#parameters-description) and the [describe event](#documenting-parameters).
 
 To add additional documentation at the end of the [info command](#info) output, listen to the `scenario:info` event on the scenario object:
 

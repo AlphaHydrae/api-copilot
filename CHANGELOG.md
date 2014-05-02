@@ -9,6 +9,12 @@
 * **NEW:** The [info](README.md#info) sub-command prints detailed information about an API scenario.
   You can also add your own documentation by listening to the [scenario:info event](README.md#documenting).
 
+  Also check out:
+  
+    * [the summary option](README.md#summary-option),
+
+    * [documenting parameters](README.md#documenting-parameters).
+
 * Fixed a bug where steps would be numbered starting from 2 in the command line output.
 
 ## v0.4.0 - April 24, 2014

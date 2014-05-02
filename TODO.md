@@ -1,4 +1,3 @@
-* add summary option to scenario to display in info output and when running
 * allow to set custom error message for expected response values
 * add shared store object and document using global variables
 * show scenario configuration at runtime with trace log level (including config before/after config file)
