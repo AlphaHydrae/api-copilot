@@ -1,3 +1,5 @@
+* BUG: listing is displayed when an error occurs in the scenario
+* show summary when running
 * provide underscore and q dependencies
 * check TODO/FIXMEs
 * rename h.mockMethods to spyObjectMethods

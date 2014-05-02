@@ -6,6 +6,104 @@
 
 **[Installation](#installation) - [Documentation](#documentation) - [Usage](#usage) - [Contributing](#contributing) - [License](#license)**
 
+**Write an API scenario to make HTTP calls on your API:**
+
+```js
+var _ = require('underscore'),
+    copilot = require('api-copilot');
+
+var productsData = [
+  [ 'Cheese', 2.45 ],
+  [ 'Milk', 4 ],
+  [ 'Wine', 10 ]
+];
+
+// create an API scenario
+var scenario = new copilot.Scenario({
+  name: 'My Scenario',
+  summary: 'Populate some data into my API.',
+  baseUrl: 'http://example.com/api',
+  defaultRequestOptions: {
+    json: true
+  }
+});
+
+// define steps to run
+scenario.step('create a user', function() {
+
+  // make HTTP calls
+  return this.post({
+    url: '/users',
+    body: {
+      name: 'pgibbons',
+      password: 'changeme'
+    }
+  });
+});
+
+// each step gets the result from the previous step
+scenario.step('create 3 products', function(response) {
+
+  var user = response.body;
+
+  var requests = _.map(productsData, function(data) {
+    return this.post({
+      url: '/products',
+      body: {
+        title: data[0],
+        price: data[1],
+        userKey: user.key
+      },
+      expect: { statusCode: 201 }
+    });
+  });
+
+  // run HTTP requests in parallel
+  return this.all(requests);
+});
+
+scenario.step('show created data', function(responses) {
+
+  var products = _.pluck(responses, 'body');
+
+  console.log(products.length + ' products created:');
+  _.each(products, function(product) {
+    console.log('- ' + product.title);
+  });
+});
+
+// export the scenario for API Copilot to use
+module.exports = scenario;
+```
+
+**Run it with API Copilot:**
+
+```
+api-copilot --log debug run myScenario
+```
+
+**See it in action:**
+
+```
+My Scenario
+Base URL: none
+
+STEP 1: create a user
+Completed in 140ms
+
+STEP 2: create 3 products
+Completed in 1250ms
+
+STEP 3: show created data
+3 products created:
+- Cheese
+- Milk
+- Wine
+Completed in 2ms
+
+DONE in 1.39s!
+```
+
 
 
 
