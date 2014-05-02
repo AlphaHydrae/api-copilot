@@ -1,6 +1,6 @@
 # Changelog
 
-## Edge
+## v0.5.0 - May 2, 2014
 
 * **BREAKING!** [Runtime parameters](README.md#runtime-parameters) have been completely overhauled.
 
