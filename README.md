@@ -868,6 +868,44 @@ scenario.step('step', function() {
 });
 ```
 
+<a name="request-expect-custom-message"></a>
+
+To specify a custom error message, pass an object with the expected
+value as the `value` option, and the message as the `message` option:
+
+```js
+scenario.step('step', function() {
+  return this.get({
+    url: 'http://example.com',
+    expect: {
+      statusCode: {
+        value: /^2/,
+        message: 'Must be in the 2xx range.'
+      }
+    }
+  });
+});
+```
+
+To build an error message from the expected and actual values,
+pass a function as the `message` option:
+
+```js
+scenario.step('step', function() {
+  return this.get({
+    url: 'http://example.com',
+    expect: {
+      statusCode: {
+        value: [ 200, 201, 204 ],
+        message: function(expected, actual) {
+          return "Expected " + actual + " to be in " + expected;
+        }
+      }
+    }
+  });
+});
+```
+
 <a href="#toc" style="float:right;">Back to top</a>
 
 

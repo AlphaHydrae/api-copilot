@@ -767,6 +767,52 @@ describe("Scenario Client Extensions", function() {
         });
       });
 
+      it("should return a rejected promise with a custom error message", function() {
+
+        addSampleResponse();
+
+        scenario.step('step', function() {
+          return this.request({ foo: 'bar', expect: { statusCode: { value: 201, message: 'server bug' } } });
+        });
+
+        var error;
+        h.runScenario(scenario, false).fail(function(err) {
+          error = err;
+        });
+
+        runs(function() {
+          expect(error).toBeAnError('server bug');
+        });
+      });
+
+      it("should return a rejected promise with a custom error message function", function() {
+
+        addSampleResponse();
+
+        scenario.step('step', function() {
+          return this.request({
+            foo: 'bar',
+            expect: {
+              statusCode: {
+                value: [ 201, 400, 500 ],
+                message: function(expected, actual) {
+                  return 'Expected ' + actual + ' to be in ' + expected;
+                }
+              }
+            }
+          });
+        });
+
+        var error;
+        h.runScenario(scenario, false).fail(function(err) {
+          error = err;
+        });
+
+        runs(function() {
+          expect(error).toBeAnError('Expected ' + defaultSampleResponse.statusCode + ' to be in 201,400,500');
+        });
+      });
+
       it("should return a rejected promise if an error occurs", function() {
 
         requestMock.addError(new Error('bug'));

@@ -1,4 +1,3 @@
-* allow to set custom error message for expected response values
 * add auto-completer for selector
 * add some colors to listing
 * add q.all parallel requests example

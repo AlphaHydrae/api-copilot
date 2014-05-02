@@ -15,6 +15,8 @@
 
     * [documenting parameters](README.md#documenting-parameters).
 
+* [Custom error messages](#request-expect-custom-message) can now be specified when expecting an HTTP response to have a certain value.
+
 * Fixed a bug where steps would be numbered starting from 2 in the command line output.
 
 ## v0.4.0 - April 24, 2014
