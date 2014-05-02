@@ -273,6 +273,8 @@ Available API scenarios (3):
 Type the number, path or name of the scenario you want to run:
 ```
 
+Auto-completion is provided for scenario names.
+
 If multiple scenarios are available, you can also directly run one by specifying its number, path or name as argument to the `run` command:
 
 ```bash

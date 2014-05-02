@@ -366,6 +366,37 @@ describe("CLI Selector", function() {
       });
     });
   });
+  
+  describe("completer function", function() {
+
+    var completer;
+    beforeEach(function() {
+
+      setScenarios('api/abc.scenario.js', 'api/abcdef.scenario.js', 'api/fedcab.scenario.js', 'api/sub/ab.scenario.js');
+      setReadlineAnswer('2');
+      setLoadedScenario('completer');
+
+      var fulfilledSpy = select();
+
+      runs(function() {
+
+        expectListingDisplayed(true);
+        expectReadlineCalled(true);
+        expectLoaderCalled('api/abcdef.scenario.js');
+        expectScenarioSelected(fulfilledSpy, 'completer', 'api/abcdef.scenario.js');
+
+        completer = mocks.readline.createInterface.calls[0].args[0].completer;
+      });
+    });
+
+    it("should find all scenarios with no input", function() {
+      expect(completer('')).toEqual([ [ 'abc', 'abcdef', 'fedcab', 'ab' ], '' ]);
+    });
+
+    it("should find scenarios that have names starting with the input token", function() {
+      expect(completer('a')).toEqual([ [ 'abc', 'abcdef', 'ab' ], 'a' ]);
+    });
+  });
 
   function expectListingDisplayed(displayed, options) {
 
@@ -400,7 +431,8 @@ describe("CLI Selector", function() {
     // check that a readline interface was created
     expect(mocks.readline.createInterface).toHaveBeenCalledWith({
       input: process.stdin,
-      output: process.stdout
+      output: process.stdout,
+      completer: jasmine.any(Function)
     });
 
     // check that the readline interface was used to ask the user which scenario to run

@@ -15,6 +15,8 @@
 
     * [documenting parameters](README.md#documenting-parameters).
 
+* The [run](README.md#running) and the [info](README.md#info) commands support auto-completion of scenario names when prompting to select a scenario.
+
 * [Custom error messages](#request-expect-custom-message) can now be specified when expecting an HTTP response to have a certain value.
 
 * Fixed a bug where steps would be numbered starting from 2 in the command line output.

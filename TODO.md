@@ -1,4 +1,3 @@
-* add auto-completer for selector
 * add some colors to listing
 * add q.all parallel requests example
 * provide underscore and q dependencies
