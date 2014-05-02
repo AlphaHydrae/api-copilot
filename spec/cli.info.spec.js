@@ -7,7 +7,8 @@ var _ = require('underscore'),
 
 describe("CLI Info", function() {
 
-  var scenarioFinderUtils = require('./support/scenario.finder.utils'),
+  var fsMock = require('./support/fs.mock'),
+      scenarioFinderUtils = require('./support/scenario.finder.utils'),
       infoInjector = require('../lib/cli.info');
 
   var Info, mocks, foundScenarios, selectedScenario, choice, lines;
@@ -20,11 +21,13 @@ describe("CLI Info", function() {
     foundScenarios = undefined;
     selectedScenario = undefined;
     scenarioResult = undefined;
+    fsMock.reset();
 
     mocks = {
       finder: function() {
         return foundScenarios instanceof Error ? q.reject(foundScenarios) : q(foundScenarios);
       },
+      fs: fsMock,
       selector: function() {
         return selectedScenario instanceof Error ? q.reject(selectedScenario) : q(selectedScenario);
       },
@@ -196,6 +199,46 @@ describe("CLI Info", function() {
       });
     });
 
+    it("should display the configuration file if loaded", function() {
+
+      fsMock.files['config.yml'] = 'log: trace';
+
+      displayInfo({}, {
+        config: 'config.yml'
+      });
+
+      runs(function() {
+
+        var i = 0;
+        i = expectHeader(i, 'Sample', 'api/b.scenario.js');
+        i = expectParametersHeader(i, 0);
+        i = expectBaseConfiguration(i, {});
+        i = expectCurrentConfiguration(i, { config: 'config.yml' }, { configFile: 'config.yml', configFileExists: true });
+        i = expectSteps(i, []);
+
+        expectNothingMore(i);
+      });
+    });
+
+    it("should display that the configuration file was not loaded if it does not exist", function() {
+
+      displayInfo({}, {
+        config: 'config.yml'
+      });
+
+      runs(function() {
+
+        var i = 0;
+        i = expectHeader(i, 'Sample', 'api/b.scenario.js');
+        i = expectParametersHeader(i, 0);
+        i = expectBaseConfiguration(i, {});
+        i = expectCurrentConfiguration(i, { config: 'config.yml' }, { configFile: 'config.yml', configFileExists: false });
+        i = expectSteps(i, []);
+
+        expectNothingMore(i);
+      });
+    });
+
     it("should display step information", function() {
 
       displayInfo({
@@ -360,7 +403,7 @@ describe("CLI Info", function() {
     return expectJson(i, options, 4);
   }
 
-  function expectCurrentConfiguration(index, options) {
+  function expectCurrentConfiguration(index, configuration, options) {
 
     var i = expectLines(index, [
       '',
@@ -368,7 +411,21 @@ describe("CLI Info", function() {
       ''
     ]);
 
-    return expectJson(i, options);
+    if (options && options.configFile) {
+      if (options.configFileExists) {
+        i = expectLines(i, [
+          '  Configuration file: ' + path.resolve(options.configFile),
+          ''
+        ]);
+      } else {
+        i = expectLines(i, [
+          '  No configuration file loaded (search path ' + path.resolve(options.configFile) + ')',
+          ''
+        ]);
+      }
+    }
+
+    return expectJson(i, configuration);
   }
 
   function expectSteps(index, steps) {

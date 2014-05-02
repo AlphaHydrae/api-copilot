@@ -19,7 +19,8 @@ describe("CLI Program", function() {
 
     defaultOptions = {
       log: 'info',
-      source: 'api'
+      source: 'api',
+      config: 'api-copilot.yml'
     };
 
     Program = programInjector({
@@ -251,11 +252,11 @@ describe("CLI Program", function() {
           expect(spy).toHaveBeenCalledWith(parsed({ params: { foo: 'bar', baz: true, qux: 'corge' } }));
         });
 
-        it("should not parse the config option", function() {
+        it("should parse the config option", function() {
           execute('-c', 'foo.yml', command);
-          expect(spy).toHaveBeenCalledWith(parsed());
+          expect(spy).toHaveBeenCalledWith(parsed({ config: 'foo.yml' }));
           execute('--config', 'bar.yml', command);
-          expect(spy).toHaveBeenCalledWith(parsed());
+          expect(spy).toHaveBeenCalledWith(parsed({ config: 'bar.yml' }));
         });
 
         it("should override configuration file options", function() {
@@ -333,9 +334,9 @@ describe("CLI Program", function() {
           setConfig({ log: 'debug' });
           setConfig({ log: 'trace' }, 'foo.yml');
           execute('-c', 'foo.yml', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ log: 'trace' }));
+          expect(spy).toHaveBeenCalledWith(parsed({ log: 'trace', config: 'foo.yml' }));
           execute('--config', 'foo.yml', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ log: 'trace' }));
+          expect(spy).toHaveBeenCalledWith(parsed({ log: 'trace', config: 'foo.yml' }));
         });
 
         it("should not parse unknown options", function() {
