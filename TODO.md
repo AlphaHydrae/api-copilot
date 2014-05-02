@@ -1,4 +1,6 @@
 * BUG: listing is displayed when an error occurs in the scenario
+* add sample with server and use as readme example
+* document samples in readme
 * show summary when running
 * provide underscore and q dependencies
 * check TODO/FIXMEs
