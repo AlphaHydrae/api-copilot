@@ -17,7 +17,7 @@
 
 * The [run](README.md#running) and the [info](README.md#info) commands support auto-completion of scenario names when prompting to select a scenario.
 
-* [Custom error messages](#request-expect-custom-message) can now be specified when expecting an HTTP response to have a certain value.
+* [Custom error messages](README.md#request-expect-custom-message) can now be specified when expecting an HTTP response to have a certain value.
 
 * HTTP requests can be run in parallel by passing them to the [all method](README.md#request-parallel).
 
