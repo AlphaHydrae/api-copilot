@@ -19,6 +19,8 @@
 
 * [Custom error messages](#request-expect-custom-message) can now be specified when expecting an HTTP response to have a certain value.
 
+* HTTP requests can be run in parallel by passing them to the [all method](README.md#request-parallel).
+
 * Fixed a bug where steps would be numbered starting from 2 in the command line output.
 
 ## v0.4.0 - April 24, 2014

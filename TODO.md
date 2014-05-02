@@ -1,7 +1,5 @@
-* add some colors to listing
 * add q.all parallel requests example
 * provide underscore and q dependencies
-* use <> instead of [] notation for required command line option args in readme
 * check TODO/FIXMEs
 * rename h.mockMethods to spyObjectMethods
 * get rid of new Dependency

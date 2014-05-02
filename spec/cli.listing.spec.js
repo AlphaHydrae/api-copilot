@@ -243,7 +243,7 @@ describe("CLI Listing", function() {
   }
 
   function expectAvailable(lines, scenarios) {
-    expect(lines[2]).toBe('Available API scenarios (' + scenarios.length + '):');
+    expect(lines[2]).toBe(('Available API scenarios (' + scenarios.length + '):').bold);
     _.each(scenarios, function(scenario, i) {
       var line = lines[3 + i].replace(/ +/g, ' ').trim();
       expect(line).toBe((i + 1) + ') ' + scenario.file + (scenario.name ? ' (' + scenario.name + ')' : ''));
@@ -251,8 +251,8 @@ describe("CLI Listing", function() {
   }
 
   function expectInfoNotice(lines) {
-    expect(lines[lines.length - 3]).toBe('Use `api-copilot info [scenario]` for more information about a scenario.');
-    expect(lines[lines.length - 2]).toBe('Use `api-copilot run [scenario]` to run a scenario.');
+    expect(lines[lines.length - 3]).toBe('Use `' + 'api-copilot info [scenario]'.underline + '` for more information about a scenario.');
+    expect(lines[lines.length - 2]).toBe('Use `' + 'api-copilot run [scenario]'.underline + '` to run a scenario.');
     expect(lines[lines.length - 1]).toBe('[scenario] may be either the number, path or name of the scenario.');
   }
 });

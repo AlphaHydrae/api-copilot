@@ -115,6 +115,7 @@ Check the [CHANGELOG](CHANGELOG.md) for information about new features and break
   * [Default request options](#default-request-options)
   * [Request filters](#request-filters)
   * [Expecting a specific response](#request-expect)
+  * [Running requests in parallel](#request-parallel)
 * [Runtime Parameters](#runtime-parameters)
   * [Parameter options](#parameter-options)
   * [Loading parameters from another source](#loading-parameters)
@@ -299,17 +300,17 @@ Command line options override options from the configuration file and both overr
 
 The following configuration options are supported:
 
-* `log` - command line `-l, --log [level]`
+* `log` - command line `-l, --log <level>`
 
   Log level (trace, debug or info). The default level is info. Use trace to see the stack trace of errors.
 
-* `source` - command line `-s, --source [dir]`
+* `source` - command line `-s, --source <dir>`
 
   Path to the directory where API scenarios are located.
   The default directory is `api`.
   The path can be absolute or relative to the current working directory.
 
-* `baseUrl` - command line `-u, --base-url [url]`
+* `baseUrl` - command line `-u, --base-url <url>`
 
   Override the base URL of the scenario.
   Only the paths of URLs will be printed in debug mode.
@@ -341,7 +342,7 @@ The following configuration options are supported:
 
 Additionally, this command line option can be used to load another configuration file:
 
-* `-c, --config [file]`
+* `-c, --config <file>`
 
   Path to the configuration file.
   The default path is `api-copilot.yml`.
@@ -907,6 +908,31 @@ scenario.step('step', function() {
   });
 });
 ```
+
+<a name="request-parallel"></a>
+#### Running requests in parallel
+
+Pass an array of HTTP requests to the `all` method to run them in parallel:
+
+```js
+scenario.step('many HTTP calls', function() {
+  return this.all([
+    this.get('http://example.com/foo');
+  ]);
+});
+
+scenario.step('handle responses', function(responses) {
+  // you get the three responses in the next step
+  // when all requests have completed
+  responses.length; // #=> 3
+});
+```
+
+The `all` method turns an array of promises into a single promise that is resolved
+when all the promises in the array have been resolved. The resolution value will be
+an array of the resolved values.
+
+Read about [q combinations](https://github.com/kriskowal/q#combination) for more information.
 
 <a href="#toc" style="float:right;">Back to top</a>
 

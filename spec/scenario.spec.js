@@ -370,6 +370,27 @@ describe("Scenario", function() {
     });
   });
 
+  describe("#all", function() {
+
+    it("should return a promise for an array of promises", function() {
+
+      var deferreds = [ q.defer(), q.defer(), q.defer() ],
+          promises = _.pluck(deferreds, 'promise');
+
+      var fulfilledSpy = jasmine.createSpy();
+      scenario.all(promises).then(fulfilledSpy);
+      h.waitForSpies(fulfilledSpy);
+
+      deferreds[0].resolve('a');
+      deferreds[1].resolve('b');
+      deferreds[2].resolve('c');
+
+      runs(function() {
+        expect(fulfilledSpy).toHaveBeenCalledWith([ 'a', 'b', 'c' ]);
+      });
+    });
+  });
+
   describe("#configure", function() {
 
     it("should emit the `configure` event", function() {
