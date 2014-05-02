@@ -21,7 +21,7 @@
 
 * HTTP requests can be run in parallel by passing them to the [all method](README.md#request-parallel).
 
-* Fixed a bug where steps would be numbered starting from 2 in the command line output.
+* *BUGFIX:* steps were numbered starting from 2 in the command line output.
 
 ## v0.4.0 - April 24, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.3.3...0.4.0)
 
@@ -37,13 +37,13 @@
 
 * Allow custom error message for required parameters. See [runtime parameters](README.md#runtime-parameters).
 
-* Fixed a bug where setting a base URL and providing no URL when making an HTTP request would cause an undefined string to be appended to the constructed URL.
+* *BUGFIX:* setting a base URL and providing no URL when making an HTTP request would cause an undefined string to be appended to the constructed URL.
 
-* Fixed a bug where skipping a step would not work with a falsy message.
+* *BUGFIX:* skipping a step did not work with a falsy message.
 
 ## v0.3.3 - April 16, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.3.2...0.3.3)
 
-* Fixed logging bug due to missing colors dependency.
+* *BUGFIX:* undefined strings were logged due to missing colors dependency.
 
 ## v0.3.2 - April 15, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.3.1...0.3.2)
 
@@ -64,7 +64,7 @@
 
 * **NEW:** [multipart/form-data requests](README.md#multipart-form-data) are now supported.
 
-* Fixed a bug where all steps would be printed as step number 1.
+* *BUGFIX:* all steps were printed as step number 1.
 
 ## v0.2.1 - April 3, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.2.0...0.2.1)
 
@@ -84,7 +84,7 @@
 
 * Fixed the scenario completion message.
 
-* Fixed a bug where request filters would not receive the request options as first argument.
+* *BUGFIX:* request filters did not receive the request options as first argument.
 
 ## v0.1.3 - March 26, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.1.2...0.1.3)
 
@@ -96,7 +96,7 @@
 
 * Process exits with status 2 if the scenario fails.
 
-* Fixed a bug where `success` would only forward its first argument to the next step.
+* *BUGFIX:* `success` would only forward its first argument to the next step.
 
 ## v0.1.2 - March 21, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.1.1...0.1.2)
 
