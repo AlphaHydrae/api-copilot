@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.5.0 - May 2, 2014
+## v0.5.0 - May 2, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.4.0...0.5.0)
 
 * **BREAKING!** [Runtime parameters](README.md#runtime-parameters) have been completely overhauled.
 
@@ -23,7 +23,7 @@
 
 * Fixed a bug where steps would be numbered starting from 2 in the command line output.
 
-## v0.4.0 - April 24, 2014
+## v0.4.0 - April 24, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.3.3...0.4.0)
 
 * **BREAKING!** Request options are now merged with default request options instead of overriding them.
   For example, if there are headers in both the default request options and the request options, they will be
@@ -41,20 +41,20 @@
 
 * Fixed a bug where skipping a step would not work with a falsy message.
 
-## v0.3.3 - April 16, 2014
+## v0.3.3 - April 16, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.3.2...0.3.3)
 
 * Fixed logging bug due to missing colors dependency.
 
-## v0.3.2 - April 15, 2014
+## v0.3.2 - April 15, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.3.1...0.3.2)
 
 * Experimental run command (undocumented).
 
-## v0.3.1 - April 9, 2014
+## v0.3.1 - April 9, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.3.0...0.3.1)
 
 * Required request options (`method` and `url`) are now validated after request filters are run.
   This allows the method or URL to be set by filters.
 
-## v0.3.0 - April 9, 2014
+## v0.3.0 - April 9, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.2.1...0.3.0)
 
 * **NEW:** Scenarios can be [customized with runtime parameters](README.md#runtime-parameters):
 
@@ -66,13 +66,13 @@
 
 * Fixed a bug where all steps would be printed as step number 1.
 
-## v0.2.1 - April 3, 2014
+## v0.2.1 - April 3, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.2.0...0.2.1)
 
 * **NEW:** Configuration options can be changed at runtime with the `configure` method.
 
 * The new `showFullUrl` option causes full URLs to be displayed instead of paths only when a base URL is configured.
 
-## v0.2.0 - March 31, 2014
+## v0.2.0 - March 31, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.1.4...0.2.0)
 
 * **BREAKING!** Request filters must now return the request options object instead of modifying it by reference.
 
@@ -80,13 +80,13 @@
 
 * Request filters can be made asynchronous by returning a promise for the request options.
 
-## v0.1.4 - March 26, 2014
+## v0.1.4 - March 26, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.1.3...0.1.4)
 
 * Fixed the scenario completion message.
 
 * Fixed a bug where request filters would not receive the request options as first argument.
 
-## v0.1.3 - March 26, 2014
+## v0.1.3 - March 26, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.1.2...0.1.3)
 
 * **NEW:** Scenario options can be given through an `api-copilot.yml` file in the current working directory:
 
@@ -98,7 +98,7 @@
 
 * Fixed a bug where `success` would only forward its first argument to the next step.
 
-## v0.1.2 - March 21, 2014
+## v0.1.2 - March 21, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.1.1...0.1.2)
 
 * **BREAKING!** Request filters are no longer passed a store object.
 
@@ -119,7 +119,7 @@
 
 * The body of HTTP responses is now hidden by default. Use the new `showResponseBody` scenario option or the `-b, --show-response-body` command line option to print it.
 
-## v0.1.1 - March 21, 2014
+## v0.1.1 - March 21, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.1.0...0.1.1)
 
 * **BREAKING!** Scenario files must export the Scenario object instead of running it.
 
