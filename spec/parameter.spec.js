@@ -251,6 +251,30 @@ describe("Parameters", function() {
       });
     });
 
+    it("should print the parameter description and emit the describe event", function() {
+
+      param = new Parameter('foo');
+      setDescription('foo=value');
+      addReadlineAnswer('bar');
+
+      param.on('describe', function(print) {
+        print('more\ndetailed\ndescription');
+      });
+
+      var fulfilledSpy = prompt();
+      h.waitForSpies(fulfilledSpy);
+
+      runs(function() {
+
+        expect(lines).toEqual([ '', 'foo=value', '  more', '  detailed', '  description', '' ]);
+
+        expectReadlineCalled();
+        expectReadlineQuestion('Enter a value for foo: ');
+
+        expect(fulfilledSpy).toHaveBeenCalledWith('bar');
+      });
+    });
+
     it("should prompt for a new value until a valid one is given", function() {
       // TODO: refactor this to ask one question at a time
 
