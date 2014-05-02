@@ -170,7 +170,6 @@ describe("Scenario Parameters", function() {
 
     it("should be configurable at runtime", function() {
 
-      scenario = new Scenario({ name: 'once upon a time' });
       scenario.addParam('foo');
       scenario.addParam('baz');
 
@@ -207,6 +206,118 @@ describe("Scenario Parameters", function() {
       runs(function() {
         expectSuccess(fulfilledSpy);
         expect(values).toEqual([ 'corge', 'qux', 'garply' ]);
+      });
+    });
+
+    it("should be configurable with a custom loading function", function() {
+
+      scenario.addParam('foo');
+      scenario.addParam('baz');
+
+      scenario.loadParametersWith(function(params) {
+        return _.extend(params, { foo: 'bar', baz: 'qux' });
+      });
+
+      var values = [];
+      scenario.step('step', function() {
+        values.push(this.param('foo'));
+        values.push(this.param('baz'));
+      });
+
+      var fulfilledSpy = runScenario(true);
+
+      runs(function() {
+        expectSuccess(fulfilledSpy);
+        expect(values).toEqual([ 'bar', 'qux' ]);
+      });
+    });
+
+    it("should be configurable with a loading function that returns a promise", function() {
+
+      scenario.addParam('foo');
+      scenario.addParam('baz');
+
+      scenario.loadParametersWith(function(params) {
+        return q(_.extend({}, params, { foo: 'qux', baz: 'bar' })).delay(15);
+      });
+
+      var values = [];
+      scenario.step('step', function() {
+        values.push(this.param('foo'));
+        values.push(this.param('baz'));
+      });
+
+      var fulfilledSpy = runScenario(true);
+
+      runs(function() {
+        expectSuccess(fulfilledSpy);
+        expect(values).toEqual([ 'qux', 'bar' ]);
+      });
+    });
+
+    it("should be configurable with a multiple loading functions", function() {
+
+      scenario.addParam('foo');
+      scenario.addParam('bar');
+      scenario.addParam('baz');
+
+      var order = [];
+
+      scenario.loadParametersWith(function(params) {
+        order.push(1);
+        return { foo: 'bad' };
+      });
+
+      scenario.loadParametersWith(function(params) {
+        order.push(2);
+        return q({ foo: 'a', baz: 'b' }).delay(15);
+      });
+
+      scenario.loadParametersWith(function(params) {
+        order.push(3);
+        return _.extend({}, params, { bar: 'c' });
+      });
+
+      var values = [];
+      scenario.step('step', function() {
+        values.push(this.param('foo'));
+        values.push(this.param('bar'));
+        values.push(this.param('baz'));
+      });
+
+      var fulfilledSpy = runScenario(true);
+
+      runs(function() {
+        expectSuccess(fulfilledSpy);
+        expect(order).toEqual([ 1, 2, 3 ]);
+        expect(values).toEqual([ 'a', 'c', 'b' ]);
+      });
+    });
+
+    it("should cause the scenario to fail if a loading function returns nothing", function() {
+
+      scenario.addParam('foo');
+      scenario.loadParametersWith(function() {});
+      scenario.step('step', function() {});
+
+      var rejectedSpy = runScenario(false);
+
+      runs(function() {
+        expectFailure(rejectedSpy, 'Parameter loading function at index 0 returned nothing; it must return the updated runtime parameters');
+      });
+    });
+
+    it("should cause the scenario to fail if a loading function returns a non-object", function() {
+
+      scenario.addParam('foo');
+      scenario.loadParametersWith(function(params) { return {}; });
+      scenario.loadParametersWith(function(params) { return true; });
+      scenario.step('step', function() {});
+
+      var rejectedSpy = runScenario(false);
+
+      runs(function() {
+        expectFailure(rejectedSpy, 'Expected parameter loading function at index 1 to return updated runtime parameters as an object, got boolean');
       });
     });
   });

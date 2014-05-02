@@ -1,4 +1,3 @@
-* allow to customize param loading so that they may also be taken from an additional source yet remain mandatory
 * add summary option to scenario to display in info output and when running
 * allow to set custom error message for expected response values
 * add shared store object and document using global variables
