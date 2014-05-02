@@ -2,9 +2,9 @@
 
 > Write testing or data population scenarios for your APIs.
 
-[![NPM version](https://badge.fury.io/js/api-copilot.svg)](http://badge.fury.io/js/api-copilot)
-
 **[Installation](#installation) - [Documentation](#documentation) - [Usage](#usage) - [Contributing](#contributing) - [License](#license)**
+
+[![NPM version](https://badge.fury.io/js/api-copilot.svg)](http://badge.fury.io/js/api-copilot)
 
 **Write an API scenario to make HTTP calls on your API:**
 
