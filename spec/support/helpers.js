@@ -81,6 +81,16 @@ exports.runPromise = function(promise, expectedResult) {
   return spy;
 };
 
+exports.waitForSpies = function() {
+
+  var spies = slice.call(arguments);
+  waitsFor(function() {
+    return !!_.find(spies, function(spy) {
+      return spy.calls.length;
+    });
+  }, "the spy/spies to have been called", 50);
+};
+
 exports.addMatchers = function(jasmine) {
   jasmine.addMatchers({
     toBeAnError: function(expected) {

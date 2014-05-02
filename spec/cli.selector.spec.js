@@ -392,7 +392,7 @@ describe("CLI Selector", function() {
 
   function expectReadlineCalled(called) {
 
-    if (!called || called === undefined) {
+    if (!called) {
       expect(mocks.readline.createInterface).not.toHaveBeenCalled();
       return;
     }
