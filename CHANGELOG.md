@@ -1,5 +1,9 @@
 # Changelog
 
+## Edge
+
+* *BUGFIX:* the scenario listing would unnecessarily be displayed when using the run or info commands with an argument and a loading error occurred (e.g. due to an invalid scenario object).
+
 ## v0.5.0 - May 2, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.4.0...0.5.0)
 
 * **BREAKING!** [Runtime parameters](README.md#runtime-parameters) have been completely overhauled.

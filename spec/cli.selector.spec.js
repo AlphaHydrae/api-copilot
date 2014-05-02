@@ -19,6 +19,10 @@ describe("CLI Selector", function() {
 
     mocks = {
       loader: function() {
+        if (loadedScenario instanceof Error) {
+          throw loadedScenario;
+        }
+
         return loadedScenario;
       },
       readlineInterface: {
@@ -69,7 +73,7 @@ describe("CLI Selector", function() {
   }
 
   function setLoadedScenario(scenario) {
-    loadedScenario = { result: scenario };
+    loadedScenario = scenario instanceof Error ? scenario : { result: scenario };
   }
 
   function setReadlineAnswer(answer) {
@@ -240,6 +244,21 @@ describe("CLI Selector", function() {
         expectReadlineCalled(false);
         expectLoaderCalled(false);
         expectError(rejectedSpy, 'No such scenario "5"');
+      });
+    });
+
+    it("should not display available scenarios and not run anything if a loading error occurs", function() {
+
+      setChoice('a');
+      setLoadedScenario(new Error('loading bug'));
+
+      var rejectedSpy = select(false);
+
+      runs(function() {
+        expectListingDisplayed(false);
+        expectReadlineCalled(false);
+        expectLoaderCalled('api/a.scenario.js');
+        expectError(rejectedSpy, 'loading bug');
       });
     });
   });
