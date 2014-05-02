@@ -1,4 +1,3 @@
-* add q.all parallel requests example
 * provide underscore and q dependencies
 * check TODO/FIXMEs
 * rename h.mockMethods to spyObjectMethods
