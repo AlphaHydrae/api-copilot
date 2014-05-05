@@ -1,22 +1,16 @@
 var _ = require('underscore'),
     h = require('./support/helpers'),
-    ioc = require('../lib/ioc'),
     q = require('q');
 
 describe("Scenario", function() {
 
   var scenarioFactory = require('../lib/scenario'),
-      scenarioParametersFactory = require('../lib/scenario.params'),
-      parameterFactory = ioc.create('parameter.factory'),
-      log4jsMock = require('./support/log4js.mock'),
-      ClientMock = require('./support/client.mock');
+      log4jsMock = require('./support/log4js.mock');
 
   var Scenario, scenario;
   beforeEach(function() {
 
-    var parameterExtensions = scenarioParametersFactory(parameterFactory, function() {});
-
-    Scenario = scenarioFactory(ClientMock, parameterExtensions, log4jsMock, function() {});
+    Scenario = scenarioFactory([], log4jsMock, function() {});
 
     scenario = new Scenario({ name: 'once upon a time' });
   });
@@ -25,11 +19,6 @@ describe("Scenario", function() {
     spyOn(log4jsMock, 'getLogger');
     new Scenario({ name: 'foo' });
     expect(log4jsMock.getLogger).toHaveBeenCalledWith('foo');
-  });
-
-  it("should create a client with no arguments", function() {
-    var scenario = new Scenario({ name: 'foo', bar: 'baz' });
-    expect(scenario.client.args).toEqual([]);
   });
 
   it("should throw an error if no step is defined", function() {
@@ -403,16 +392,6 @@ describe("Scenario", function() {
       scenario.configure({ foo: 'bar' });
       expect(configureSpy.calls.length).toBe(1);
       expect(configureSpy).toHaveBeenCalledWith({ foo: 'bar' });
-    });
-
-    it("should forward the `configure` event to the client", function() {
-
-      var configureSpy = jasmine.createSpy();
-      scenario.client.on('configure', configureSpy);
-
-      scenario.configure({ baz: 'qux' });
-      expect(configureSpy.calls.length).toBe(1);
-      expect(configureSpy).toHaveBeenCalledWith({ baz: 'qux' });
     });
   });
 });

@@ -1,3 +1,4 @@
 --ignore-dir=.grunt
+--ignore-dir=doc
 --ignore-dir=node_modules
 --ignore-dir=tmp

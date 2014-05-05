@@ -5,8 +5,7 @@ var _ = require('underscore'),
 describe("Scenario Events", function() {
 
   var scenarioFactory = require('../lib/scenario'),
-      scenarioParametersFactory = require('../lib/scenario.params'),
-      parameterFactory = ioc.create('parameter.factory'),
+      clientExtensionsFactory = require('../lib/scenario.ext.client'),
       log4jsMock = require('./support/log4js.mock'),
       ClientMock = require('./support/client.mock'),
       EventCollector = require('./support/event.collector');
@@ -17,9 +16,9 @@ describe("Scenario Events", function() {
     collector = new EventCollector();
     events = collector.events;
 
-    var parameterExtensions = scenarioParametersFactory(parameterFactory, function() {});
+    var clientExtensions = clientExtensionsFactory(ClientMock);
 
-    Scenario = scenarioFactory(ClientMock, parameterExtensions, log4jsMock, function() {});
+    Scenario = scenarioFactory([ clientExtensions ], log4jsMock, function() {});
 
     scenario = new Scenario({ name: 'once upon a time' });
   });

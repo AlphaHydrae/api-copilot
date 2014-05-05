@@ -8,8 +8,7 @@ var METHODS = [ 'get', 'head', 'post', 'put', 'patch', 'delete' ];
 describe("Scenario Client Extensions", function() {
 
   var scenarioFactory = require('../lib/scenario'),
-      scenarioParametersFactory = require('../lib/scenario.params'),
-      parameterFactory = ioc.create('parameter.factory'),
+      clientExtensionsFactory = require('../lib/scenario.ext.client'),
       log4jsMock = require('./support/log4js.mock'),
       ClientMock = require('./support/client.mock');
 
@@ -18,9 +17,9 @@ describe("Scenario Client Extensions", function() {
 
     h.addMatchers(this);
 
-    var parameterExtensions = scenarioParametersFactory(parameterFactory, function() {});
+    var clientExtensions = clientExtensionsFactory(ClientMock);
 
-    Scenario = scenarioFactory(ClientMock, parameterExtensions, log4jsMock, function() {});
+    Scenario = scenarioFactory([ clientExtensions ], log4jsMock, function() {});
 
     scenario = new Scenario({ name: 'once upon a time' });
     requestMock = scenario.client.requestMock;
@@ -34,6 +33,20 @@ describe("Scenario Client Extensions", function() {
       requestMock.addResponse(_.clone(defaultSampleResponse));
     });
   }
+
+  it("should create a client with no arguments", function() {
+    expect(scenario.client.args).toEqual([]);
+  });
+
+  it("should forward the `configure` event to the client", function() {
+
+    var configureSpy = jasmine.createSpy();
+    scenario.client.on('configure', configureSpy);
+
+    scenario.configure({ baz: 'qux' });
+    expect(configureSpy.calls.length).toBe(1);
+    expect(configureSpy).toHaveBeenCalledWith({ baz: 'qux' });
+  });
 
   describe("base URL", function() {
 
