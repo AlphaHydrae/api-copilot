@@ -1,6 +1,6 @@
 var _ = require('underscore'),
     CliLoggerMock = require('./support/cli.logger.mock'),
-    cliRunnerInjector = require('../lib/cli.runner'),
+    cliRunnerFactory = require('../lib/cli.runner'),
     colors = require('colors'),
     fs = require('fs'),
     h = require('./support/helpers'),
@@ -36,10 +36,7 @@ describe("CLI Runner", function() {
 
     CliLoggerMock.instances.length = 0;
 
-    cliRunner = cliRunnerInjector({
-      Logger: CliLoggerMock,
-      cliSelector: mocks.cliSelector
-    });
+    cliRunner = cliRunnerFactory(mocks.cliSelector, CliLoggerMock);
   });
 
   function run(expectedResult, options) {

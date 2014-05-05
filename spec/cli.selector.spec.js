@@ -7,7 +7,7 @@ var _ = require('underscore'),
 describe("CLI Selector", function() {
 
   var scenarioFinderUtils = require('./support/scenario.finder.utils'),
-      cliSelectorInjector = require('../lib/cli.selector');
+      cliSelectorFactory = require('../lib/cli.selector');
 
   var selector, mocks, loadedScenario, readlineAnswer, foundScenarios, scenarioListing, choice, lines;
   beforeEach(function() {
@@ -62,7 +62,7 @@ describe("CLI Selector", function() {
     spyOn(mocks.readlineInterface, 'close');
     spyOn(mocks.readline, 'createInterface').andCallThrough();
 
-    selector = cliSelectorInjector(mocks);
+    selector = cliSelectorFactory(mocks.scenarioFinder, mocks.scenarioListing, mocks.scenarioLoader, mocks.readline, mocks.print);
   });
 
   function select(expectedResult, options) {

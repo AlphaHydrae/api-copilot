@@ -1,5 +1,5 @@
 var _ = require('underscore'),
-    cliProgramInjector = require('../lib/cli.program'),
+    cliProgramFactory = require('../lib/cli.program'),
     fsMock = require('./support/fs.mock'),
     h = require('./support/helpers'),
     q = require('q'),
@@ -22,9 +22,8 @@ describe("CLI Program", function() {
       config: 'api-copilot.yml'
     };
 
-    CliProgram = cliProgramInjector({
-      fs: fsMock
-    });
+    var noop = function() {};
+    CliProgram = cliProgramFactory(noop, noop, noop, fsMock);
 
     handlerMocks = {
       run: jasmine.createSpy(),

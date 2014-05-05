@@ -1,6 +1,4 @@
-* rename h.mockMethods to spyObjectMethods
 * get rid of new Dependency
-* replace manual injection by electrolyte module
 * allow to set parameter default value
 * allow to coerce parameter values with custom function
 * add sample with server and use as readme example
@@ -26,3 +24,6 @@
 * create step class to hide scenario from step definitions
 * add --no-color option
 * add --non-interactive option
+* keep asking for scenario identifier if user doesn't give one
+* document that extendDefaultRequestOptions has same behavior as Underscore#extend
+* show defaults in info effective configuration

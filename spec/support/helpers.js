@@ -117,12 +117,6 @@ exports.addMatchers = function(jasmine) {
   });
 };
 
-exports.mockMethods = function(target) {
-  _.each(slice.call(arguments, 1), function(method) {
-    spyOn(target, method).andCallThrough();
-  }, target);
-};
-
 exports.capture = function (fn) {
 
   var output = {

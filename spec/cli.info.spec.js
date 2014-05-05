@@ -1,6 +1,6 @@
 var _ = require('underscore'),
     colors = require('colors'),
-    cliInfoInjector = require('../lib/cli.info'),
+    cliInfoFactory = require('../lib/cli.info'),
     fsMock = require('./support/fs.mock'),
     h = require('./support/helpers'),
     path = require('path'),
@@ -34,7 +34,7 @@ describe("CLI Info", function() {
 
     spyOn(mocks, 'cliSelector').andCallThrough();
 
-    cliInfo = cliInfoInjector(mocks);
+    cliInfo = cliInfoFactory(mocks.cliSelector, mocks.fs, mocks.print);
   });
 
   function info(expectedResult, options) {

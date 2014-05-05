@@ -9,16 +9,14 @@ describe("CLI Logger", function() {
 
   var log4jsMock = require('./support/log4js.mock'),
       ScenarioMock = require('./support/scenario.mock'),
-      cliLoggerInjector = require('../lib/cli.logger');
+      cliLoggerFactory = require('../lib/cli.logger');
 
   var CliLogger, scenario, cliLogger, sampleRequestOptions, sampleResponse;
   beforeEach(function() {
 
     log4jsMock.reset();
 
-    CliLogger = cliLoggerInjector({
-      log4js: log4jsMock
-    });
+    CliLogger = cliLoggerFactory(log4jsMock);
 
     scenario = new ScenarioMock({ name: 'once upon a time' });
     cliLogger = new CliLogger(scenario);
