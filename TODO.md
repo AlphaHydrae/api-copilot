@@ -6,7 +6,6 @@
 * add sample with server and use as readme example
 * make scenario name optional (replace with camelcased file name?)
 * coerge undefined flag value to false, do not allow required in conjunction with flag option
-* selector should use finder as dependency
 * support multiple configuration files with -c, --config FILE
 * make `list` check which files export valid scenarios
 * run request filters before passing options to client

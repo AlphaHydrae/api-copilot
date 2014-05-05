@@ -1,6 +1,7 @@
 var _ = require('underscore'),
     h = require('./support/helpers'),
     path = require('path'),
+    q = require('q'),
     slice = Array.prototype.slice;
 
 describe("CLI Selector", function() {
@@ -21,6 +22,9 @@ describe("CLI Selector", function() {
     scenarioListing = 'scenario\nlisting';
 
     mocks = {
+      scenarioFinder: function() {
+        return foundScenarios instanceof Error ? q.reject(foundScenarios) : q(foundScenarios);
+      },
       scenarioListing: function() {
         if (scenarioListing instanceof Error) {
           throw scenarioListing;
@@ -51,6 +55,7 @@ describe("CLI Selector", function() {
       }
     };
 
+    spyOn(mocks, 'scenarioFinder').andCallThrough();
     spyOn(mocks, 'scenarioListing').andCallThrough();
     spyOn(mocks, 'scenarioLoader').andCallThrough();
     spyOn(mocks.readlineInterface, 'question').andCallThrough();
@@ -65,12 +70,16 @@ describe("CLI Selector", function() {
       throw new Error('No scenarios mocked');
     }
 
-    var promise = selector(foundScenarios, choice, _.extend({}, options));
+    var promise = selector(choice, _.extend({}, options));
     return h.runPromise(promise, expectedResult);
   }
 
-  function setAvailableScenarios() {
-    foundScenarios = scenarioFinderUtils.parseFiles(slice.call(arguments));
+  function setAvailableScenarios(err) {
+    if (err instanceof Error) {
+      foundScenarios = err;
+    } else {
+      foundScenarios = scenarioFinderUtils.parseFiles(slice.call(arguments));
+    }
   }
 
   function setChoice(newChoice) {
@@ -96,6 +105,7 @@ describe("CLI Selector", function() {
     var fulfilledSpy = select();
 
     runs(function() {
+      expectFinderCalled();
       expectListingPrinted();
       expectReadlineCalled(false);
       expectLoaderCalled(false);
@@ -111,6 +121,7 @@ describe("CLI Selector", function() {
     var fulfilledSpy = select();
 
     runs(function() {
+      expectFinderCalled();
       expectListingPrinted(false);
       expectReadlineCalled(false);
       expectLoaderCalled('api/a.scenario.js');
@@ -126,10 +137,42 @@ describe("CLI Selector", function() {
     var fulfilledSpy = select(true, { foo: 'bar' });
 
     runs(function() {
+      expectFinderCalled({ foo: 'bar' });
       expectListingPrinted(false);
       expectReadlineCalled(false);
       expectLoaderCalled('api/b.scenario.js');
       expectScenarioSelected(fulfilledSpy, 'single with custom options', 'api/b.scenario.js');
+    });
+  });
+
+  it("should forward a scenario listing error", function() {
+
+    setAvailableScenarios();
+    setScenarioListing(new Error('listing bug'));
+
+    var rejectedSpy = select(false);
+
+    runs(function() {
+      expectFinderCalled();
+      expectListingError();
+      expectReadlineCalled(false);
+      expectLoaderCalled(false);
+      expectError(rejectedSpy, 'listing bug');
+    });
+  });
+
+  it("should forward an error from the scenario finder", function() {
+
+    setAvailableScenarios(new Error('finder bug'));
+
+    var rejectedSpy = select(false);
+
+    runs(function() {
+      expectFinderCalled();
+      expectListingPrinted(false);
+      expectReadlineCalled(false);
+      expectLoaderCalled(false);
+      expectError(rejectedSpy, 'finder bug');
     });
   });
 
@@ -147,6 +190,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select();
 
       runs(function() {
+        expectFinderCalled();
         expectListingPrinted(false);
         expectReadlineCalled(false);
         expectLoaderCalled('api/b.scenario.js');
@@ -162,6 +206,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select();
 
       runs(function() {
+        expectFinderCalled();
         expectListingPrinted(false);
         expectReadlineCalled(false);
         expectLoaderCalled('api/c.scenario.js');
@@ -177,6 +222,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select();
 
       runs(function() {
+        expectFinderCalled();
         expectListingPrinted(false);
         expectReadlineCalled(false);
         expectLoaderCalled('api/a.scenario.js');
@@ -192,6 +238,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select(true, { baz: 'qux' });
 
       runs(function() {
+        expectFinderCalled({ baz: 'qux' });
         expectListingPrinted(false);
         expectReadlineCalled(false);
         expectLoaderCalled('api/sub/d.scenario.js');
@@ -207,6 +254,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select();
 
       runs(function() {
+        expectFinderCalled();
         expectListingPrinted(false);
         expectReadlineCalled(false);
         expectLoaderCalled('api/sub/d.scenario.js');
@@ -221,6 +269,7 @@ describe("CLI Selector", function() {
       var rejectedSpy = select(false);
 
       runs(function() {
+        expectFinderCalled();
         expectListingPrinted();
         expectReadlineCalled(false);
         expectLoaderCalled(false);
@@ -235,6 +284,7 @@ describe("CLI Selector", function() {
       var rejectedSpy = select(false);
 
       runs(function() {
+        expectFinderCalled();
         expectListingPrinted();
         expectReadlineCalled(false);
         expectLoaderCalled(false);
@@ -249,10 +299,27 @@ describe("CLI Selector", function() {
       var rejectedSpy = select(false);
 
       runs(function() {
+        expectFinderCalled();
         expectListingPrinted();
         expectReadlineCalled(false);
         expectLoaderCalled(false);
         expectError(rejectedSpy, 'No such scenario "5"');
+      });
+    });
+
+    it("should not print or run anything if a listing error occurs", function() {
+
+      setChoice('0');
+      setScenarioListing(new Error('listing bug'));
+
+      var rejectedSpy = select(false);
+
+      runs(function() {
+        expectFinderCalled();
+        expectListingError();
+        expectReadlineCalled(false);
+        expectLoaderCalled(false);
+        expectError(rejectedSpy, 'listing bug');
       });
     });
 
@@ -264,6 +331,7 @@ describe("CLI Selector", function() {
       var rejectedSpy = select(false);
 
       runs(function() {
+        expectFinderCalled();
         expectListingPrinted(false);
         expectReadlineCalled(false);
         expectLoaderCalled('api/a.scenario.js');
@@ -286,6 +354,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select();
 
       runs(function() {
+        expectFinderCalled();
         expectListingPrinted();
         expectReadlineCalled(true);
         expectLoaderCalled('api/b.scenario.js');
@@ -301,6 +370,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select();
 
       runs(function() {
+        expectFinderCalled();
         expectListingPrinted();
         expectReadlineCalled(true);
         expectLoaderCalled('api/c.scenario.js');
@@ -316,6 +386,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select();
 
       runs(function() {
+        expectFinderCalled();
         expectListingPrinted();
         expectReadlineCalled(true);
         expectLoaderCalled('api/a.scenario.js');
@@ -331,6 +402,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select(true, { qux: 'baz' });
 
       runs(function() {
+        expectFinderCalled({ qux: 'baz' });
         expectListingPrinted({ qux: 'baz' });
         expectReadlineCalled(true);
         expectLoaderCalled('api/sub/d.scenario.js');
@@ -345,6 +417,7 @@ describe("CLI Selector", function() {
       var rejectedSpy = select(false);
 
       runs(function() {
+        expectFinderCalled();
         expectListingPrinted();
         expectReadlineCalled(true);
         expectLoaderCalled(false);
@@ -359,6 +432,7 @@ describe("CLI Selector", function() {
       var rejectedSpy = select(false);
 
       runs(function() {
+        expectFinderCalled();
         expectListingPrinted();
         expectReadlineCalled(true);
         expectLoaderCalled(false);
@@ -373,6 +447,7 @@ describe("CLI Selector", function() {
       var rejectedSpy = select(false);
 
       runs(function() {
+        expectFinderCalled();
         expectListingPrinted();
         expectReadlineCalled(true);
         expectLoaderCalled(false);
@@ -387,10 +462,42 @@ describe("CLI Selector", function() {
       var rejectedSpy = select(false);
 
       runs(function() {
+        expectFinderCalled();
         expectListingPrinted();
         expectReadlineCalled(true);
         expectLoaderCalled(false);
         expectError(rejectedSpy, 'No such scenario "unknown"');
+      });
+    });
+
+    it("should not run anything if a listing error occurs", function() {
+
+      setScenarioListing(new Error('listing bug'));
+
+      var rejectedSpy = select(false);
+
+      runs(function() {
+        expectFinderCalled();
+        expectListingError();
+        expectReadlineCalled(false);
+        expectLoaderCalled(false);
+        expectError(rejectedSpy, 'listing bug');
+      });
+    });
+
+    it("should not run anything if a loading error occurs", function() {
+
+      setReadlineAnswer('a');
+      setLoadedScenario(new Error('loading bug'));
+
+      var rejectedSpy = select(false);
+
+      runs(function() {
+        expectFinderCalled();
+        expectListingPrinted();
+        expectReadlineCalled(true);
+        expectLoaderCalled('api/a.scenario.js');
+        expectError(rejectedSpy, 'loading bug');
       });
     });
   });
@@ -408,6 +515,7 @@ describe("CLI Selector", function() {
 
       runs(function() {
 
+        expectFinderCalled();
         expectListingPrinted();
         expectReadlineCalled(true);
         expectLoaderCalled('api/abcdef.scenario.js');
@@ -425,6 +533,15 @@ describe("CLI Selector", function() {
       expect(completer('a')).toEqual([ [ 'abc', 'abcdef', 'ab' ], 'a' ]);
     });
   });
+
+  function expectFinderCalled(options) {
+    expect(mocks.scenarioFinder).toHaveBeenCalledWith(_.extend({}, options));
+  }
+
+  function expectListingError(options) {
+    expect(mocks.scenarioListing).toHaveBeenCalledWith(foundScenarios, _.extend({}, options));
+    expect(lines).toEqual([]);
+  }
 
   function expectListingPrinted(options) {
     if (options === false) {
@@ -448,6 +565,8 @@ describe("CLI Selector", function() {
 
     if (!called) {
       expect(mocks.readline.createInterface).not.toHaveBeenCalled();
+      expect(mocks.readlineInterface.question).not.toHaveBeenCalled();
+      expect(mocks.readlineInterface.close).not.toHaveBeenCalled();
       return;
     }
 

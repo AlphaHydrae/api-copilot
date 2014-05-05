@@ -11,33 +11,29 @@ describe("CLI Info", function() {
       scenarioFinderUtils = require('./support/scenario.finder.utils'),
       infoInjector = require('../lib/cli.info');
 
-  var Info, mocks, foundScenarios, selectedScenario, choice, lines;
+  var Info, mocks, selectedScenario, choice, lines, lineIndex;
   beforeEach(function() {
 
     h.addMatchers(this);
 
     lines = [];
+    lineIndex = 0;
     choice = undefined;
-    foundScenarios = undefined;
     selectedScenario = undefined;
     scenarioResult = undefined;
     fsMock.reset();
 
     mocks = {
-      finder: function() {
-        return foundScenarios instanceof Error ? q.reject(foundScenarios) : q(foundScenarios);
-      },
-      fs: fsMock,
-      selector: function() {
+      cliSelector: function() {
         return selectedScenario instanceof Error ? q.reject(selectedScenario) : q(selectedScenario);
       },
+      fs: fsMock,
       print: function(text) {
         lines = lines.concat((text || '').split("\n"));
       }
     };
 
-    spyOn(mocks, 'finder').andCallThrough();
-    spyOn(mocks, 'selector').andCallThrough();
+    spyOn(mocks, 'cliSelector').andCallThrough();
 
     Info = infoInjector(mocks);
   });
@@ -45,10 +41,6 @@ describe("CLI Info", function() {
   function info(expectedResult, options) {
     var instance = new Info(_.extend({}, options));
     return h.runPromise(instance.execute(choice), expectedResult);
-  }
-
-  function setAvailableScenarios() {
-    foundScenarios = scenarioFinderUtils.parseFiles(slice.call(arguments));
   }
 
   function setSelectedScenario(scenario) {
@@ -66,29 +58,25 @@ describe("CLI Info", function() {
 
   it("should do nothing if there are no available scenarios", function() {
 
-    setAvailableScenarios();
     setSelectedScenario();
 
     var fulfilledSpy = info();
 
     runs(function() {
-      expectFinderCalled();
-      expectSelectorCalled([]);
+      expectSelectorCalled();
       expectNothingDisplayed(fulfilledSpy);
     });
   });
 
   it("should forward options to the finder and selector and the choice to the selector", function() {
 
-    setAvailableScenarios('api/a.scenario.js', 'api/b.scenario.js');
     setSelectedScenario();
     setChoice('foo');
 
     var fulfilledSpy = info(true, { bar: 'baz' });
 
     runs(function() {
-      expectFinderCalled({ bar: 'baz' });
-      expectSelectorCalled(foundScenarios, 'foo', { bar: 'baz' });
+      expectSelectorCalled('foo', { bar: 'baz' });
       expectNothingDisplayed(fulfilledSpy);
     });
   });
@@ -97,8 +85,6 @@ describe("CLI Info", function() {
 
     var defaultScenario;
     beforeEach(function() {
-
-      setAvailableScenarios('api/a.scenario.js', 'api/b.scenario.js');
 
       defaultScenario = {
         name: 'Sample',
@@ -116,8 +102,7 @@ describe("CLI Info", function() {
       var fulfilledSpy = info(true, options);
 
       runs(function() {
-        expectFinderCalled(options);
-        expectSelectorCalled(foundScenarios, undefined, options);
+        expectSelectorCalled(undefined, options);
         expectSuccess(fulfilledSpy);
       });
     }
@@ -128,14 +113,13 @@ describe("CLI Info", function() {
 
       runs(function() {
 
-        var i = 0;
-        i = expectHeader(i, 'Sample', 'api/b.scenario.js');
-        i = expectParametersHeader(i, 0);
-        i = expectBaseConfiguration(i, {});
-        i = expectCurrentConfiguration(i, {});
-        i = expectSteps(i, []);
+        expectHeader('Sample', 'api/b.scenario.js');
+        expectParametersHeader(0);
+        expectBaseConfiguration({});
+        expectCurrentConfiguration({});
+        expectSteps([]);
 
-        expectNothingMore(i);
+        expectNothingMore();
       });
     });
 
@@ -147,14 +131,13 @@ describe("CLI Info", function() {
 
       runs(function() {
 
-        var i = 0;
-        i = expectHeader(i, 'Sample', 'api/b.scenario.js', { summary: 'Short description\nof the scenario.' });
-        i = expectParametersHeader(i, 0);
-        i = expectBaseConfiguration(i, {});
-        i = expectCurrentConfiguration(i, {});
-        i = expectSteps(i, []);
+        expectHeader('Sample', 'api/b.scenario.js', { summary: 'Short description\nof the scenario.' });
+        expectParametersHeader(0);
+        expectBaseConfiguration({});
+        expectCurrentConfiguration({});
+        expectSteps([]);
 
-        expectNothingMore(i);
+        expectNothingMore();
       });
     });
 
@@ -166,14 +149,13 @@ describe("CLI Info", function() {
 
       runs(function() {
 
-        var i = 0;
-        i = expectHeader(i, 'Sample', 'api/b.scenario.js');
-        i = expectParametersHeader(i, 0);
-        i = expectBaseConfiguration(i, { foo: 'bar' });
-        i = expectCurrentConfiguration(i, { foo: 'bar' });
-        i = expectSteps(i, []);
+        expectHeader('Sample', 'api/b.scenario.js');
+        expectParametersHeader(0);
+        expectBaseConfiguration({ foo: 'bar' });
+        expectCurrentConfiguration({ foo: 'bar' });
+        expectSteps([]);
 
-        expectNothingMore(i);
+        expectNothingMore();
       });
     });
 
@@ -188,14 +170,13 @@ describe("CLI Info", function() {
 
       runs(function() {
 
-        var i = 0;
-        i = expectHeader(i, 'Sample', 'api/b.scenario.js');
-        i = expectParametersHeader(i, 0);
-        i = expectBaseConfiguration(i, { foo: 'bar' });
-        i = expectCurrentConfiguration(i, { foo: 'bar', baz: 'qux', corge: 'grault' });
-        i = expectSteps(i, []);
+        expectHeader('Sample', 'api/b.scenario.js');
+        expectParametersHeader(0);
+        expectBaseConfiguration({ foo: 'bar' });
+        expectCurrentConfiguration({ foo: 'bar', baz: 'qux', corge: 'grault' });
+        expectSteps([]);
 
-        expectNothingMore(i);
+        expectNothingMore();
       });
     });
 
@@ -209,14 +190,13 @@ describe("CLI Info", function() {
 
       runs(function() {
 
-        var i = 0;
-        i = expectHeader(i, 'Sample', 'api/b.scenario.js');
-        i = expectParametersHeader(i, 0);
-        i = expectBaseConfiguration(i, {});
-        i = expectCurrentConfiguration(i, { config: 'config.yml' }, { configFile: 'config.yml', configFileExists: true });
-        i = expectSteps(i, []);
+        expectHeader('Sample', 'api/b.scenario.js');
+        expectParametersHeader(0);
+        expectBaseConfiguration({});
+        expectCurrentConfiguration({ config: 'config.yml' }, { configFile: 'config.yml', configFileExists: true });
+        expectSteps([]);
 
-        expectNothingMore(i);
+        expectNothingMore();
       });
     });
 
@@ -228,14 +208,13 @@ describe("CLI Info", function() {
 
       runs(function() {
 
-        var i = 0;
-        i = expectHeader(i, 'Sample', 'api/b.scenario.js');
-        i = expectParametersHeader(i, 0);
-        i = expectBaseConfiguration(i, {});
-        i = expectCurrentConfiguration(i, { config: 'config.yml' }, { configFile: 'config.yml', configFileExists: false });
-        i = expectSteps(i, []);
+        expectHeader('Sample', 'api/b.scenario.js');
+        expectParametersHeader(0);
+        expectBaseConfiguration({});
+        expectCurrentConfiguration({ config: 'config.yml' }, { configFile: 'config.yml', configFileExists: false });
+        expectSteps([]);
 
-        expectNothingMore(i);
+        expectNothingMore();
       });
     });
 
@@ -251,18 +230,17 @@ describe("CLI Info", function() {
 
       runs(function() {
 
-        var i = 0;
-        i = expectHeader(i, 'Sample', 'api/b.scenario.js');
-        i = expectParametersHeader(i, 0);
-        i = expectBaseConfiguration(i, {});
-        i = expectCurrentConfiguration(i, {});
-        i = expectSteps(i, [
+        expectHeader('Sample', 'api/b.scenario.js');
+        expectParametersHeader(0);
+        expectBaseConfiguration({});
+        expectCurrentConfiguration({});
+        expectSteps([
           { name: 'foo' },
           { name: 'bar' },
           { name: 'baz' }
         ]);
 
-        expectNothingMore(i);
+        expectNothingMore();
       });
     });
 
@@ -283,45 +261,28 @@ describe("CLI Info", function() {
 
       runs(function() {
 
-        var i = 0;
-        i = expectHeader(i, 'Sample', 'api/b.scenario.js');
-        i = expectParametersHeader(i, 3);
-        i = expectParameter(i, 'foo=value');
-        i = expectParameter(i, 'bar=/^regexp/ (required)\n  More documentation.');
-        i = expectParameter(i, 'baz boolean flag\n  Additional\n  indented\n  documentation.\n  And more.');
-        i = expectBaseConfiguration(i, {});
-        i = expectCurrentConfiguration(i, {});
-        i = expectSteps(i, []);
+        expectHeader('Sample', 'api/b.scenario.js');
+        expectParametersHeader(3);
+        expectParameter('foo=value');
+        expectParameter('bar=/^regexp/ (required)\n  More documentation.');
+        expectParameter('baz boolean flag\n  Additional\n  indented\n  documentation.\n  And more.');
+        expectBaseConfiguration({});
+        expectCurrentConfiguration({});
+        expectSteps([]);
 
-        expectNothingMore(i);
+        expectNothingMore();
       });
-    });
-  });
-
-  it("should forward an error from the finder", function() {
-
-    foundScenarios = new Error('finder bug');
-
-    var rejectedSpy = info(false);
-
-    runs(function() {
-      expectFinderCalled();
-      expectSelectorCalled(false);
-      expectNothingDisplayed();
-      expectError(rejectedSpy, 'finder bug');
     });
   });
 
   it("should forward an error from the selector", function() {
 
-    setAvailableScenarios('api/a.scenario.js', 'api/b.scenario.js');
-    selectedScenario = new Error('selector bug');
+    setSelectedScenario(new Error('selector bug'));
 
     var rejectedSpy = info(false);
 
     runs(function() {
-      expectFinderCalled();
-      expectSelectorCalled(foundScenarios);
+      expectSelectorCalled();
       expectNothingDisplayed();
       expectError(rejectedSpy, 'selector bug');
     });
@@ -344,7 +305,7 @@ describe("CLI Info", function() {
     return param;
   }
 
-  function expectHeader(index, name, file, options) {
+  function expectHeader(name, file, options) {
 
     var lines = [
       '',
@@ -363,49 +324,49 @@ describe("CLI Info", function() {
       '  File: ' + path.resolve(file)
     ]);
 
-    return expectLines(index, lines);
+    expectLines(lines);
   }
 
-  function expectParametersHeader(index, n) {
+  function expectParametersHeader(n) {
 
     if (!n) {
-      return expectLines(index, [
+      return expectLines([
         '',
         'PARAMETERS'.bold,
         '  None'
       ]);
     }
 
-    return expectLines(index, [
+    expectLines([
       '',
       ('PARAMETERS (' + n + ')').bold
     ]);
   }
 
-  function expectParameter(index, description) {
+  function expectParameter(description) {
 
       var paramLines = [
         ''
       ];
 
-      return expectLines(index, paramLines.concat(description.replace(/^/gm, '  ').split("\n")));
+      expectLines(paramLines.concat(description.replace(/^/gm, '  ').split("\n")));
   }
 
-  function expectBaseConfiguration(index, options) {
+  function expectBaseConfiguration(options) {
 
-    var i = expectLines(index, [
+    expectLines([
       '',
       'BASE CONFIGURATION'.bold,
       '',
       '  Options given to the scenario object:'
     ]);
 
-    return expectJson(i, options, 4);
+    expectJson(options, 4);
   }
 
-  function expectCurrentConfiguration(index, configuration, options) {
+  function expectCurrentConfiguration(configuration, options) {
 
-    var i = expectLines(index, [
+    expectLines([
       '',
       'EFFECTIVE CONFIGURATION'.bold,
       ''
@@ -413,77 +374,67 @@ describe("CLI Info", function() {
 
     if (options && options.configFile) {
       if (options.configFileExists) {
-        i = expectLines(i, [
+        expectLines([
           '  Configuration file: ' + path.resolve(options.configFile),
           ''
         ]);
       } else {
-        i = expectLines(i, [
+        expectLines([
           '  No configuration file loaded (search path ' + path.resolve(options.configFile) + ')',
           ''
         ]);
       }
     }
 
-    return expectJson(i, configuration);
+    expectJson(configuration);
   }
 
-  function expectSteps(index, steps) {
+  function expectSteps(steps) {
 
     if (!steps.length) {
-      return expectLines(index, [
+      return expectLines([
         '',
         'STEPS'.bold,
-        '  None'
+        '  None',
+        ''
       ]);
     }
 
-    var i = expectLines(index, [
+    expectLines([
       '',
       ('STEPS (' + steps.length + ')').bold,
       ''
     ]);
 
-    return expectLines(i, _.map(steps, function(step, i) {
+    expectLines(_.map(steps, function(step, i) {
       return '  ' + (i + 1) + '. ' + step.name;
     }));
+
+    expectLines([ '' ]);
   }
 
-  function expectNothingMore(index) {
-    var i = expectLines(index, [ '' ]);
-    expect(lines.length).toBe(i);
+  function expectNothingMore() {
+    expect(lineIndex).toBe(lines.length);
   }
 
-  function expectJson(index, data, indent) {
+  function expectJson(data, indent) {
 
-    var displayedJson = JSON.stringify(data, undefined, 2).replace(/^/mg, new Array((indent || 2) + 1).join(' ')),
-        jsonLines = displayedJson.split("\n"),
-        comparedLines = lines.slice(index, index + jsonLines.length);
+    var displayedJson = JSON.stringify(data, undefined, 2).replace(/^/mg, new Array((indent || 2) + 1).join(' '));
 
-    expect(comparedLines.join("\n")).toEqual(displayedJson);
-
-    return index + jsonLines.length;
+    expectLines(displayedJson.split("\n"));
   }
 
-  function expectLines(index, expectedLines) {
-    var comparedLines = lines.slice(index, index + expectedLines.length);
+  function expectLines(expectedLines) {
+    var comparedLines = lines.slice(lineIndex, lineIndex + expectedLines.length);
     expect(comparedLines.join("\n")).toEqual(expectedLines.join("\n"));
-    return index + expectedLines.length;
+    lineIndex += expectedLines.length;
   }
 
-  function expectFinderCalled(options) {
-    if (options === false) {
-      expect(mocks.finder).not.toHaveBeenCalled();
+  function expectSelectorCalled(choice, options) {
+    if (choice === false) {
+      expect(mocks.cliSelector).not.toHaveBeenCalled();
     } else {
-      expect(mocks.finder).toHaveBeenCalledWith(_.extend({}, options));
-    }
-  }
-
-  function expectSelectorCalled(scenarios, choice, options) {
-    if (scenarios === false) {
-      expect(mocks.selector).not.toHaveBeenCalled();
-    } else {
-      expect(mocks.selector).toHaveBeenCalledWith(scenarios, choice, _.extend({}, options));
+      expect(mocks.cliSelector).toHaveBeenCalledWith(choice, _.extend({}, options));
     }
   }
 

@@ -12,50 +12,40 @@ describe("CLI Runner", function() {
       scenarioFinderUtils = require('./support/scenario.finder.utils'),
       runnerInjector = require('../lib/cli.runner');
 
-  var Runner, mocks, foundScenarios, selectedScenario, scenarioResult, choice, defaultOptions;
+  var Runner, mocks, selectedScenario, scenarioResult, choice, defaultOptions;
   beforeEach(function() {
 
     h.addMatchers(this);
 
     choice = undefined;
-    foundScenarios = undefined;
     selectedScenario = undefined;
     defaultOptions = { source: 'api', foo: 'bar' };
 
     mocks = {
-      finder: function() {
-        return foundScenarios instanceof Error ? q.reject(foundScenarios) : q(foundScenarios);
-      },
       scenario: {
         run: function() {
           return scenarioResult instanceof Error ? q.reject(scenarioResult) : q(scenarioResult);
         }
       },
-      selector: function() {
+      cliSelector: function() {
         return selectedScenario instanceof Error ? q.reject(selectedScenario) : q(selectedScenario);
       }
     };
 
-    spyOn(mocks, 'finder').andCallThrough();
-    spyOn(mocks, 'selector').andCallThrough();
+    spyOn(mocks, 'cliSelector').andCallThrough();
     spyOn(mocks.scenario, 'run').andCallThrough();
 
     CliLoggerMock.instances.length = 0;
 
     Runner = runnerInjector({
       Logger: CliLoggerMock,
-      selector: mocks.selector,
-      finder: mocks.finder
+      cliSelector: mocks.cliSelector
     });
   });
 
   function run(expectedResult, options) {
     var runner = new Runner(_.extend({}, defaultOptions, options));
     return h.runPromise(runner.execute(choice), expectedResult);
-  }
-
-  function setAvailableScenarios() {
-    foundScenarios = scenarioFinderUtils.parseFiles(slice.call(arguments));
   }
 
   function setSelectedScenario(scenario) {
@@ -72,14 +62,12 @@ describe("CLI Runner", function() {
 
   it("should do nothing if there are no available scenarios", function() {
 
-    setAvailableScenarios();
     setSelectedScenario(false);
 
     var fulfilledSpy = run();
 
     runs(function() {
-      expectFinderCalled();
-      expectSelectorCalled([]);
+      expectSelectorCalled();
       expectNoScenarioRun();
       expect(fulfilledSpy).toHaveBeenCalledWith(undefined);
     });
@@ -87,22 +75,19 @@ describe("CLI Runner", function() {
 
   it("should run a selected scenario", function() {
 
-    setAvailableScenarios('api/a.scenario.js', 'api/b.scenario.js');
     setSelectedScenario();
     setScenarioResult('result');
 
     var fulfilledSpy = run();
 
     runs(function() {
-      expectFinderCalled();
-      expectSelectorCalled(foundScenarios);
+      expectSelectorCalled();
       expectScenarioRun(fulfilledSpy, 'result');
     });
   });
 
   it("should run a scenario selected with an argument", function() {
 
-    setAvailableScenarios('api/a.scenario.js', 'api/b.scenario.js');
     setChoice('foo');
     setSelectedScenario();
     setScenarioResult('result with arg');
@@ -110,69 +95,42 @@ describe("CLI Runner", function() {
     var fulfilledSpy = run();
 
     runs(function() {
-      expectFinderCalled();
-      expectSelectorCalled(foundScenarios, 'foo');
+      expectSelectorCalled('foo');
       expectScenarioRun(fulfilledSpy, 'result with arg');
     });
   });
 
   it("should run a selected scenario with custom options", function() {
 
-    setAvailableScenarios('api/a.scenario.js', 'api/b.scenario.js');
     setSelectedScenario();
     setScenarioResult('result with custom options');
 
     var fulfilledSpy = run(true, { baz: 'qux', corge: 'grault' });
 
     runs(function() {
-      expectFinderCalled({ baz: 'qux', corge: 'grault' });
-      expectSelectorCalled(foundScenarios, undefined, { baz: 'qux', corge: 'grault' });
+      expectSelectorCalled(undefined, { baz: 'qux', corge: 'grault' });
       expectScenarioRun(fulfilledSpy, 'result with custom options', { baz: 'qux', corge: 'grault' });
     });
   });
 
-  it("should forward an error from the finder", function() {
+  it("should forward an error from the selector", function() {
 
-    foundScenarios = new Error('finder bug');
-
-    var rejectedSpy = run(false);
-
-    runs(function() {
-      expectFinderCalled();
-      expectSelectorCalled(false);
-      expectNoScenarioRun();
-      expectRunError(rejectedSpy, 'finder bug');
-    });
-  });
-
-  it("should forward an error from the finder", function() {
-
-    setAvailableScenarios('api/a.scenario.js', 'api/b.scenario.js');
-    selectedScenario = new Error('selector bug');
+    setSelectedScenario(new Error('selector bug'));
 
     var rejectedSpy = run(false);
 
     runs(function() {
-      expectFinderCalled();
-      expectSelectorCalled(foundScenarios);
+      expectSelectorCalled();
       expectNoScenarioRun();
       expectRunError(rejectedSpy, 'selector bug');
     });
   });
 
-  function expectFinderCalled(options) {
-    if (options === false) {
-      expect(mocks.finder).not.toHaveBeenCalled();
+  function expectSelectorCalled(choice, options) {
+    if (choice === false) {
+      expect(mocks.cliSelector).not.toHaveBeenCalled();
     } else {
-      expect(mocks.finder).toHaveBeenCalledWith(_.extend({}, defaultOptions, options));
-    }
-  }
-
-  function expectSelectorCalled(scenarios, choice, options) {
-    if (scenarios === false) {
-      expect(mocks.selector).not.toHaveBeenCalled();
-    } else {
-      expect(mocks.selector).toHaveBeenCalledWith(scenarios, choice, _.extend({}, defaultOptions, options));
+      expect(mocks.cliSelector).toHaveBeenCalledWith(choice, _.extend({}, defaultOptions, options));
     }
   }
 
