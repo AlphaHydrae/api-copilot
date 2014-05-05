@@ -10,18 +10,27 @@ describe("CLI Listing", function() {
   var scenarioFinderUtils = require('./support/scenario.finder.utils'),
       listingInjector = require('../lib/cli.listing');
 
-  var Listing, mocks, foundScenarios, defaultOptions, lines;
+  var Listing, mocks, foundScenarios, scenarioListing, defaultOptions, lines, lineIndex;
   beforeEach(function() {
 
     h.addMatchers(this);
 
     lines = [];
+    lineIndex = 0;
     foundScenarios = undefined;
+    scenarioListing = undefined;
     defaultOptions = { source: 'api' };
 
     mocks = {
       finder: function() {
         return foundScenarios instanceof Error ? q.reject(foundScenarios) : q(foundScenarios);
+      },
+      listing: function() {
+        if (scenarioListing instanceof Error) {
+          throw scenarioListing;
+        }
+
+        return scenarioListing;
       },
       print: function(text) {
         lines = lines.concat((text || '').split("\n"));
@@ -29,230 +38,149 @@ describe("CLI Listing", function() {
     };
 
     spyOn(mocks, 'finder').andCallThrough();
+    spyOn(mocks, 'listing').andCallThrough();
 
     Listing = listingInjector(mocks);
   });
 
-  function list(options, expectedResult) {
+  function list(expectedResult, options) {
     var listing = new Listing(_.extend({}, defaultOptions, options));
     return h.runPromise(listing.execute(), expectedResult);
   }
 
-  function setAvailableScenarios() {
-    foundScenarios = scenarioFinderUtils.parseFiles(slice.call(arguments));
+  function setScenarioListing(scenarioListingText) {
+    scenarioListing = scenarioListingText;
   }
 
-  // TODO: remove this and check exact output
-  function cleanOutput() {
-    lines = _.filter(lines, function(line) {
-      return line.trim().length;
-    });
+  function setAvailableScenarios(err) {
+    if (err instanceof Error) {
+      foundScenarios = err;
+    } else {
+      foundScenarios = scenarioFinderUtils.parseFiles(slice.call(arguments));
+    }
   }
 
-  it("should show when no scenarios are available", function() {
+  it("should print the scenario listing and commands notice", function() {
 
-    setAvailableScenarios();
-
-    var fulfilledSpy = list();
-
-    runs(function() {
-
-      expectListingSuccessful(fulfilledSpy);
-      expectFinderCalled();
-
-      cleanOutput();
-      expectSource(lines, 'api');
-      expect(lines.length).toBe(3);
-      expect(lines[2]).toBe('Available API scenarios: none'.yellow);
-    });
-  });
-
-  it("should list one scenario", function() {
-
-    setAvailableScenarios('api/a.scenario.js');
+    setAvailableScenarios('api/a.scenario.js', 'api/b.scenario.js');
+    setScenarioListing('- a\n- b');
 
     var fulfilledSpy = list();
 
     runs(function() {
 
-      expectListingSuccessful(fulfilledSpy);
+      expectSuccess(fulfilledSpy);
       expectFinderCalled();
+      expectListingCalled();
 
-      cleanOutput();
-      expect(lines.length).toBe(7);
-      expectSource(lines, 'api');
-      expectAvailable(lines, [ { file: 'api/a.scenario.js', name: 'a' } ]);
-      expectInfoNotice(lines);
+      expectScenarioListingPrinted('\n- a\n- b');
+      expectCommandsNoticePrinted();
+      expectNothingMorePrinted();
     });
   });
 
-  it("should list multiple scenarios", function() {
+  it("should pass its options to the scenario finder and listing", function() {
 
-    setAvailableScenarios('api/a.scenario.js', 'api/b.scenario.js', 'api/c.scenario.js');
+    setAvailableScenarios('api/a.scenario.js', 'api/b.scenario.js');
+    setScenarioListing('- a\n- b');
 
-    var fulfilledSpy = list();
+    var fulfilledSpy = list(true, { foo: 'bar', baz: 'qux' });
 
     runs(function() {
 
-      expectListingSuccessful(fulfilledSpy);
+      expectSuccess(fulfilledSpy);
+      expectFinderCalled({ foo: 'bar', baz: 'qux' });
+      expectListingCalled({ foo: 'bar', baz: 'qux' });
+
+      expectScenarioListingPrinted('\n- a\n- b');
+      expectCommandsNoticePrinted();
+      expectNothingMorePrinted();
+    });
+  });
+
+  it("should forward an error from the scenario finder", function() {
+
+    setAvailableScenarios(new Error('finder bug'));
+
+    var rejectedSpy = list(false);
+
+    runs(function() {
+
+      expectError(rejectedSpy, 'finder bug');
       expectFinderCalled();
+      expectListingCalled(false);
 
-      cleanOutput();
-      expect(lines.length).toBe(9);
-      expectSource(lines, 'api');
-      expectAvailable(lines, [
-        { file: 'api/a.scenario.js', name: 'a' },
-        { file: 'api/b.scenario.js', name: 'b' },
-        { file: 'api/c.scenario.js', name: 'c' }
-      ]);
-      expectInfoNotice(lines);
+      expectNothingPrinted();
     });
   });
 
-  it("should list scenarios from a custom source", function() {
+  it("should forward an error from the scenario listing", function() {
 
-    setAvailableScenarios('custom/a.scenario.js', 'custom/b.scenario.js');
+    setAvailableScenarios('api/a.scenario.js', 'api/b.scenario.js');
+    setScenarioListing(new Error('listing bug'));
 
-    var fulfilledSpy = list({ source: 'custom' });
-
-    runs(function() {
-
-      expectListingSuccessful(fulfilledSpy);
-      expectFinderCalled({ source: 'custom' });
-
-      cleanOutput();
-      expect(lines.length).toBe(8);
-      expectSource(lines, 'custom');
-      expectAvailable(lines, [
-        { file: 'custom/a.scenario.js', name: 'a' },
-        { file: 'custom/b.scenario.js', name: 'b' }
-      ]);
-      expectInfoNotice(lines);
-    });
-  });
-
-  it("should list scenarios from an absolute source", function() {
-
-    setAvailableScenarios('/custom/a.scenario.js', '/custom/b.scenario.js');
-
-    var fulfilledSpy = list({ source: '/custom' });
+    var rejectedSpy = list(false);
 
     runs(function() {
 
-      expectListingSuccessful(fulfilledSpy);
-      expectFinderCalled({ source: '/custom' });
-
-      cleanOutput();
-      expect(lines.length).toBe(8);
-      expectSource(lines, '/custom');
-      expectAvailable(lines, [
-        { file: '/custom/a.scenario.js', name: 'a' },
-        { file: '/custom/b.scenario.js', name: 'b' }
-      ]);
-      expectInfoNotice(lines);
-    });
-  });
-
-  it("should use file basenames as scenario names", function() {
-
-    setAvailableScenarios(
-      'api/a.scenario.js', 'api/b.scenario.js',
-      'api/sub/c.scenario.js', 'api/sub/sub/d.scenario.js'
-    );
-
-    var fulfilledSpy = list();
-
-    runs(function() {
-
-      expectListingSuccessful(fulfilledSpy);
+      expectError(rejectedSpy, 'listing bug');
       expectFinderCalled();
+      expectListingCalled();
 
-      cleanOutput();
-      expect(lines.length).toBe(10);
-      expectSource(lines, 'api');
-      expectAvailable(lines, [
-        { file: 'api/a.scenario.js', name: 'a' },
-        { file: 'api/b.scenario.js', name: 'b' },
-        { file: 'api/sub/c.scenario.js', name: 'c' },
-        { file: 'api/sub/sub/d.scenario.js', name: 'd' }
-      ]);
-      expectInfoNotice(lines);
+      expectNothingPrinted();
     });
   });
 
-  it("should show only unique scenario names", function() {
-
-    setAvailableScenarios(
-      'api/a.scenario.js', 'api/b.scenario.js',
-      'api/sub/b.scenario.js', 'api/sub/c.scenario.js',
-      'api/svb/c.scenario.js'
-    );
-
-    var fulfilledSpy = list();
-
-    runs(function() {
-
-      expectListingSuccessful(fulfilledSpy);
-      expectFinderCalled();
-
-      cleanOutput();
-      expect(lines.length).toBe(11);
-      expectSource(lines, 'api');
-      expectAvailable(lines, [
-        { file: 'api/a.scenario.js', name: 'a' },
-        { file: 'api/b.scenario.js', name: 'b' },
-        { file: 'api/sub/b.scenario.js', name: false },
-        { file: 'api/sub/c.scenario.js', name: 'c' },
-        { file: 'api/svb/c.scenario.js', name: false }
-      ]);
-      expectInfoNotice(lines);
-    });
-  });
-
-  it("should forward an error from the finder", function() {
-
-    foundScenarios = new Error('finder bug');
-
-    var rejectedSpy = list({}, false);
-
-    runs(function() {
-
-      expectListingFailed(rejectedSpy, 'finder bug');
-      expectFinderCalled();
-
-      expect(lines.length).toBe(0);
-    });
-  });
-
-  function expectListingSuccessful(fulfilledSpy) {
+  function expectSuccess(fulfilledSpy) {
     expect(fulfilledSpy).toHaveBeenCalledWith(undefined);
   }
 
-  function expectListingFailed(rejectedSpy, message) {
+  function expectError(rejectedSpy, message) {
     expect(rejectedSpy).toHaveBeenCalled();
     expect(rejectedSpy.calls[0].args[0]).toBeAnError(message);
   }
 
   function expectFinderCalled(options) {
-    expect(mocks.finder).toHaveBeenCalledWith(_.extend({}, defaultOptions, options));
+    if (options === false) {
+      expect(mocks.finder).not.toHaveBeenCalled();
+    } else {
+      expect(mocks.finder).toHaveBeenCalledWith(_.extend({}, defaultOptions, options));
+    }
   }
 
-  function expectSource(lines, source) {
-    expect(lines[0]).toBe('Source directory: ' + path.resolve(source));
-    expect(lines[1]).toBe('  (use the `-s, --source <dir>` option to list API scenarios from another directory)');
+  function expectListingCalled(options) {
+    if (options === false) {
+      expect(mocks.listing).not.toHaveBeenCalled();
+    } else {
+      expect(mocks.listing).toHaveBeenCalledWith(foundScenarios, _.extend({}, defaultOptions, options));
+    }
   }
 
-  function expectAvailable(lines, scenarios) {
-    expect(lines[2]).toBe(('Available API scenarios (' + scenarios.length + '):').bold);
-    _.each(scenarios, function(scenario, i) {
-      var line = lines[3 + i].replace(/ +/g, ' ').trim();
-      expect(line).toBe((i + 1) + ') ' + scenario.file + (scenario.name ? ' (' + scenario.name + ')' : ''));
-    });
+  function expectScenarioListingPrinted(listing) {
+    return expectLines(listing.split("\n"));
   }
 
-  function expectInfoNotice(lines) {
-    expect(lines[lines.length - 3]).toBe('Use `' + 'api-copilot info [scenario]'.underline + '` for more information about a scenario.');
-    expect(lines[lines.length - 2]).toBe('Use `' + 'api-copilot run [scenario]'.underline + '` to run a scenario.');
-    expect(lines[lines.length - 1]).toBe('[scenario] may be either the number, path or name of the scenario.');
+  function expectCommandsNoticePrinted() {
+    return expectLines([
+      '',
+      'Use `' + 'api-copilot info [scenario]'.underline + '` for more information about a scenario.',
+      'Use `' + 'api-copilot run [scenario]'.underline + '` to run a scenario.',
+      '[scenario] may be either the number, path or name of the scenario.',
+      ''
+    ]);
+  }
+
+  function expectNothingMorePrinted() {
+    expect(lineIndex).toBe(lines.length);
+  }
+
+  function expectNothingPrinted() {
+    expect(lines).toEqual([]);
+  }
+
+  function expectLines(expectedLines) {
+    var comparedLines = lines.slice(lineIndex, lineIndex + expectedLines.length);
+    expect(comparedLines.join("\n")).toEqual(expectedLines.join("\n"));
+    lineIndex += expectedLines.length;
   }
 });

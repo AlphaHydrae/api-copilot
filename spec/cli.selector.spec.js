@@ -5,25 +5,38 @@ var _ = require('underscore'),
 
 describe("CLI Selector", function() {
 
-  var CliListingMock = require('./support/cli.listing.mock'),
-      scenarioFinderUtils = require('./support/scenario.finder.utils'),
+  var scenarioFinderUtils = require('./support/scenario.finder.utils'),
       cliSelectorInjector = require('../lib/cli.selector');
 
-  var selector, mocks, loadedScenario, listingMock, readlineAnswer, scenarios, choice;
+  var selector, mocks, loadedScenario, readlineAnswer, foundScenarios, scenarioListing, choice, lines;
   beforeEach(function() {
 
     h.addMatchers(this);
 
+    lines = [];
+    choice = undefined;
+    foundScenarios = undefined;
     loadedScenario = undefined;
     readlineAnswer = undefined;
+    scenarioListing = 'scenario\nlisting';
 
     mocks = {
-      loader: function() {
+      scenarioListing: function() {
+        if (scenarioListing instanceof Error) {
+          throw scenarioListing;
+        }
+
+        return scenarioListing;
+      },
+      scenarioLoader: function() {
         if (loadedScenario instanceof Error) {
           throw loadedScenario;
         }
 
         return loadedScenario;
+      },
+      print: function(text) {
+        lines = lines.concat((text || '').split("\n"));
       },
       readlineInterface: {
         question: function(query, callback) {
@@ -38,34 +51,26 @@ describe("CLI Selector", function() {
       }
     };
 
-    spyOn(mocks, 'loader').andCallThrough();
+    spyOn(mocks, 'scenarioListing').andCallThrough();
+    spyOn(mocks, 'scenarioLoader').andCallThrough();
     spyOn(mocks.readlineInterface, 'question').andCallThrough();
     spyOn(mocks.readlineInterface, 'close');
     spyOn(mocks.readline, 'createInterface').andCallThrough();
 
-    CliListingMock.instances.length = 0;
-
-    choice = undefined;
-    scenarios = undefined;
-
-    selector = cliSelectorInjector({
-      readline: mocks.readline,
-      scenarioLoader: mocks.loader,
-      Listing: CliListingMock
-    });
+    selector = cliSelectorInjector(mocks);
   });
 
   function select(expectedResult, options) {
-    if (!scenarios) {
+    if (!foundScenarios) {
       throw new Error('No scenarios mocked');
     }
 
-    var promise = selector(scenarios, choice, _.extend({}, options));
+    var promise = selector(foundScenarios, choice, _.extend({}, options));
     return h.runPromise(promise, expectedResult);
   }
 
-  function setScenarios() {
-    scenarios = scenarioFinderUtils.parseFiles(slice.call(arguments));
+  function setAvailableScenarios() {
+    foundScenarios = scenarioFinderUtils.parseFiles(slice.call(arguments));
   }
 
   function setChoice(newChoice) {
@@ -80,44 +85,48 @@ describe("CLI Selector", function() {
     readlineAnswer = answer;
   }
 
+  function setScenarioListing(listing) {
+    scenarioListing = listing;
+  }
+
   it("should select nothing if there are no available scenarios", function() {
 
-    setScenarios();
+    setAvailableScenarios();
 
     var fulfilledSpy = select();
 
     runs(function() {
-      expectListingDisplayed(true);
+      expectListingPrinted();
       expectReadlineCalled(false);
       expectLoaderCalled(false);
       expectScenarioSelected(fulfilledSpy, undefined);
     });
   });
 
-  it("should automatically run a single available scenario", function() {
+  it("should automatically select a single available scenario", function() {
 
-    setScenarios('api/a.scenario.js');
+    setAvailableScenarios('api/a.scenario.js');
     setLoadedScenario('single');
 
     var fulfilledSpy = select();
 
     runs(function() {
-      expectListingDisplayed(false);
+      expectListingPrinted(false);
       expectReadlineCalled(false);
       expectLoaderCalled('api/a.scenario.js');
       expectScenarioSelected(fulfilledSpy, 'single', 'api/a.scenario.js');
     });
   });
 
-  it("should automatically run a single available scenario with custom options", function() {
+  it("should automatically select a single available scenario with custom options", function() {
 
-    setScenarios('api/b.scenario.js');
+    setAvailableScenarios('api/b.scenario.js');
     setLoadedScenario('single with custom options');
 
     var fulfilledSpy = select(true, { foo: 'bar' });
 
     runs(function() {
-      expectListingDisplayed(false, { foo: 'bar' });
+      expectListingPrinted(false);
       expectReadlineCalled(false);
       expectLoaderCalled('api/b.scenario.js');
       expectScenarioSelected(fulfilledSpy, 'single with custom options', 'api/b.scenario.js');
@@ -127,7 +136,7 @@ describe("CLI Selector", function() {
   describe("with a provided argument", function() {
 
     beforeEach(function() {
-      setScenarios('api/a.scenario.js', 'api/b.scenario.js', 'api/c.scenario.js', 'api/sub/d.scenario.js');
+      setAvailableScenarios('api/a.scenario.js', 'api/b.scenario.js', 'api/c.scenario.js', 'api/sub/d.scenario.js');
     });
 
     it("should run a scenario by number", function() {
@@ -138,7 +147,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select();
 
       runs(function() {
-        expectListingDisplayed(false);
+        expectListingPrinted(false);
         expectReadlineCalled(false);
         expectLoaderCalled('api/b.scenario.js');
         expectScenarioSelected(fulfilledSpy, 'by number', 'api/b.scenario.js');
@@ -153,7 +162,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select();
 
       runs(function() {
-        expectListingDisplayed(false);
+        expectListingPrinted(false);
         expectReadlineCalled(false);
         expectLoaderCalled('api/c.scenario.js');
         expectScenarioSelected(fulfilledSpy, 'by path', 'api/c.scenario.js');
@@ -168,7 +177,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select();
 
       runs(function() {
-        expectListingDisplayed(false);
+        expectListingPrinted(false);
         expectReadlineCalled(false);
         expectLoaderCalled('api/a.scenario.js');
         expectScenarioSelected(fulfilledSpy, 'by name', 'api/a.scenario.js');
@@ -183,7 +192,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select(true, { baz: 'qux' });
 
       runs(function() {
-        expectListingDisplayed(false, { baz: 'qux' });
+        expectListingPrinted(false);
         expectReadlineCalled(false);
         expectLoaderCalled('api/sub/d.scenario.js');
         expectScenarioSelected(fulfilledSpy, 'by name with custom options', 'api/sub/d.scenario.js');
@@ -198,7 +207,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select();
 
       runs(function() {
-        expectListingDisplayed(false);
+        expectListingPrinted(false);
         expectReadlineCalled(false);
         expectLoaderCalled('api/sub/d.scenario.js');
         expectScenarioSelected(fulfilledSpy, 'by name in subdir', 'api/sub/d.scenario.js');
@@ -212,7 +221,7 @@ describe("CLI Selector", function() {
       var rejectedSpy = select(false);
 
       runs(function() {
-        expectListingDisplayed(true);
+        expectListingPrinted();
         expectReadlineCalled(false);
         expectLoaderCalled(false);
         expectError(rejectedSpy, 'No such scenario "unknown"');
@@ -226,7 +235,7 @@ describe("CLI Selector", function() {
       var rejectedSpy = select(false);
 
       runs(function() {
-        expectListingDisplayed(true);
+        expectListingPrinted();
         expectReadlineCalled(false);
         expectLoaderCalled(false);
         expectError(rejectedSpy, 'No such scenario "0"');
@@ -240,7 +249,7 @@ describe("CLI Selector", function() {
       var rejectedSpy = select(false);
 
       runs(function() {
-        expectListingDisplayed(true);
+        expectListingPrinted();
         expectReadlineCalled(false);
         expectLoaderCalled(false);
         expectError(rejectedSpy, 'No such scenario "5"');
@@ -255,7 +264,7 @@ describe("CLI Selector", function() {
       var rejectedSpy = select(false);
 
       runs(function() {
-        expectListingDisplayed(false);
+        expectListingPrinted(false);
         expectReadlineCalled(false);
         expectLoaderCalled('api/a.scenario.js');
         expectError(rejectedSpy, 'loading bug');
@@ -266,7 +275,7 @@ describe("CLI Selector", function() {
   describe("after asking the user which scenario to run", function() {
 
     beforeEach(function() {
-      setScenarios('api/a.scenario.js', 'api/b.scenario.js', 'api/c.scenario.js', 'api/sub/d.scenario.js');
+      setAvailableScenarios('api/a.scenario.js', 'api/b.scenario.js', 'api/c.scenario.js', 'api/sub/d.scenario.js');
     });
 
     it("should run a scenario by number", function() {
@@ -277,7 +286,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select();
 
       runs(function() {
-        expectListingDisplayed(true);
+        expectListingPrinted();
         expectReadlineCalled(true);
         expectLoaderCalled('api/b.scenario.js');
         expectScenarioSelected(fulfilledSpy, 'by number', 'api/b.scenario.js');
@@ -292,7 +301,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select();
 
       runs(function() {
-        expectListingDisplayed(true);
+        expectListingPrinted();
         expectReadlineCalled(true);
         expectLoaderCalled('api/c.scenario.js');
         expectScenarioSelected(fulfilledSpy, 'by path', 'api/c.scenario.js');
@@ -307,7 +316,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select();
 
       runs(function() {
-        expectListingDisplayed(true);
+        expectListingPrinted();
         expectReadlineCalled(true);
         expectLoaderCalled('api/a.scenario.js');
         expectScenarioSelected(fulfilledSpy, 'by name', 'api/a.scenario.js');
@@ -322,7 +331,7 @@ describe("CLI Selector", function() {
       var fulfilledSpy = select(true, { qux: 'baz' });
 
       runs(function() {
-        expectListingDisplayed(true, { qux: 'baz' });
+        expectListingPrinted({ qux: 'baz' });
         expectReadlineCalled(true);
         expectLoaderCalled('api/sub/d.scenario.js');
         expectScenarioSelected(fulfilledSpy, 'by name with custom options', 'api/sub/d.scenario.js');
@@ -336,7 +345,7 @@ describe("CLI Selector", function() {
       var rejectedSpy = select(false);
 
       runs(function() {
-        expectListingDisplayed(true);
+        expectListingPrinted();
         expectReadlineCalled(true);
         expectLoaderCalled(false);
         expectError(rejectedSpy, 'No such scenario ""');
@@ -350,7 +359,7 @@ describe("CLI Selector", function() {
       var rejectedSpy = select(false);
 
       runs(function() {
-        expectListingDisplayed(true);
+        expectListingPrinted();
         expectReadlineCalled(true);
         expectLoaderCalled(false);
         expectError(rejectedSpy, 'No such scenario "0"');
@@ -364,7 +373,7 @@ describe("CLI Selector", function() {
       var rejectedSpy = select(false);
 
       runs(function() {
-        expectListingDisplayed(true);
+        expectListingPrinted();
         expectReadlineCalled(true);
         expectLoaderCalled(false);
         expectError(rejectedSpy, 'No such scenario "5"');
@@ -378,7 +387,7 @@ describe("CLI Selector", function() {
       var rejectedSpy = select(false);
 
       runs(function() {
-        expectListingDisplayed(true);
+        expectListingPrinted();
         expectReadlineCalled(true);
         expectLoaderCalled(false);
         expectError(rejectedSpy, 'No such scenario "unknown"');
@@ -391,7 +400,7 @@ describe("CLI Selector", function() {
     var completer;
     beforeEach(function() {
 
-      setScenarios('api/abc.scenario.js', 'api/abcdef.scenario.js', 'api/fedcab.scenario.js', 'api/sub/ab.scenario.js');
+      setAvailableScenarios('api/abc.scenario.js', 'api/abcdef.scenario.js', 'api/fedcab.scenario.js', 'api/sub/ab.scenario.js');
       setReadlineAnswer('2');
       setLoadedScenario('completer');
 
@@ -399,7 +408,7 @@ describe("CLI Selector", function() {
 
       runs(function() {
 
-        expectListingDisplayed(true);
+        expectListingPrinted();
         expectReadlineCalled(true);
         expectLoaderCalled('api/abcdef.scenario.js');
         expectScenarioSelected(fulfilledSpy, 'completer', 'api/abcdef.scenario.js');
@@ -417,26 +426,21 @@ describe("CLI Selector", function() {
     });
   });
 
-  function expectListingDisplayed(displayed, options) {
-
-    // check that one logger was created with the correct options
-    expect(CliListingMock.instances.length).toBe(1);
-    expect(CliListingMock.instances[0].args).toEqual([ _.extend({}, options) ]);
-
-    // check that the logger was called (or not)
-    displayed = displayed !== undefined ? displayed : true;
-    if (displayed) {
-      expect(CliListingMock.instances[0].display).toHaveBeenCalledWith(scenarios);
+  function expectListingPrinted(options) {
+    if (options === false) {
+      expect(mocks.scenarioListing).not.toHaveBeenCalled();
+      expect(lines).toEqual([]);
     } else {
-      expect(CliListingMock.instances[0].display).not.toHaveBeenCalled();
+      expect(mocks.scenarioListing).toHaveBeenCalledWith(foundScenarios, _.extend({}, options));
+      expect(lines).toEqual([ '' ].concat(scenarioListing.split("\n")));
     }
   }
 
   function expectLoaderCalled(file) {
     if (file) {
-      expect(mocks.loader).toHaveBeenCalledWith(path.resolve(file));
+      expect(mocks.scenarioLoader).toHaveBeenCalledWith(path.resolve(file));
     } else {
-      expect(mocks.loader).not.toHaveBeenCalled();
+      expect(mocks.scenarioLoader).not.toHaveBeenCalled();
     }
   }
 
