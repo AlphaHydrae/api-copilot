@@ -1,17 +1,16 @@
 var _ = require('underscore'),
+    cliProgramInjector = require('../lib/cli.program'),
+    fsMock = require('./support/fs.mock'),
     h = require('./support/helpers'),
     q = require('q'),
     path = require('path'),
+    pkg = require('../package'),
     slice = Array.prototype.slice,
     yaml = require('js-yaml');
 
 describe("CLI Program", function() {
 
-  var fsMock = require('./support/fs.mock'),
-      programInjector = require('../lib/cli.program'),
-      pkg = require('../package');
-
-  var Program, program, defaultOptions, runSpy, infoSpy, listSpy, spies;
+  var CliProgram, program, defaultOptions, mocks, handlerMocks;
   beforeEach(function() {
 
     h.addMatchers(this);
@@ -23,21 +22,17 @@ describe("CLI Program", function() {
       config: 'api-copilot.yml'
     };
 
-    Program = programInjector({
+    CliProgram = cliProgramInjector({
       fs: fsMock
     });
 
-    runSpy = jasmine.createSpy();
-    infoSpy = jasmine.createSpy();
-    listSpy = jasmine.createSpy();
-
-    spies = {
-      run: runSpy,
-      info: infoSpy,
-      list: listSpy
+    handlerMocks = {
+      run: jasmine.createSpy(),
+      info: jasmine.createSpy(),
+      list: jasmine.createSpy()
     };
 
-    program = new Program(spies);
+    program = new CliProgram(handlerMocks);
   });
 
   function execute() {
@@ -63,7 +58,7 @@ describe("CLI Program", function() {
 
     expect(output.stdout).toMatch(/Usage:/);
 
-    _.each(spies, function(spy) {
+    _.each(handlerMocks, function(spy) {
       expect(spy).not.toHaveBeenCalled();
     });
   });
@@ -88,9 +83,9 @@ describe("CLI Program", function() {
   });
 
   var subCommands = [
-    { name: 'run', minArgs: 0, maxArgs: 1 },
-    { name: 'info', minArgs: 0, maxArgs: 1 },
-    { name: 'list', minArgs: 0, maxArgs: 0 }
+    { name: 'run', arity: 1 },
+    { name: 'info', arity: 1 },
+    { name: 'list', arity: 0 }
   ];
 
   _.each(subCommands, function(subCommand) {
@@ -98,10 +93,21 @@ describe("CLI Program", function() {
 
     describe("`" + command + "` sub-command", function() {
 
-      var spy;
+      var spy, arity;
       beforeEach(function() {
-        spy = spies[subCommand.name];
+        spy = handlerMocks[subCommand.name];
+        arity = subCommand.arity;
       });
+
+      function expectActionCalled(options, arg) {
+        if (arity === 1) {
+          expect(spy).toHaveBeenCalledWith(arg, options);
+        } else if (arity === 0) {
+          expect(spy).toHaveBeenCalledWith(options);
+        } else {
+          throw new Error('Unsupported arity ' + arity);
+        }
+      }
 
       it("should return a resolved promise when successful", function() {
 
@@ -110,7 +116,7 @@ describe("CLI Program", function() {
           return q(command + ' result');
         };
 
-        program = new Program(handlers);
+        program = new CliProgram(handlers);
 
         var fulfilledSpy = jasmine.createSpy();
         execute(command).then(fulfilledSpy);
@@ -129,7 +135,7 @@ describe("CLI Program", function() {
         var handlers = {};
         handlers[command] = function() {};
 
-        program = new Program(handlers);
+        program = new CliProgram(handlers);
 
         var fulfilledSpy = jasmine.createSpy();
         execute(command).then(fulfilledSpy);
@@ -150,7 +156,7 @@ describe("CLI Program", function() {
           return q.reject(new Error(command + ' bug'));
         };
 
-        program = new Program(handlers);
+        program = new CliProgram(handlers);
 
         var rejectedSpy = jasmine.createSpy();
         execute(command).fail(rejectedSpy);
@@ -167,16 +173,16 @@ describe("CLI Program", function() {
 
       it("should produce the default options with no arguments", function() {
         execute(command);
-        expect(spy).toHaveBeenCalledWith(parsed());
+        expectActionCalled(parsed());
       });
 
       describe("command line", function() {
 
         it("should parse the log option", function() {
           execute('-l', 'debug', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ log: 'debug' }));
+          expectActionCalled(parsed({ log: 'debug' }));
           execute('--log', 'trace', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ log: 'trace' }));
+          expectActionCalled(parsed({ log: 'trace' }));
         });
 
         it("should not accept unknown log levels with the short log option", function() {
@@ -189,86 +195,94 @@ describe("CLI Program", function() {
           expect(spy.calls.length).toBe(8);
 
           _.times(8, function(i) {
-            expect(spy.calls[i].args).toEqual([ parsed() ]);
+
+            var args = [];
+            if (arity === 1) {
+              args.push(undefined);
+            }
+
+            args.push(parsed());
+
+            expect(spy.calls[i].args).toEqual(args);
           });
         });
 
         it("should parse the source option", function() {
           execute('-s', 'foo', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ source: 'foo' }));
+          expectActionCalled(parsed({ source: 'foo' }));
           execute('--source', 'bar', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ source: 'bar' }));
+          expectActionCalled(parsed({ source: 'bar' }));
         });
 
         it("should parse the baseUrl option", function() {
           execute('-u', 'http://foo.com', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ baseUrl: 'http://foo.com' }));
+          expectActionCalled(parsed({ baseUrl: 'http://foo.com' }));
           execute('--base-url', 'http://bar.com', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ baseUrl: 'http://bar.com' }));
+          expectActionCalled(parsed({ baseUrl: 'http://bar.com' }));
         });
 
         it("should parse the showTime option", function() {
           execute('-t', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ showTime: true }));
+          expectActionCalled(parsed({ showTime: true }));
           execute('--show-time', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ showTime: true }));
+          expectActionCalled(parsed({ showTime: true }));
         });
 
         it("should parse the showRequest option", function() {
           execute('-q', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ showRequest: true }));
+          expectActionCalled(parsed({ showRequest: true }));
           execute('--show-request', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ showRequest: true }));
+          expectActionCalled(parsed({ showRequest: true }));
         });
 
         it("should parse the showResponseBody option", function() {
           execute('-b', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ showResponseBody: true }));
+          expectActionCalled(parsed({ showResponseBody: true }));
           execute('--show-response-body', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ showResponseBody: true }));
+          expectActionCalled(parsed({ showResponseBody: true }));
         });
 
         it("should parse the params option", function() {
           execute('-p', 'foo', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ params: { foo: true } }));
+          expectActionCalled(parsed({ params: { foo: true } }));
           execute('--params', 'bar', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ params: { bar: true } }));
+          expectActionCalled(parsed({ params: { bar: true } }));
         });
 
         it("should parse multiple params options", function() {
           execute('-p', 'foo', '--params', 'bar', '-p', 'baz', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ params: { foo: true, bar: true, baz: true } }));
+          expectActionCalled(parsed({ params: { foo: true, bar: true, baz: true } }));
         });
 
         it("should parse key/value params options", function() {
           execute('-p', 'foo=bar', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ params: { foo: 'bar' } }));
+          expectActionCalled(parsed({ params: { foo: 'bar' } }));
           execute('--params', 'baz=qux', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ params: { baz: 'qux' } }));
+          expectActionCalled(parsed({ params: { baz: 'qux' } }));
         });
 
         it("should parse mixed params options", function() {
           execute('-p', 'foo=bar', '-p', 'baz', '--params', 'qux=corge', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ params: { foo: 'bar', baz: true, qux: 'corge' } }));
+          expectActionCalled(parsed({ params: { foo: 'bar', baz: true, qux: 'corge' } }));
         });
 
         it("should parse the config option", function() {
           execute('-c', 'foo.yml', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ config: 'foo.yml' }));
+          expectActionCalled(parsed({ config: 'foo.yml' }));
           execute('--config', 'bar.yml', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ config: 'bar.yml' }));
+          expectActionCalled(parsed({ config: 'bar.yml' }));
         });
 
         it("should override configuration file options", function() {
           setConfig({ log: 'debug', source: 'foo', baseUrl: 'http://bar.com' });
           execute('-l', 'trace', '--source', 'baz', '-u', 'http://qux.com', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ log: 'trace', source: 'baz', baseUrl: 'http://qux.com' }));
+          expectActionCalled(parsed({ log: 'trace', source: 'baz', baseUrl: 'http://qux.com' }));
         });
 
         it("should merge configuration file params", function() {
           setConfig({ params: { foo: 'bar', baz: 'qux' } });
           execute('-p', 'baz=corge', '--params', 'grault', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ params: { foo: 'bar', baz: 'corge', grault: true } }));
+          expectActionCalled(parsed({ params: { foo: 'bar', baz: 'corge', grault: true } }));
         });
       });
 
@@ -277,82 +291,82 @@ describe("CLI Program", function() {
         it("should parse the log option", function() {
           setConfig({ log: 'debug' });
           execute(command);
-          expect(spy).toHaveBeenCalledWith(parsed({ log: 'debug' }));
+          expectActionCalled(parsed({ log: 'debug' }));
         });
 
         it("should not accept unknown log levels", function() {
           _.each([ 'foo', 'bar', 'baz', 'traze' ], function(unknownLogLevel) {
             setConfig({ log: unknownLogLevel });
             execute(command);
-            expect(spy).toHaveBeenCalledWith(parsed());
+            expectActionCalled(parsed());
           });
         });
 
         it("should parse the source option", function() {
           setConfig({ source: 'foo' });
           execute(command);
-          expect(spy).toHaveBeenCalledWith(parsed({ source: 'foo' }));
+          expectActionCalled(parsed({ source: 'foo' }));
         });
 
         it("should parse the baseUrl option", function() {
           setConfig({ baseUrl: 'http://foo.com' });
           execute(command);
-          expect(spy).toHaveBeenCalledWith(parsed({ baseUrl: 'http://foo.com' }));
+          expectActionCalled(parsed({ baseUrl: 'http://foo.com' }));
         });
 
         it("should parse the showTime option", function() {
           setConfig({ showTime: true });
           execute(command);
-          expect(spy).toHaveBeenCalledWith(parsed({ showTime: true }));
+          expectActionCalled(parsed({ showTime: true }));
         });
 
         it("should parse the showRequest option", function() {
           setConfig({ showRequest: true });
           execute(command);
-          expect(spy).toHaveBeenCalledWith(parsed({ showRequest: true }));
+          expectActionCalled(parsed({ showRequest: true }));
         });
 
         it("should parse the showResponseBody option", function() {
           setConfig({ showResponseBody: true });
           execute(command);
-          expect(spy).toHaveBeenCalledWith(parsed({ showResponseBody: true }));
+          expectActionCalled(parsed({ showResponseBody: true }));
         });
 
         it("should parse the params option", function() {
           setConfig({ params: { foo: 'bar' } });
           execute(command);
-          expect(spy).toHaveBeenCalledWith(parsed({ params: { foo: 'bar' } }));
+          expectActionCalled(parsed({ params: { foo: 'bar' } }));
         });
 
         it("should not parse the config option", function() {
           setConfig({ config: 'foo' });
           execute(command);
-          expect(spy).toHaveBeenCalledWith(parsed());
+          expectActionCalled(parsed());
         });
 
         it("should load the configuration from the file given in the config option", function() {
           setConfig({ log: 'debug' });
           setConfig({ log: 'trace' }, 'foo.yml');
           execute('-c', 'foo.yml', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ log: 'trace', config: 'foo.yml' }));
+          expectActionCalled(parsed({ log: 'trace', config: 'foo.yml' }));
           execute('--config', 'foo.yml', command);
-          expect(spy).toHaveBeenCalledWith(parsed({ log: 'trace', config: 'foo.yml' }));
+          expectActionCalled(parsed({ log: 'trace', config: 'foo.yml' }));
         });
 
         it("should not parse unknown options", function() {
           setConfig({ foo: 'bar', baz: 'qux' });
           execute(command);
-          expect(spy).toHaveBeenCalledWith(parsed());
+          expectActionCalled(parsed());
         });
       });
 
-      if (subCommand.maxArgs) {
+      if (subCommand.arity) {
         describe("arguments", function() {
 
           it("should be parsed", function() {
             setConfig({ baseUrl: 'http://qux.com' });
             execute('-l', 'debug', command, 'foo.scenario.js');
-            expect(spy).toHaveBeenCalledWith(parsed({
+            expectActionCalled(parsed({
               log: 'debug',
               baseUrl: 'http://qux.com'
             }), 'foo.scenario.js');

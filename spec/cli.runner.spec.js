@@ -1,18 +1,17 @@
 var _ = require('underscore'),
+    CliLoggerMock = require('./support/cli.logger.mock'),
+    cliRunnerInjector = require('../lib/cli.runner'),
     colors = require('colors'),
     fs = require('fs'),
     h = require('./support/helpers'),
     q = require('q'),
     path = require('path'),
+    scenarioFinderUtils = require('./support/scenario.finder.utils'),
     slice = Array.prototype.slice;
 
 describe("CLI Runner", function() {
 
-  var CliLoggerMock = require('./support/cli.logger.mock'),
-      scenarioFinderUtils = require('./support/scenario.finder.utils'),
-      runnerInjector = require('../lib/cli.runner');
-
-  var Runner, mocks, selectedScenario, scenarioResult, choice, defaultOptions;
+  var cliRunner, mocks, selectedScenario, scenarioResult, choice, defaultOptions;
   beforeEach(function() {
 
     h.addMatchers(this);
@@ -37,15 +36,15 @@ describe("CLI Runner", function() {
 
     CliLoggerMock.instances.length = 0;
 
-    Runner = runnerInjector({
+    cliRunner = cliRunnerInjector({
       Logger: CliLoggerMock,
       cliSelector: mocks.cliSelector
     });
   });
 
   function run(expectedResult, options) {
-    var runner = new Runner(_.extend({}, defaultOptions, options));
-    return h.runPromise(runner.execute(choice), expectedResult);
+    var promise = cliRunner(choice, _.extend({}, defaultOptions, options));
+    return h.runPromise(promise, expectedResult);
   }
 
   function setSelectedScenario(scenario) {

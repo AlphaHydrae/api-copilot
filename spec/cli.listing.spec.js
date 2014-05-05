@@ -1,16 +1,15 @@
 var _ = require('underscore'),
     colors = require('colors'),
     h = require('./support/helpers'),
+    cliListingInjector = require('../lib/cli.listing'),
     path = require('path'),
     q = require('q'),
+    scenarioFinderUtils = require('./support/scenario.finder.utils'),
     slice = Array.prototype.slice;
 
 describe("CLI Listing", function() {
 
-  var scenarioFinderUtils = require('./support/scenario.finder.utils'),
-      listingInjector = require('../lib/cli.listing');
-
-  var Listing, mocks, foundScenarios, scenarioListing, defaultOptions, lines, lineIndex;
+  var cliListing, mocks, foundScenarios, scenarioListing, defaultOptions, lines, lineIndex;
   beforeEach(function() {
 
     h.addMatchers(this);
@@ -40,12 +39,12 @@ describe("CLI Listing", function() {
     spyOn(mocks, 'finder').andCallThrough();
     spyOn(mocks, 'listing').andCallThrough();
 
-    Listing = listingInjector(mocks);
+    cliListing = cliListingInjector(mocks);
   });
 
   function list(expectedResult, options) {
-    var listing = new Listing(_.extend({}, defaultOptions, options));
-    return h.runPromise(listing.execute(), expectedResult);
+    var promise = cliListing(_.extend({}, defaultOptions, options));
+    return h.runPromise(promise, expectedResult);
   }
 
   function setScenarioListing(scenarioListingText) {

@@ -1,17 +1,16 @@
 var _ = require('underscore'),
     colors = require('colors'),
+    cliInfoInjector = require('../lib/cli.info'),
+    fsMock = require('./support/fs.mock'),
     h = require('./support/helpers'),
     path = require('path'),
     q = require('q'),
+    scenarioFinderUtils = require('./support/scenario.finder.utils'),
     slice = Array.prototype.slice;
 
 describe("CLI Info", function() {
 
-  var fsMock = require('./support/fs.mock'),
-      scenarioFinderUtils = require('./support/scenario.finder.utils'),
-      infoInjector = require('../lib/cli.info');
-
-  var Info, mocks, selectedScenario, choice, lines, lineIndex;
+  var cliInfo, mocks, selectedScenario, choice, lines, lineIndex;
   beforeEach(function() {
 
     h.addMatchers(this);
@@ -35,12 +34,12 @@ describe("CLI Info", function() {
 
     spyOn(mocks, 'cliSelector').andCallThrough();
 
-    Info = infoInjector(mocks);
+    cliInfo = cliInfoInjector(mocks);
   });
 
   function info(expectedResult, options) {
-    var instance = new Info(_.extend({}, options));
-    return h.runPromise(instance.execute(choice), expectedResult);
+    var promise = cliInfo(choice, _.extend({}, options));
+    return h.runPromise(promise, expectedResult);
   }
 
   function setSelectedScenario(scenario) {
