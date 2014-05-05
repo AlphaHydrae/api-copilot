@@ -1,11 +1,10 @@
 var _ = require('underscore'),
+    finderFactory = require('../lib/scenario.finder'),
     h = require('./support/helpers'),
     path = require('path'),
     slice = Array.prototype.slice;
 
 describe("Scenario Finder", function() {
-
-  var finderInjector = require('../lib/scenario.finder');
 
   var finder, mocks, globResults;
   beforeEach(function() {
@@ -24,7 +23,7 @@ describe("Scenario Finder", function() {
 
     spyOn(mocks, 'glob').andCallThrough();
 
-    finder = finderInjector(mocks);
+    finder = finderFactory(mocks.glob);
   });
 
   function find(expectedResult, options) {

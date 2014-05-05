@@ -1,12 +1,11 @@
 var _ = require('underscore'),
     h = require('./support/helpers'),
     path = require('path'),
+    scenarioFinderUtils = require('./support/scenario.finder.utils'),
+    scenarioListingFactory = require('../lib/scenario.listing'),
     slice = Array.prototype.slice;
 
 describe("Scenario Listing", function() {
-
-  var scenarioFinderUtils = require('./support/scenario.finder.utils'),
-      scenarioListingFactory = require('../lib/scenario.listing');
 
   var listing, defaultOptions, lines, lineIndex;
   beforeEach(function() {
