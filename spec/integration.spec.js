@@ -1,9 +1,10 @@
 var cp = require('child_process'),
     h = require('./support/helpers'),
+    ioc = require('../lib/ioc'),
     path = require('path'),
     slice = Array.prototype.slice;
 
-var Scenario = require('../lib/scenario')();
+var Scenario = ioc.create('scenario');
 
 describe("Mock Server Scenario", function() {
 

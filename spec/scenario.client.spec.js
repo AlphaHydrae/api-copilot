@@ -1,12 +1,15 @@
 var _ = require('underscore'),
     h = require('./support/helpers'),
+    ioc = require('../lib/ioc'),
     slice = Array.prototype.slice;
 
 var METHODS = [ 'get', 'head', 'post', 'put', 'patch', 'delete' ];
 
 describe("Scenario Client Extensions", function() {
 
-  var scenarioInjector = require('../lib/scenario'),
+  var scenarioFactory = require('../lib/scenario'),
+      scenarioParametersFactory = require('../lib/scenario.params'),
+      parameterFactory = ioc.create('parameter.factory'),
       log4jsMock = require('./support/log4js.mock'),
       ClientMock = require('./support/client.mock');
 
@@ -15,10 +18,9 @@ describe("Scenario Client Extensions", function() {
 
     h.addMatchers(this);
 
-    Scenario = scenarioInjector({
-      log4js: log4jsMock,
-      Client: ClientMock
-    });
+    var parameterExtensions = scenarioParametersFactory(parameterFactory, function() {});
+
+    Scenario = scenarioFactory(ClientMock, parameterExtensions, log4jsMock, function() {});
 
     scenario = new Scenario({ name: 'once upon a time' });
     requestMock = scenario.client.requestMock;

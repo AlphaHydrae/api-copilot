@@ -14,9 +14,7 @@ describe("Client", function() {
     h.addMatchers(this);
 
     requestMock = new RequestMock();
-    Client = clientInjector({
-      request: requestMock.func()
-    });
+    Client = clientInjector(requestMock.func());
   });
 
   it("should accept no options", function() {

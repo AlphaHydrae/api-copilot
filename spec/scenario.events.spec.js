@@ -1,9 +1,12 @@
 var _ = require('underscore'),
-    h = require('./support/helpers');
+    h = require('./support/helpers'),
+    ioc = require('../lib/ioc');
 
 describe("Scenario Events", function() {
 
-  var scenarioInjector = require('../lib/scenario'),
+  var scenarioFactory = require('../lib/scenario'),
+      scenarioParametersFactory = require('../lib/scenario.params'),
+      parameterFactory = ioc.create('parameter.factory'),
       log4jsMock = require('./support/log4js.mock'),
       ClientMock = require('./support/client.mock'),
       EventCollector = require('./support/event.collector');
@@ -14,10 +17,9 @@ describe("Scenario Events", function() {
     collector = new EventCollector();
     events = collector.events;
 
-    Scenario = scenarioInjector({
-      log4js: log4jsMock,
-      Client: ClientMock
-    });
+    var parameterExtensions = scenarioParametersFactory(parameterFactory, function() {});
+
+    Scenario = scenarioFactory(ClientMock, parameterExtensions, log4jsMock, function() {});
 
     scenario = new Scenario({ name: 'once upon a time' });
   });

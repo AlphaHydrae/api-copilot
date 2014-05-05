@@ -1,7 +1,7 @@
 var _ = require('underscore'),
     colors = require('colors'),
     h = require('./support/helpers'),
-    cliListingInjector = require('../lib/cli.listing'),
+    cliListingFactory = require('../lib/cli.listing'),
     path = require('path'),
     q = require('q'),
     scenarioFinderUtils = require('./support/scenario.finder.utils'),
@@ -39,7 +39,7 @@ describe("CLI Listing", function() {
     spyOn(mocks, 'finder').andCallThrough();
     spyOn(mocks, 'listing').andCallThrough();
 
-    cliListing = cliListingInjector(mocks);
+    cliListing = cliListingFactory(mocks.finder, mocks.listing, mocks.print);
   });
 
   function list(expectedResult, options) {

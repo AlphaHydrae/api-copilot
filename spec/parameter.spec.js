@@ -3,7 +3,7 @@ var _ = require('underscore'),
 
 describe("Parameters", function() {
 
-  var parameterInjector = require('../lib/parameter');
+  var parameterFactory = require('../lib/parameter');
 
   var Parameter, mocks, readlineAnswers, lines;
   beforeEach(function() {
@@ -36,7 +36,7 @@ describe("Parameters", function() {
     spyOn(mocks.readlineInterface, 'close');
     spyOn(mocks.readline, 'createInterface').andCallThrough();
 
-    Parameter = parameterInjector(mocks);
+    Parameter = parameterFactory(mocks.readline, mocks.print);
   });
 
   function addReadlineAnswer(answer) {

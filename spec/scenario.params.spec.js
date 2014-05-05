@@ -5,7 +5,8 @@ var _ = require('underscore'),
 
 describe("Scenario Parameters", function() {
 
-  var scenarioInjector = require('../lib/scenario'),
+  var scenarioFactory = require('../lib/scenario'),
+      scenarioParametersFactory = require('../lib/scenario.params'),
       log4jsMock = require('./support/log4js.mock'),
       ClientMock = require('./support/client.mock');
 
@@ -35,12 +36,9 @@ describe("Scenario Parameters", function() {
 
     spyOn(mocks, 'parameterFactory').andCallThrough();
 
-    Scenario = scenarioInjector({
-      log4js: log4jsMock,
-      Client: ClientMock,
-      parameterFactory: mocks.parameterFactory,
-      print: mocks.print
-    });
+    var parameterExtensions = scenarioParametersFactory(mocks.parameterFactory, mocks.print);
+
+    Scenario = scenarioFactory(ClientMock, parameterExtensions, log4jsMock, mocks.print);
 
     scenario = new Scenario({ name: 'once upon a time' });
   });
