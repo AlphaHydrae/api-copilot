@@ -1,3 +1,4 @@
+* show parameter values in debug mode
 * get rid of new Dependency
 * allow to set parameter default value
 * allow to coerce parameter values with custom function
