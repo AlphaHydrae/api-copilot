@@ -1,3 +1,4 @@
+* do not take log level from command line/config file if not specified
 * show parameter values in debug mode
 * get rid of new Dependency
 * allow to set parameter default value
