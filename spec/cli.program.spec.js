@@ -17,7 +17,6 @@ describe("CLI Program", function() {
     fsMock.reset();
 
     defaultOptions = {
-      log: 'info',
       source: 'api',
       config: 'api-copilot.yml'
     };

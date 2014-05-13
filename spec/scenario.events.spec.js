@@ -32,8 +32,8 @@ describe("Scenario Events", function() {
 
     runs(function() {
       expect(events).toEqual([
-        { name: 'configure', args: [ { name: 'once upon a time' } ] },
-        { name: 'scenario:start', args: [ { name: 'once upon a time' } ] },
+        { name: 'configure', args: [ { name: 'once upon a time', log: 'info' } ] },
+        { name: 'scenario:start', args: [ { name: 'once upon a time', log: 'info' } ] },
         { name: 'executing step 0', args: [] },
         { name: 'executing step 1', args: [] },
         { name: 'executing step 2', args: [] },
@@ -54,8 +54,8 @@ describe("Scenario Events", function() {
 
     runs(function() {
       expect(events).toEqual([
-        { name: 'configure', args: [ { name: 'once upon a time' } ] },
-        { name: 'scenario:start', args: [ { name: 'once upon a time' } ] },
+        { name: 'configure', args: [ { name: 'once upon a time', log: 'info' } ] },
+        { name: 'scenario:start', args: [ { name: 'once upon a time', log: 'info' } ] },
         { name: 'executing step 0', args: [] },
         { name: 'executing step 1', args: [] },
         { name: 'scenario:error', args: [ error ] }
