@@ -1,4 +1,5 @@
-var _ = require('underscore');
+var _ = require('underscore'),
+    colors = require('colors');
 
 RegExp.escape = function(s) {
   return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -19,6 +20,14 @@ describe("CLI Logger", function() {
     CliLogger = cliLoggerFactory(log4jsMock);
 
     scenario = new ScenarioMock({ name: 'once upon a time' });
+    scenario.getParameter = function() {
+      return {
+        displayValue: function(value) {
+          return value;
+        }
+      };
+    };
+
     cliLogger = new CliLogger(scenario);
     logger = log4jsMock.getLogger(scenario.name);
 
@@ -41,8 +50,39 @@ describe("CLI Logger", function() {
     }
   }
 
+  describe("on configure", function() {
+
+    it("should log the scenario name", function() {
+      scenario.emit('configure', { name: 'once upon a time' });
+      expect(logger.info).toHaveBeenCalledWith('once upon a time'.bold);
+      expect(logger.info.calls.length).toBe(1);
+    });
+  });
+
+  describe("on scenario:start", function() {
+
+    beforeEach(function() {
+      cliLogger.configured = true;
+    });
+
+    it("should log runtime parameters in debug mode", function() {
+      scenario.emit('scenario:start', { params: { foo: 'bar', baz: { a: 1, b: 2 } } });
+      expect(logger.debug).toHaveBeenCalledWith('Runtime parameters:');
+      expect(logger.debug).toHaveBeenCalledWith('  ' + 'baz'.underline + ' = {"a":1,"b":2}');
+      expect(logger.debug).toHaveBeenCalledWith('  ' + 'foo'.underline + ' = "bar"');
+      expect(logger.debug.calls.length).toBe(3);
+    });
+
+    it("should log no runtime parameters in debug mode", function() {
+      scenario.emit('scenario:start', { params: {} });
+      expect(logger.debug).toHaveBeenCalledWith('Runtime parameters: none');
+      expect(logger.debug.calls.length).toBe(1);
+    });
+  });
+
   it("should log successful HTTP requests with the DEBUG level", function() {
 
+    cliLogger.configured = true;
     makeRequest(1);
 
     expect(logger.totalCalls).toBe(2);
@@ -53,6 +93,7 @@ describe("CLI Logger", function() {
 
   it("should log failed HTTP requests with the DEBUG level", function() {
 
+    cliLogger.configured = true;
     makeRequest(1, { response: new Error('foo') });
 
     expect(logger.totalCalls).toBe(1);
@@ -62,6 +103,7 @@ describe("CLI Logger", function() {
 
   it("should log the HTTP status code in yellow if not in the 200-399 range", function() {
 
+    cliLogger.configured = true;
     makeRequest(1, { response: { statusCode: 500, body: 'epic fail' } });
 
     expect(logger.totalCalls).toBe(2);
@@ -72,6 +114,7 @@ describe("CLI Logger", function() {
 
   it("should number HTTP requests in the order they are made", function() {
 
+    cliLogger.configured = true;
     _.each([ sampleResponse, { statusCode: 500, body: 'oops' }, { statusCode: 200, body: 'bar' } ], function(response, i) {
       makeRequest(i + 1, { response: response });
     });
@@ -89,33 +132,35 @@ describe("CLI Logger", function() {
   describe("with the `baseUrl` option", function() {
 
     beforeEach(function() {
-      cliLogger.configure({ baseUrl: 'http://example.com/foo' });
+      cliLogger.configured = true;
+      cliLogger.configure({ name: 'scenario', baseUrl: 'http://example.com/foo' });
+      expect(logger.debug).toHaveBeenCalledWith('Base URL set to http://example.com/foo');
     });
 
     it("should log only the path of URLs", function() {
 
       makeRequest(1, { request: { method: 'GET', url: 'http://example.com/foo/bar/baz' } });
 
-      expect(logger.totalCalls).toBe(2);
-      expect(logger.debug.calls.length).toBe(2);
-      expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET /foo/bar/baz' ]);
-      expect(logger.debug.calls[1].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '204 No Content'.green + ' in ') + '\\d+ms$'));
+      expect(logger.totalCalls).toBe(3);
+      expect(logger.debug.calls.length).toBe(3);
+      expect(logger.debug.calls[1].args).toEqual([ "http[1]".cyan + ' GET /foo/bar/baz' ]);
+      expect(logger.debug.calls[2].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '204 No Content'.green + ' in ') + '\\d+ms$'));
     });
 
     describe("with the `showFullUrl` option", function() {
 
       beforeEach(function() {
-        cliLogger.configure({ showFullUrl: true });
+        cliLogger.configure({ name: 'scenario', showFullUrl: true });
       });
 
       it("should log full URLs", function() {
 
         makeRequest(1, { request: { method: 'GET', url: 'http://example.com/foo/bar/baz' } });
 
-        expect(logger.totalCalls).toBe(2);
-        expect(logger.debug.calls.length).toBe(2);
-        expect(logger.debug.calls[0].args).toEqual([ "http[1]".cyan + ' GET http://example.com/foo/bar/baz' ]);
-        expect(logger.debug.calls[1].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '204 No Content'.green + ' in ') + '\\d+ms$'));
+        expect(logger.totalCalls).toBe(3);
+        expect(logger.debug.calls.length).toBe(3);
+        expect(logger.debug.calls[1].args).toEqual([ "http[1]".cyan + ' GET http://example.com/foo/bar/baz' ]);
+        expect(logger.debug.calls[2].args[0]).toMatch(new RegExp(RegExp.escape("http[1]".cyan + ' ' + '204 No Content'.green + ' in ') + '\\d+ms$'));
       });
     });
   });
@@ -123,7 +168,8 @@ describe("CLI Logger", function() {
   describe("with the `showRequest` option", function() {
 
     beforeEach(function() {
-      cliLogger.configure({ showRequest: true });
+      cliLogger.configured = true;
+      cliLogger.configure({ name: 'scenario', showRequest: true });
     });
 
     it("should log HTTP request options with the `showRequest` option", function() {
@@ -141,7 +187,8 @@ describe("CLI Logger", function() {
   describe("with the `showResponseBody` option", function() {
 
     beforeEach(function() {
-      cliLogger.configure({ showResponseBody: true });
+      cliLogger.configured = true;
+      cliLogger.configure({ name: 'scenario', showResponseBody: true });
     });
 
     it("should not log the HTTP response body if there is none", function() {

@@ -1,5 +1,6 @@
+* add method to obfuscate request body/response properties
+* add command line option to disable obfuscation
 * coerce request pipeline integers from configuration files
-* show parameter values in debug mode
 * get rid of new Dependency
 * allow to set parameter default value
 * allow to coerce parameter values with custom function

@@ -2,7 +2,8 @@ var Scenario = require('../lib').Scenario;
 
 var scenario = new Scenario({
   name: 'Documented Scenario',
-  summary: 'This scenario demonstrates all the ways in which API Copilot scenarios can be documented.'
+  summary: 'This scenario demonstrates all the ways in which API Copilot scenarios can be documented.',
+  log: 'debug'
 });
 
 scenario.addParam('foo', {
@@ -14,6 +15,11 @@ scenario.addParam('bar', {
   required: false,
   pattern: /^https?:/, 
   description: 'This should be an HTTP or HTTPS URL.'
+});
+
+scenario.addParam('password', {
+  required: false,
+  description: 'A password that will be automatically obfuscated when displayed in debug mode.'
 });
 
 var myFlag = scenario.addParam('baz', {

@@ -43,6 +43,27 @@ describe("Parameters", function() {
     readlineAnswers.push(answer);
   }
 
+  describe("#displayValue", function() {
+
+    function displayValue(name, options, value) {
+      return new Parameter(name, options).displayValue(value);
+    }
+
+    it("should return the value", function() {
+      expect(displayValue('foo', {}, 'bar')).toBe('bar');
+    });
+
+    it("should obfuscate the value if the parameter name indicates a secret", function() {
+      _.each([ 'secret', 'apiSecret', 'password', 'userPassword', 'authToken' ], function(secret) {
+        expect(displayValue(secret, {}, 'bar')).toBe('***');
+      });
+    });
+
+    it("should obfuscate the value if the obfuscate option is set", function() {
+      expect(displayValue('foo', { obfuscate: true }, 'bar')).toBe('***');
+    });
+  });
+
   describe("#describe", function() {
 
     function description(name, options) {

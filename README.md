@@ -1278,6 +1278,34 @@ Sample output:
 backendUrl=url
 ```
 
+<a name="parameters-obfuscate"></a>
+
+* **obfuscate** - `boolean, default: false`
+
+  If set, the value of this parameter will be obfuscated when displayed
+  before the scenario starts running.
+
+  Note that this is automatically set for parameters whose name contains
+  the words `password`, `secret` or `authToken` (case-insensitive). If you
+  have such a parameter that you do not want obfuscated, set the option
+  to `false`.
+
+```js
+scenario.addParam('password');
+
+scenario.addParam('foo', {
+  obfuscate: true
+});
+```
+
+Sample output when running a scenario:
+
+```
+Runtime parameters:
+  password = "************"
+  foo = "***"
+```
+
 <a href="#toc" style="float:right;">Back to top</a>
 
 <a name="loading-parameters"></a>

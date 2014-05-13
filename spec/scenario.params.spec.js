@@ -525,6 +525,27 @@ describe("Scenario Parameters", function() {
     });
   });
 
+  describe("#getParameter", function() {
+
+    beforeEach(function() {
+      scenario = new Scenario({ name: 'once upon a time' });
+      scenario.addParam('foo');
+      scenario.addParam('bar', { baz: 'qux' });
+    });
+
+    it("should retrieve a parameter by name", function() {
+      expect(scenario.getParameter('foo')).toEqual({ name: 'foo', options: undefined, prompt: jasmine.any(Function), validate: jasmine.any(Function) });
+    });
+
+    it("should retrieve a parameter with options by name", function() {
+      expect(scenario.getParameter('bar')).toEqual({ name: 'bar', options: { baz: 'qux' }, prompt: jasmine.any(Function), validate: jasmine.any(Function) });
+    });
+
+    it("should not retrieve an unknown parameter", function() {
+      expect(scenario.getParameter('unknown')).toBe(undefined);
+    });
+  });
+
   describe("#param", function() {
 
     beforeEach(function() {
@@ -533,15 +554,15 @@ describe("Scenario Parameters", function() {
       scenario.addParam('bar');
     });
 
-    it("should retrieve a param by name", function() {
+    it("should retrieve a parameter value by name", function() {
       expect(scenario.param('foo')).toBe('bar');
     });
 
-    it("should retrieve a param with no value", function() {
+    it("should retrieve a missing parameter value", function() {
       expect(scenario.param('bar')).toBe(undefined);
     });
 
-    it("should throw an error for unknown params", function() {
+    it("should throw an error for unknown parameters", function() {
       expect(function() {
         scenario.param('baz');
       }).toThrow('Unknown parameter "baz"; add it to the Scenario object with the `addParam` method');
