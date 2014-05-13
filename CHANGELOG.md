@@ -2,6 +2,8 @@
 
 ## Edge - [commits](https://github.com/lotaris/api-copilot/compare/0.5.0...master)
 
+* **NEW:** The configurable [request pipeline](README.md#request-pipeline) allows to limit the number of HTTP requests made in parallel.
+
 * *BUGFIX:* the scenario listing would unnecessarily be displayed when using the run or info commands with an argument and a loading error occurred (e.g. due to an invalid scenario object).
 
 ## v0.5.0 - May 2, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.4.0...0.5.0)

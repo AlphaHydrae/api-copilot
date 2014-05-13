@@ -1,6 +1,7 @@
 var _ = require('underscore'),
     h = require('./support/helpers'),
     ioc = require('../lib/ioc'),
+    q = require('q'),
     slice = Array.prototype.slice;
 
 var METHODS = [ 'get', 'head', 'post', 'put', 'patch', 'delete' ];
@@ -28,9 +29,9 @@ describe("Scenario Client Extensions", function() {
     defaultSampleResponse = { statusCode: 204 };
   });
 
-  function addSampleResponse(n) {
+  function addSampleResponse(n, options) {
     _.times(n || 1, function() {
-      requestMock.addResponse(_.clone(defaultSampleResponse));
+      requestMock.addResponse(_.clone(defaultSampleResponse), options);
     });
   }
 
@@ -843,6 +844,159 @@ describe("Scenario Client Extensions", function() {
 
         runs(function() {
           expect(error).toBeAnError('bug');
+        });
+      });
+    });
+
+    describe("with request pipeline options", function() {
+      // TODO: request pipeline should be tested with the actual client implementation (using request mock)
+
+      var requestData, pipelineOptions;
+      beforeEach(function() {
+
+        requestData = [];
+        scenario.on('client:request', function(number, options) {
+          requestData.push({ number: number, options: options, time: new Date().getTime() });
+        });
+
+        pipelineOptions = {};
+        scenario.step('configuration', function() {
+          this.configure(pipelineOptions);
+        });
+      });
+
+      function setPipelineOptions(options) {
+        _.extend(pipelineOptions, options);
+      }
+
+      function setUpRequests(n) {
+
+        scenario.step('requests', function() {
+
+          var requests = [];
+          _.times(n, function(i) {
+            requests.push(this.request({ i: i }));
+          }, this);
+
+          return q.all(requests);
+        });
+      }
+
+      it("should execute requests one by one with a pipeline of 1", function() {
+
+        var n = 5,
+            requestDuration = 25;
+
+        addSampleResponse(n, { delay: requestDuration });
+        setPipelineOptions({ requestPipeline: 1 });
+        setUpRequests(n);
+
+        var start = new Date().getTime();
+        h.runScenario(scenario, true, { timeout: (n * requestDuration) + 25 });
+
+        runs(function() {
+
+          expect(requestData.length).toBe(n);
+
+          _.each(n, function(i) {
+
+            expect(requestData[i].number).toBe(i + 1);
+            expect(requestData[i].options).toEqual({ i: i });
+            expect(requestData[i].time).toBeGreaterThan(start + (requestDuration - 1));
+            expect(requestData[i].time).toBeLessThan(start + requestDuration + 10);
+
+            start = requestData[i].time;
+          });
+        });
+      });
+
+      it("should execute requests three by three with a pipeline of 3", function() {
+
+        var n = 9,
+            requestPipeline = 3,
+            requestDuration = 15;
+
+        addSampleResponse(n, { delay: requestDuration });
+        setPipelineOptions({ requestPipeline: requestPipeline });
+        setUpRequests(n);
+
+        var start = new Date().getTime();
+        h.runScenario(scenario, true, { timeout: ((n / requestPipeline) * requestDuration) + 25 });
+
+        runs(function() {
+
+          expect(requestData.length).toBe(n);
+
+          _.each(n, function(i) {
+
+            expect(requestData[i].number).toBe(i + 1);
+            expect(requestData[i].options).toEqual({ i: i });
+
+            expect(requestData[i].time).toBeGreaterThan(start + (requestDuration - 1));
+            expect(requestData[i].time).toBeLessThan(start + requestDuration + 10);
+
+            if (i !== 0 && i % 3 === 0) {
+              start = requestData[i].time;
+            }
+          });
+        });
+      });
+
+      it("should cool down for 10ms after each request", function() {
+
+        var n = 5,
+            requestDuration = 5,
+            requestCooldown = 10;
+
+        addSampleResponse(n, { delay: requestDuration });
+        setPipelineOptions({ requestPipeline: 1, requestCooldown: requestCooldown });
+        setUpRequests(n);
+
+        var start = new Date().getTime();
+        h.runScenario(scenario, true, { timeout: (n * requestDuration) + ((n - 1) * requestCooldown) + 25 });
+
+        runs(function() {
+
+          expect(requestData.length).toBe(n);
+
+          _.each(n, function(i) {
+
+            expect(requestData[i].number).toBe(i + 1);
+            expect(requestData[i].options).toEqual({ i: i });
+            expect(requestData[i].time).toBeGreaterThan(start - 1);
+            expect(requestData[i].time).toBeLessThan(start + 5);
+
+            start = requestData[i].time + requestDuration + requestCooldown;
+          });
+        });
+      });
+
+      it("should spread requests with a delay of 10ms", function() {
+
+        var n = 5,
+            requestDuration = 20,
+            requestDelay = 10;
+
+        addSampleResponse(n, { delay: requestDuration });
+        setPipelineOptions({ requestDelay: requestDelay });
+        setUpRequests(n);
+
+        var start = new Date().getTime();
+        h.runScenario(scenario, true, { timeout: ((n - 1) * requestDelay) + requestDuration + 25 });
+
+        runs(function() {
+
+          expect(requestData.length).toBe(n);
+
+          _.each(n, function(i) {
+
+            expect(requestData[i].number).toBe(i + 1);
+            expect(requestData[i].options).toEqual({ i: i });
+            expect(requestData[i].time).toBeGreaterThan(start + (requestDelay - 1));
+            expect(requestData[i].time).toBeLessThan(start + requestDuration);
+
+            start = requestData[i].time;
+          });
         });
       });
     });

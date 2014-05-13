@@ -265,6 +265,21 @@ describe("CLI Program", function() {
           expectActionCalled(parsed({ params: { foo: 'bar', baz: true, qux: 'corge' } }));
         });
 
+        it("should parse the request pipeline options", function() {
+          execute('--request-pipeline', '3', '--request-cooldown', '250', '--request-delay', '350', command);
+          expectActionCalled(parsed({ requestPipeline: 3, requestCooldown: 250, requestDelay: 350 }));
+        });
+
+        it("should coerce the request pipeline options to integers", function() {
+          execute('--request-pipeline', 'asd', '--request-cooldown', 'sdf', '--request-delay', 'dfg', command);
+          expectActionCalled(jasmine.any(Object));
+
+          var options = spy.calls[0].args[arity];
+          expect(options.requestPipeline).toBeNaN();
+          expect(options.requestCooldown).toBeNaN();
+          expect(options.requestDelay).toBeNaN();
+        });
+
         it("should parse the config option", function() {
           execute('-c', 'foo.yml', command);
           expectActionCalled(parsed({ config: 'foo.yml' }));
@@ -273,9 +288,9 @@ describe("CLI Program", function() {
         });
 
         it("should override configuration file options", function() {
-          setConfig({ log: 'debug', source: 'foo', baseUrl: 'http://bar.com' });
-          execute('-l', 'trace', '--source', 'baz', '-u', 'http://qux.com', command);
-          expectActionCalled(parsed({ log: 'trace', source: 'baz', baseUrl: 'http://qux.com' }));
+          setConfig({ log: 'debug', source: 'foo', baseUrl: 'http://bar.com', requestPipeline: 2 });
+          execute('-l', 'trace', '--source', 'baz', '-u', 'http://qux.com', '--request-pipeline', '3', command);
+          expectActionCalled(parsed({ log: 'trace', source: 'baz', baseUrl: 'http://qux.com', requestPipeline: 3 }));
         });
 
         it("should merge configuration file params", function() {
@@ -335,6 +350,18 @@ describe("CLI Program", function() {
           setConfig({ params: { foo: 'bar' } });
           execute(command);
           expectActionCalled(parsed({ params: { foo: 'bar' } }));
+        });
+
+        it("should parse the request pipeline options", function() {
+          setConfig({ requestPipeline: 3, requestCooldown: 250, requestDelay: 350 });
+          execute(command);
+          expectActionCalled(parsed({ requestPipeline: 3, requestCooldown: 250, requestDelay: 350 }));
+        });
+
+        it("should not coerce request pipeline options", function() {
+          setConfig({ requestPipeline: 'asd', requestCooldown: 'sdf', requestDelay: 'dfg' });
+          execute(command);
+          expectActionCalled(parsed({ requestPipeline: 'asd', requestCooldown: 'sdf', requestDelay: 'dfg' }));
         });
 
         it("should not parse the config option", function() {
@@ -411,7 +438,7 @@ describe("CLI Program", function() {
           customParamsIndex = _.indexOf(lines, '  Custom Parameters:'),
           options = cleanHelp(lines.slice(optionsIndex + 1, customParamsIndex));
 
-      expect(options.length).toBe(11);
+      expect(options.length).toBe(14);
       expect(options[0]).toBe('-h, --help output usage information');
       expect(options[1]).toBe('-V, --version output the version number');
       expect(options[2]).toBe('-c, --config [file] Set the configuration file path');
@@ -423,6 +450,9 @@ describe("CLI Program", function() {
       expect(options[8]).toBe('-q, --show-request (run) Print options for each HTTP request (only with debug or trace log level)');
       expect(options[9]).toBe('-b, --show-response-body (run) Print response body for each HTTP request (only with debug or trace log level)');
       expect(options[10]).toBe('--show-full-url (run) Show full URLs even when a base URL is configured (only with debug or trace log level)');
+      expect(options[11]).toBe('--request-pipeline <n> (run) maximum number of HTTP requests to run in parallel (no limit by default)');
+      expect(options[12]).toBe('--request-cooldown <ms> (run) if set and an HTTP request ends, no other request will be started before this time (milliseconds) has elapsed (no cooldown by default)');
+      expect(options[13]).toBe('--request-delay <ms> (run) if set and an HTTP request starts, no other request will be started before this time (milliseconds) has elapsed (no delay by default)');
     });
 
     it("should show information about custom parameters", function() {

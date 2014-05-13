@@ -93,6 +93,19 @@ exports.waitForSpies = function() {
 
 exports.addMatchers = function(jasmine) {
   jasmine.addMatchers({
+
+    toBeNaN: function() {
+
+      var actual = this.actual,
+          actualIsNaN = isNaN(actual);
+
+      this.message = function() {
+        return 'Expected NaN, got ' + actual + ' (' + typeof(actual) + ')';
+      };
+
+      return actualIsNaN;
+    },
+
     toBeAnError: function(expected) {
 
       var actual = this.actual,

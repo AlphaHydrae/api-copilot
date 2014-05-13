@@ -10,6 +10,7 @@ function ClientMock() {
   this.args = Array.prototype.slice.call(arguments);
   this.requestMock = new RequestMock();
   this.requestFunc = this.requestMock.func();
+  this.requestNumber = 0;
 
   spyOn(this, 'configure');
   spyOn(this, 'request').andCallThrough();
@@ -25,9 +26,17 @@ _.extend(ClientMock.prototype, {
   },
 
   request: function(options) {
-    return q.nfcall(this.requestFunc, options).spread(function(response, body) {
+
+    var number = ++this.requestNumber;
+    this.emit('request', number, options);
+
+    return q.nfcall(this.requestFunc, options).spread(_.bind(function(response, body) {
+      this.emit('response', number, response);
       return response;
-    });
+    }, this)).fail(_.bind(function(err) {
+      this.emit('error', number, err);
+      return q.reject(err);
+    }, this));
   }
 });
 

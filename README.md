@@ -216,6 +216,7 @@ Check the [CHANGELOG](CHANGELOG.md) for information about new features and break
   * [Request filters](#request-filters)
   * [Expecting a specific response](#request-expect)
   * [Running requests in parallel](#request-parallel)
+  * [Configuring the request pipeline](#request-pipeline)
 * [Runtime Parameters](#runtime-parameters)
   * [Parameter options](#parameter-options)
   * [Loading parameters from another source](#loading-parameters)
@@ -430,6 +431,21 @@ The following configuration options are supported:
 * `showFullUrl` - command line `--show-full-url`
 
   Always print full URLs even when a base URL is configured (only with debug or trace log levels).
+
+* `requestPipeline` - command line `--request-pipeline <n>`
+
+  Maximum number of HTTP requests to run in parallel (no limit by default).
+  See [request pipeline](#request-pipeline).
+
+* `requestCooldown` - command line `--request-cooldown <ms>`
+
+  If set and an HTTP request ends, no other request will be started before this time (in milliseconds) has elapsed (no cooldown by default).
+  See [request pipeline](#request-pipeline).
+
+* `requestDelay` - command line `--request-delay <ms>`
+
+  If set and an HTTP request starts, no other request will be started before this time (in milliseconds) has elapsed (no delay by default).
+  See [request pipeline](#request-pipeline).
 
   <a name="summary-option"></a>
 
@@ -1017,7 +1033,9 @@ Pass an array of HTTP requests to the `all` method to run them in parallel:
 ```js
 scenario.step('many HTTP calls', function() {
   return this.all([
-    this.get('http://example.com/foo');
+    this.get('http://example.com/foo'),
+    this.get('http://example.com/bar'),
+    this.get('http://example.com/baz')
   ]);
 });
 
@@ -1033,6 +1051,88 @@ when all the promises in the array have been resolved. The resolution value will
 an array of the resolved values.
 
 Read about [q combinations](https://github.com/kriskowal/q#combination) for more information.
+
+<a href="#toc" style="float:right;">Back to top</a>
+
+<a name="request-pipeline"></a>
+#### Configuring the request pipeline
+
+[Parallelism](#request-parallel) might be an issue in some situations.
+Maybe your backend cannot handle as many concurrent requests as are issued by your scenario,
+or maybe your API limits the frequency of calls.
+
+The request pipeline allows you to limit how often HTTP requests are started.
+It has three [configuration options](#configuration-options).
+
+* **requestPipeline** - `<n>`
+
+  This limits the number of HTTP requests that can be made in parallel.
+  For example, if set to 3, no more than 3 HTTP requests will run concurrently at any given time.
+
+```js
+scenario.step('limit request concurrency', function() {
+
+  scenario.configure({ requestPipeline: 3 });
+
+  return this.all([
+
+    // the first three requests will be executed concurrently
+    this.get({ url: 'http://example.com/a' }),   // starts at time 0, takes 50ms
+    this.get({ url: 'http://example.com/b' }),   // starts at time 0, takes 100ms
+    this.get({ url: 'http://example.com/c' }),   // starts at time 0, takes 100ms
+
+    // the next three requests will start one by one as soon as each of the first three finishes
+    this.get({ url: 'http://example.com/d' }),   // starts at time 50, after the first request finishes
+    this.get({ url: 'http://example.com/e' }),   // starts at time 100, after the second request finishes
+    this.get({ url: 'http://example.com/f' })    // starts at time 100, after the third request finishes
+  ]);
+});
+```
+
+* **requestCooldown** - `<ms>`
+
+  When set, the request cooldown guarantees that after an HTTP request end,
+  no other request will start before the cooldown time (in milliseconds) has elapsed.
+
+```js
+scenario.step('wait after each request', function() {
+
+  scenario.configure({ requestPipeline: 1, requestCooldown: 250 });
+
+  // after the first HTTP request, each request will wait for the previous one to finish,
+  // since the request pipeline is set to 1, and then 250 additional milliseconds (the
+  // request cooldown), before starting
+  return this.all([
+    this.get({ url: 'http://example.com/a' }),   // starts at time 0, takes 100ms
+    this.get({ url: 'http://example.com/b' }),   // starts at time 350 (last response time + cooldown), takes 100ms
+    this.get({ url: 'http://example.com/c' }),   // starts at time 700 (last response time + cooldown), takes 100ms
+    this.get({ url: 'http://example.com/d' }),   // starts at time 1050 (last response time + cooldown), takes 100ms
+  ]);
+});
+```
+
+* **requestDelay** - `<ms>`
+
+  When set, the request delay guarantees that after an HTTP request starts,
+  no other request will start before the delay time (in milliseconds) has elapsed.
+  This can be used to spread out concurrent requests so that they are not all
+  started at exactly the same time.
+
+```js
+scenario.step('wait after each request', function() {
+
+  scenario.configure({ requestDelay: 50 });
+
+  // each request will start 50ms after the previous one has started
+  // but they will still run concurrently if they take more than 50ms to complete
+  return this.all([
+    this.get({ url: 'http://example.com/a' }),   // starts at time 0
+    this.get({ url: 'http://example.com/b' }),   // starts at time 50
+    this.get({ url: 'http://example.com/c' }),   // starts at time 100
+    this.get({ url: 'http://example.com/d' }),   // starts at time 150
+  ]);
+});
+```
 
 <a href="#toc" style="float:right;">Back to top</a>
 
