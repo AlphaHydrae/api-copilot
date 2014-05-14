@@ -122,6 +122,11 @@ describe("Parameters", function() {
       expect(processValues([], { default: 'yeehaw' })).toBe('yeehaw');
     });
 
+    it("should return false for unspecified boolean parameters", function() {
+      expect(processValues(undefined, { flag: true })).toBe(false);
+      expect(processValues([], { flag: true })).toBe(false);
+    });
+
     it("should override the default value", function() {
       expect(processValues('value', { default: 'yeehaw' })).toBe('value');
     });

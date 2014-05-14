@@ -17,11 +17,6 @@ scenario.addParam('bar', {
   description: 'This should be an HTTP or HTTPS URL.'
 });
 
-scenario.addParam('password', {
-  required: false,
-  description: 'A password that will be automatically obfuscated when displayed in debug mode.'
-});
-
 var myFlag = scenario.addParam('baz', {
   flag: true,
   description: 'Activate some feature with this flag.'
@@ -30,6 +25,11 @@ var myFlag = scenario.addParam('baz', {
 myFlag.on('describe', function(print) {
   print('Listen to the `describe` event to add more documentation to parameters.');
   print('A print function is provided to correctly indent your text.');
+});
+
+scenario.addParam('password', {
+  required: false,
+  description: 'A password that will be automatically obfuscated when displayed in debug mode.'
 });
 
 scenario.step('step', function() {

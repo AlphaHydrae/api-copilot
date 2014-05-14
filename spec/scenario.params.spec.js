@@ -9,6 +9,8 @@ describe("Scenario Parameters", function() {
       parameterExtensionsFactory = require('../lib/scenario.ext.params'),
       log4jsMock = require('./support/log4js.mock');
 
+  var PARAMETER_METHODS = [ 'prompt', 'validate', 'processValues' ];
+
   var Scenario, scenario, mocks, lines;
   beforeEach(function() {
 
@@ -23,7 +25,7 @@ describe("Scenario Parameters", function() {
       parameterMocks: [],
       parameterFactory: function(name, options) {
 
-        var defaultFunctions = {
+        var defaultMethods = {
           prompt: function() {},
           validate: function() {},
           processValues: function(values) {
@@ -31,9 +33,9 @@ describe("Scenario Parameters", function() {
           }
         };
 
-        var mock = _.extend(_.defaults(mocks.parameterMocks.shift() || {}, defaultFunctions), { name: name, options: options });
+        var mock = _.extend(_.defaults(mocks.parameterMocks.shift() || {}, defaultMethods), { name: name, options: options });
 
-        _.each([ 'prompt', 'validate', 'processValues' ], function(method) {
+        _.each(PARAMETER_METHODS, function(method) {
           spyOn(mock, method).andCallThrough();
         });
 
@@ -94,6 +96,50 @@ describe("Scenario Parameters", function() {
       expect(params[0].validate).toHaveBeenCalledWith('bar', []);
       expect(params[1].validate).toHaveBeenCalledWith(true, []);
       expect(params[2].validate).toHaveBeenCalledWith(undefined, []);
+    });
+  });
+
+  it("should process values", function() {
+
+    var names = [ 'foo', 'bar', 'baz', 'qux' ],
+        values = [ 'value', true, [ 1, 2 ] ];
+
+    var params = [];
+    _.times(names.length, function(i) {
+      params.push(mockParameter({
+        processValues: function() {
+          return i;
+        }
+      }));
+    });
+
+    _.each(names, function(name) {
+      scenario.addParam(name);
+    });
+
+    var actualValues = {};
+    scenario.step('step', function() {
+      actualValues = _.reduce(names, function(memo, name) {
+        memo[name] = this.param(name);
+        return memo;
+      }, {}, this);
+    });
+
+    var fulfilledSpy = runScenario(true, {
+      params: _.reduce(names, function(memo, name, i) {
+        if (values[i] !== undefined) {
+          memo[name] = values[i];
+        }
+        return memo;
+      }, {})
+    });
+
+    runs(function() {
+      expectSuccess(fulfilledSpy);
+      _.each(names, function(name, i) {
+        expect(params[i].processValues).toHaveBeenCalledWith(values[i]);
+      });
+      expect(actualValues).toEqual({ foo: 0, bar: 1, baz: 2, qux: 3 });
     });
   });
 
@@ -423,11 +469,11 @@ describe("Scenario Parameters", function() {
         expect(params[0].prompt).toHaveBeenCalledWith(undefined);
         _.each(params.slice(1), function(param) { expect(param.prompt).not.toHaveBeenCalled(); });
 
-        expect(scenario.param('foo')).toBe('bar');
-        expect(scenario.param('bar')).toBe(true);
+        expect(scenario.param('foo')).toBe(undefined);
+        expect(scenario.param('bar')).toBe(undefined);
         expect(scenario.param('baz')).toBe(undefined);
-        expect(scenario.param('qux')).toBe('   ');
-        expect(scenario.param('corge')).toBe('*');
+        expect(scenario.param('qux')).toBe(undefined);
+        expect(scenario.param('corge')).toBe(undefined);
 
         promptDeferreds[0].resolve(corrections[0]);
       });
@@ -446,11 +492,11 @@ describe("Scenario Parameters", function() {
         expect(params[1].prompt).toHaveBeenCalledWith(undefined);
         _.each(params.slice(2), function(param) { expect(param.prompt).not.toHaveBeenCalled(); });
 
-        expect(scenario.param('foo')).toBe('a');
-        expect(scenario.param('bar')).toBe(true);
+        expect(scenario.param('foo')).toBe(undefined);
+        expect(scenario.param('bar')).toBe(undefined);
         expect(scenario.param('baz')).toBe(undefined);
-        expect(scenario.param('qux')).toBe('   ');
-        expect(scenario.param('corge')).toBe('*');
+        expect(scenario.param('qux')).toBe(undefined);
+        expect(scenario.param('corge')).toBe(undefined);
 
         promptDeferreds[1].resolve(corrections[1]);
       });
@@ -470,11 +516,11 @@ describe("Scenario Parameters", function() {
         expect(params[3].prompt).toHaveBeenCalledWith(undefined);
         _.each(params.slice(4), function(param) { expect(param.prompt).not.toHaveBeenCalled(); });
 
-        expect(scenario.param('foo')).toBe('a');
-        expect(scenario.param('bar')).toBe('b');
+        expect(scenario.param('foo')).toBe(undefined);
+        expect(scenario.param('bar')).toBe(undefined);
         expect(scenario.param('baz')).toBe(undefined);
-        expect(scenario.param('qux')).toBe('   ');
-        expect(scenario.param('corge')).toBe('*');
+        expect(scenario.param('qux')).toBe(undefined);
+        expect(scenario.param('corge')).toBe(undefined);
 
         promptDeferreds[3].resolve(corrections[3]);
       });
@@ -535,18 +581,27 @@ describe("Scenario Parameters", function() {
 
   describe("#getParameter", function() {
 
+    var mockMethodMatchers = _.reduce(PARAMETER_METHODS, function(memo, name) {
+      memo[name] = jasmine.any(Function);
+      return memo;
+    }, {});
+
     beforeEach(function() {
       scenario = new Scenario({ name: 'once upon a time' });
       scenario.addParam('foo');
       scenario.addParam('bar', { baz: 'qux' });
     });
 
+    function expectParameter(name, options) {
+      expect(scenario.getParameter(name)).toEqual(_.extend({ name: name, options: options }, mockMethodMatchers));
+    }
+
     it("should retrieve a parameter by name", function() {
-      expect(scenario.getParameter('foo')).toEqual({ name: 'foo', options: undefined, prompt: jasmine.any(Function), validate: jasmine.any(Function), processValues: jasmine.any(Function) });
+      expectParameter('foo');
     });
 
     it("should retrieve a parameter with options by name", function() {
-      expect(scenario.getParameter('bar')).toEqual({ name: 'bar', options: { baz: 'qux' }, prompt: jasmine.any(Function), validate: jasmine.any(Function), processValues: jasmine.any(Function) });
+      expectParameter('bar', { baz: 'qux' });
     });
 
     it("should not retrieve an unknown parameter", function() {
@@ -560,13 +615,11 @@ describe("Scenario Parameters", function() {
       scenario = new Scenario({ name: 'once upon a time', params: { foo: 'bar' } });
       scenario.addParam('foo');
       scenario.addParam('bar');
+      scenario.step('step', function() {});
     });
 
-    it("should retrieve a parameter value by name", function() {
-      expect(scenario.param('foo')).toBe('bar');
-    });
-
-    it("should retrieve a missing parameter value", function() {
+    it("should not retrieve parameter values before the scenario has run", function() {
+      expect(scenario.param('foo')).toBe(undefined);
       expect(scenario.param('bar')).toBe(undefined);
     });
 
@@ -574,6 +627,48 @@ describe("Scenario Parameters", function() {
       expect(function() {
         scenario.param('baz');
       }).toThrow('Unknown parameter "baz"; add it to the Scenario object with the `addParam` method');
+    });
+
+    it("should retrieve a parameter value by name", function() {
+
+      var fulfilledSpy = runScenario();
+
+      runs(function() {
+        expect(scenario.param('foo')).toBe('bar');
+      });
+    });
+
+    it("should retrieve a missing parameter value", function() {
+
+      var fulfilledSpy = runScenario();
+
+      runs(function() {
+        expect(scenario.param('bar')).toBe(undefined);
+      });
+    });
+
+    it("should retrieve overidden parameter values", function() {
+
+      var fulfilledSpy = runScenario(true, { params: { foo: 'baar', bar: [ 1, 2 ] } });
+
+      runs(function() {
+        expect(scenario.param('foo')).toBe('baar');
+        expect(scenario.param('bar')).toEqual([ 1, 2 ]);
+      });
+    });
+
+    it("should cause the scenario to fail for unknown parameters", function() {
+
+      scenario.step('retrieve unknown parameter', function() {
+        this.param('baz');
+      });
+
+      var rejectedSpy = runScenario(false);
+
+      runs(function() {
+        expect(rejectedSpy).toHaveBeenCalled();
+        expect(rejectedSpy.calls[0].args[0]).toBeAnError('Unknown parameter "baz"; add it to the Scenario object with the `addParam` method');
+      });
     });
   });
 
