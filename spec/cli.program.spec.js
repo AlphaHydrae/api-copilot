@@ -227,26 +227,31 @@ describe("CLI Program", function() {
 
         it("should parse the params option", function() {
           execute('-p', 'foo', command);
-          expectActionCalled(parsed({ params: { foo: true } }));
+          expectActionCalled(parsed({ params: { foo: [ true ] } }));
           execute('--params', 'bar', command);
-          expectActionCalled(parsed({ params: { bar: true } }));
+          expectActionCalled(parsed({ params: { bar: [ true ] } }));
         });
 
         it("should parse multiple params options", function() {
           execute('-p', 'foo', '--params', 'bar', '-p', 'baz', command);
-          expectActionCalled(parsed({ params: { foo: true, bar: true, baz: true } }));
+          expectActionCalled(parsed({ params: { foo: [ true ], bar: [ true ], baz: [ true ] } }));
         });
 
         it("should parse key/value params options", function() {
           execute('-p', 'foo=bar', command);
-          expectActionCalled(parsed({ params: { foo: 'bar' } }));
+          expectActionCalled(parsed({ params: { foo: [ 'bar' ] } }));
           execute('--params', 'baz=qux', command);
-          expectActionCalled(parsed({ params: { baz: 'qux' } }));
+          expectActionCalled(parsed({ params: { baz: [ 'qux' ] } }));
+        });
+
+        it("should parse repeated params options", function() {
+          execute('-p', 'foo', '-p', 'bar=abc', '--params', 'foo', '-p', 'bar=def', '--params', 'bar=ghi', '-p', 'qux=corge', command);
+          expectActionCalled(parsed({ params: { foo: [ true, true ], bar: [ 'abc', 'def', 'ghi' ], qux: [ 'corge' ] } }));
         });
 
         it("should parse mixed params options", function() {
           execute('-p', 'foo=bar', '-p', 'baz', '--params', 'qux=corge', command);
-          expectActionCalled(parsed({ params: { foo: 'bar', baz: true, qux: 'corge' } }));
+          expectActionCalled(parsed({ params: { foo: [ 'bar' ], baz: [ true ], qux: [ 'corge' ] } }));
         });
 
         it("should parse the request pipeline options", function() {
@@ -277,10 +282,10 @@ describe("CLI Program", function() {
           expectActionCalled(parsed({ log: 'trace', source: 'baz', baseUrl: 'http://qux.com', requestPipeline: 3 }));
         });
 
-        it("should merge configuration file params", function() {
-          setConfig({ params: { foo: 'bar', baz: 'qux' } });
-          execute('-p', 'baz=corge', '--params', 'grault', command);
-          expectActionCalled(parsed({ params: { foo: 'bar', baz: 'corge', grault: true } }));
+        it("should extend configuration file params", function() {
+          setConfig({ params: { foo: 'a', bar: 'b', baz: [ 1, 2 ], qux: 'string' } });
+          execute('-p', 'foo', '-p', 'bar=1', '-p', 'bar=2', '-p', 'bar=3', '-p', 'baz=yeehaw', '-p', 'corge', command);
+          expectActionCalled(parsed({ params: { foo: [ true ], bar: [ '1', '2', '3' ], baz: [ 'yeehaw' ], qux: 'string', corge: [ true ] } }));
         });
       });
 
@@ -331,9 +336,9 @@ describe("CLI Program", function() {
         });
 
         it("should parse the params option", function() {
-          setConfig({ params: { foo: 'bar' } });
+          setConfig({ params: { foo: true, bar: 'string', baz: [ 1, 2, 3 ] } });
           execute(command);
-          expectActionCalled(parsed({ params: { foo: 'bar' } }));
+          expectActionCalled(parsed({ params: { foo: true, bar: 'string', baz: [ 1, 2, 3 ] } }));
         });
 
         it("should parse the request pipeline options", function() {

@@ -23,9 +23,17 @@ describe("Scenario Parameters", function() {
       parameterMocks: [],
       parameterFactory: function(name, options) {
 
-        var mock = _.extend(_.defaults(mocks.parameterMocks.shift() || {}, { prompt: function() {}, validate: function() {} }), { name: name, options: options });
+        var defaultFunctions = {
+          prompt: function() {},
+          validate: function() {},
+          processValues: function(values) {
+            return values;
+          }
+        };
 
-        _.each([ 'prompt', 'validate' ], function(method) {
+        var mock = _.extend(_.defaults(mocks.parameterMocks.shift() || {}, defaultFunctions), { name: name, options: options });
+
+        _.each([ 'prompt', 'validate', 'processValues' ], function(method) {
           spyOn(mock, method).andCallThrough();
         });
 
@@ -534,11 +542,11 @@ describe("Scenario Parameters", function() {
     });
 
     it("should retrieve a parameter by name", function() {
-      expect(scenario.getParameter('foo')).toEqual({ name: 'foo', options: undefined, prompt: jasmine.any(Function), validate: jasmine.any(Function) });
+      expect(scenario.getParameter('foo')).toEqual({ name: 'foo', options: undefined, prompt: jasmine.any(Function), validate: jasmine.any(Function), processValues: jasmine.any(Function) });
     });
 
     it("should retrieve a parameter with options by name", function() {
-      expect(scenario.getParameter('bar')).toEqual({ name: 'bar', options: { baz: 'qux' }, prompt: jasmine.any(Function), validate: jasmine.any(Function) });
+      expect(scenario.getParameter('bar')).toEqual({ name: 'bar', options: { baz: 'qux' }, prompt: jasmine.any(Function), validate: jasmine.any(Function), processValues: jasmine.any(Function) });
     });
 
     it("should not retrieve an unknown parameter", function() {

@@ -1,13 +1,12 @@
+* add -p in info output before params
+* remove parameter usage notice after validation error and add one info command usage notice above validation error list
 * allow configuration from environment variables
 * allow configuration from centralized (home) config file
 * add method to obfuscate request body/response properties
 * add command line option to disable obfuscation
 * get rid of new Dependency
-* allow to set parameter default value
-* allow to coerce parameter values with custom function
 * add sample with server and use as readme example
 * make scenario name optional (replace with camelcased file name?)
-* coerge undefined flag value to false, do not allow required in conjunction with flag option
 * support multiple configuration files with -c, --config FILE
 * make `list` check which files export valid scenarios
 * run request filters before passing options to client

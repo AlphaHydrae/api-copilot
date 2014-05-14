@@ -1,5 +1,6 @@
 var _ = require('underscore'),
-    h = require('./support/helpers');
+    h = require('./support/helpers'),
+    slice = Array.prototype.slice;
 
 describe("Parameters", function() {
 
@@ -43,6 +44,22 @@ describe("Parameters", function() {
     readlineAnswers.push(answer);
   }
 
+  it("should not accept a non-string name", function() {
+    _.each([ undefined, null, true, false, 2.4, [], {} ], function(invalidName) {
+      expect(function() {
+        new Parameter(invalidName, {});
+      }).toThrow('Parameter name must be a string; got ' + JSON.stringify(invalidName) + ' (' + typeof(invalidName) + ')');
+    });
+  });
+
+  it("should not accept a non-function processor", function() {
+    _.each([ undefined, null, true, false, 2.4, [], {} ], function(invalidProcessor) {
+      expect(function() {
+        new Parameter('foo', { processor: invalidProcessor });
+      }).toThrow('Parameter `processor` option must be a function; got ' + JSON.stringify(invalidProcessor) + ' (' + typeof(invalidProcessor) + ')');
+    });
+  });
+
   describe("#displayValue", function() {
 
     function displayValue(name, options, value) {
@@ -64,6 +81,95 @@ describe("Parameters", function() {
     });
   });
 
+  describe("#processValues", function() {
+
+    function passthroughProcessor() {
+
+      var mocks = {
+        processor: function(value) {
+          return value;
+        }
+      };
+
+      spyOn(mocks, 'processor').andCallThrough();
+
+      return mocks.processor;
+    }
+
+    function customProcessor() {
+
+      var returnValues = slice.call(arguments),
+          mocks = {
+            processor: function() {
+              return returnValues.shift();
+            }
+          };
+
+      spyOn(mocks, 'processor').andCallThrough();
+
+      return mocks.processor;
+    }
+
+    function processValues(values, options) {
+      return new Parameter('foo', options).processValues(values);
+    }
+
+    it("should return the value by default", function() {
+      expect(processValues('value')).toBe('value');
+    });
+
+    it("should return the default value if set and no value is given", function() {
+      expect(processValues([], { default: 'yeehaw' })).toBe('yeehaw');
+    });
+
+    it("should override the default value", function() {
+      expect(processValues('value', { default: 'yeehaw' })).toBe('value');
+    });
+
+    it("should return the last of multiple values", function() {
+      expect(processValues([ 'value1', 'value2', 'value3' ])).toBe('value3');
+    });
+
+    it("should pass a single value to the processor function", function() {
+      var processor = passthroughProcessor();
+      expect(processValues('value', { processor: processor })).toBe('value');
+      expect(processor).toHaveBeenCalledWith('value', undefined);
+      expect(processor.calls.length).toBe(1);
+    });
+
+    it("should pass the default value to the processor function", function() {
+      var processor = passthroughProcessor();
+      expect(processValues('value', { processor: processor, default: 'yeehaw' })).toBe('value');
+      expect(processor).toHaveBeenCalledWith('value', 'yeehaw');
+      expect(processor.calls.length).toBe(1);
+    });
+
+    it("should pass multiple values to the processor function", function() {
+      var processor = passthroughProcessor();
+      expect(processValues([ 'value1', 'value2', 'value3' ], { processor: processor, default: 'yeehaw' })).toBe('value3');
+      expect(processor).toHaveBeenCalledWith('value1', 'yeehaw');
+      expect(processor).toHaveBeenCalledWith('value2', 'value1');
+      expect(processor).toHaveBeenCalledWith('value3', 'value2');
+      expect(processor.calls.length).toBe(3);
+    });
+
+    it("should use the value returned by the processor function", function() {
+      var processor = customProcessor('foo');
+      expect(processValues('value', { processor: processor, default: 'yeehaw' })).toBe('foo');
+      expect(processor).toHaveBeenCalledWith('value', 'yeehaw');
+      expect(processor.calls.length).toBe(1);
+    });
+
+    it("should use the values returned by the processor function", function() {
+      var processor = customProcessor('foo', 'bar', 'baz');
+      expect(processValues([ 'value1', 'value2', 'value3' ], { processor: processor, default: 'yeehaw' })).toBe('baz');
+      expect(processor).toHaveBeenCalledWith('value1', 'yeehaw');
+      expect(processor).toHaveBeenCalledWith('value2', 'foo');
+      expect(processor).toHaveBeenCalledWith('value3', 'bar');
+      expect(processor.calls.length).toBe(3);
+    });
+  });
+
   describe("#describe", function() {
 
     function description(name, options) {
@@ -82,8 +188,8 @@ describe("Parameters", function() {
       expect(description('flag', { flag: true })).toBe('flag'.underline);
     });
 
-    it("should describe a required flag parameter", function() {
-      expect(description('flag', { flag: true, required: true })).toBe('flag'.underline + requiredNotice());
+    it("should describe a required flag parameter (same as not required)", function() {
+      expect(description('flag', { flag: true, required: true })).toBe('flag'.underline);
     });
 
     it("should describe a parameter constrained by a pattern", function() {
@@ -154,10 +260,22 @@ describe("Parameters", function() {
       });
     });
 
-    it("should accept undefined, true or false for a flag parameter", function() {
-      _.each([ undefined, false, true ], function(bool) {
+    it("should accept true or false for a flag parameter", function() {
+      _.each([ false, true ], function(bool) {
         expectNoErrors(validate('flag', { flag: true }, bool));
       });
+    });
+
+    it("should accept true or false for a required flag parameter", function() {
+      _.each([ false, true ], function(bool) {
+        expectNoErrors(validate('flag', { flag: true, required: true }, bool));
+      });
+    });
+
+    it("should not accept undefined for a flag parameter", function() {
+      expectErrors(validate('flag', { flag: true }, undefined),
+        [ 'flag'.bold + ' is a boolean flag; it cannot have value "undefined"' + usageNotice('flag', true) ],
+        [ 'flag'.bold + ' is a boolean flag; it cannot have value "undefined"' ]);
     });
 
     it("should not accept a string value for a flag parameter", function() {
