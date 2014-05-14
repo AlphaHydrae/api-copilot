@@ -44,9 +44,9 @@ describe("Scenario Client Extensions", function() {
     var configureSpy = jasmine.createSpy();
     scenario.client.on('configure', configureSpy);
 
-    scenario.configure({ baz: 'qux' });
+    scenario.configure({ baz: 'qux', log: 'debug' });
     expect(configureSpy.calls.length).toBe(1);
-    expect(configureSpy).toHaveBeenCalledWith({ baz: 'qux' });
+    expect(configureSpy).toHaveBeenCalledWith({ baz: 'qux', log: 'debug' });
   });
 
   describe("base URL", function() {
@@ -996,6 +996,78 @@ describe("Scenario Client Extensions", function() {
             expect(requestData[i].time).toBeLessThan(start + requestDuration);
 
             start = requestData[i].time;
+          });
+        });
+      });
+
+      _.each({
+        requestPipeline: { constraint: 'greater than 0', validValues: [ 1, 5 ], invalidValues: [ 0, -1, -24 ] },
+        requestCooldown: { constraint: 'greater than or equal to 0', validValues: [ 0, 250 ], invalidValues: [ -1, -42 ] },
+        requestDelay: { constraint: 'greater than or equal to 0', validValues: [ 0, 350 ], invalidValues: [ -1, -66 ] }
+      }, function(data, name) {
+
+        _.each(data.validValues, function(value) {
+
+          it("should accept " + value + " for the `" + name + "` option", function() {
+
+            var options = {};
+            options[name] = value;
+            setPipelineOptions(options);
+
+            var fulfilledSpy = jasmine.createSpy();
+            h.runScenario(scenario).then(fulfilledSpy);
+
+            runs(function() {
+              expect(fulfilledSpy).toHaveBeenCalledWith(undefined);
+            });
+          });
+        });
+
+        it("should not accept a string for the `" + name + "` option", function() {
+
+          var options = {};
+          options[name] = 'asd';
+          setPipelineOptions(options);
+
+          var rejectedSpy = jasmine.createSpy();
+          h.runScenario(scenario, false).fail(rejectedSpy);
+
+          runs(function() {
+            expect(rejectedSpy).toHaveBeenCalled();
+            expect(rejectedSpy.calls[0].args[0]).toBeAnError('Expected `' + name + '` option to be a number, got asd (string)');
+          });
+        });
+
+        it("should not accept NaN for the `" + name + "` option", function() {
+
+          var options = {};
+          options[name] = NaN;
+          setPipelineOptions(options);
+
+          var rejectedSpy = jasmine.createSpy();
+          h.runScenario(scenario, false).fail(rejectedSpy);
+
+          runs(function() {
+            expect(rejectedSpy).toHaveBeenCalled();
+            expect(rejectedSpy.calls[0].args[0]).toBeAnError('Expected `' + name + '` option to be a number, got NaN (number)');
+          });
+        });
+
+        _.each(data.invalidValues, function(value) {
+
+          it("should not accept " + value + " for the `" + name + "` option", function() {
+
+            var options = {};
+            options[name] = value;
+            setPipelineOptions(options);
+
+            var rejectedSpy = jasmine.createSpy();
+            h.runScenario(scenario, false).fail(rejectedSpy);
+
+            runs(function() {
+              expect(rejectedSpy).toHaveBeenCalled();
+              expect(rejectedSpy.calls[0].args[0]).toBeAnError('The `' + name + '` option must be ' + data.constraint + '; got ' + value);
+            });
           });
         });
       });

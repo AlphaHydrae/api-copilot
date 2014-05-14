@@ -10,6 +10,8 @@ describe("Scenario", function() {
   var Scenario, scenario;
   beforeEach(function() {
 
+    h.addMatchers(this);
+
     Scenario = scenarioFactory([], log4jsMock, function() {});
 
     scenario = new Scenario({ name: 'once upon a time' });
@@ -19,6 +21,19 @@ describe("Scenario", function() {
     spyOn(log4jsMock, 'getLogger');
     new Scenario({ name: 'foo' });
     expect(log4jsMock.getLogger).toHaveBeenCalledWith('foo');
+  });
+
+  it("should validate the log level", function() {
+
+    scenario.step('step', function() {});
+
+    var rejectedSpy = jasmine.createSpy();
+    h.runScenario(scenario, false, { runOptions: { log: 'Traze' } }).fail(rejectedSpy);
+
+    runs(function() {
+      expect(rejectedSpy).toHaveBeenCalled();
+      expect(rejectedSpy.calls[0].args[0]).toBeAnError('Unknown log level "Traze"; must be one of trace, debug, info');
+    });
   });
 
   it("should throw an error if no step is defined", function() {
@@ -389,9 +404,9 @@ describe("Scenario", function() {
       var configureSpy = jasmine.createSpy();
       scenario.on('configure', configureSpy);
 
-      scenario.configure({ foo: 'bar' });
+      scenario.configure({ foo: 'bar', log: 'debug' });
       expect(configureSpy.calls.length).toBe(1);
-      expect(configureSpy).toHaveBeenCalledWith({ foo: 'bar' });
+      expect(configureSpy).toHaveBeenCalledWith({ foo: 'bar', log: 'debug' });
     });
   });
 });

@@ -8,6 +8,10 @@
   An [obfuscate parameter option](README.md#parameters-obfuscate) has been added for those parameters that you might not want to log in cleartext.
   This option is turned on by default for parameters whose name contains the words `password`, `secret` or `authToken` (case-insensitive).
 
+* Configuration options are now validated before running the scenario.
+  If an option has an invalid value (e.g. unknown log level, non-numeric or negative request cooldown),
+  the scenario will not start running.
+
 * *BUGFIX:* the log level option could not be set in the scenario object because the command line program would always override it to the info level.
 
 * *BUGFIX:* the scenario listing would unnecessarily be displayed when using the run or info commands with an argument and a loading error occurred (e.g. due to an invalid scenario object).

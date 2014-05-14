@@ -183,26 +183,11 @@ describe("CLI Program", function() {
           expectActionCalled(parsed({ log: 'trace' }));
         });
 
-        it("should not accept unknown log levels with the short log option", function() {
-
-          _.each([ 'foo', 'bar', 'baz', 'traze' ], function(unknownLogLevel) {
-            execute('-l', unknownLogLevel, command);
-            execute('--log', unknownLogLevel, command);
-          });
-
-          expect(spy.calls.length).toBe(8);
-
-          _.times(8, function(i) {
-
-            var args = [];
-            if (arity === 1) {
-              args.push(undefined);
-            }
-
-            args.push(parsed());
-
-            expect(spy.calls[i].args).toEqual(args);
-          });
+        it("should accept unknown log levels", function() {
+          execute('-l', 'deebug', command);
+          expectActionCalled(parsed({ log: 'deebug' }));
+          execute('--log', 'traze', command);
+          expectActionCalled(parsed({ log: 'traze' }));
         });
 
         it("should parse the source option", function() {
@@ -311,7 +296,7 @@ describe("CLI Program", function() {
           _.each([ 'foo', 'bar', 'baz', 'traze' ], function(unknownLogLevel) {
             setConfig({ log: unknownLogLevel });
             execute(command);
-            expectActionCalled(parsed());
+            expectActionCalled(parsed({ log: unknownLogLevel }));
           });
         });
 
