@@ -9,4 +9,6 @@ screen -t doc 3
 stuff "grunt doc"
 screen -t readme 4
 stuff "markdown-preview README.md"
+screen -t changelog 5
+stuff "markdown-preview CHANGELOG.md"
 select vim

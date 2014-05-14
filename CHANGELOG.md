@@ -4,11 +4,20 @@
 
 * **NEW:** The configurable [request pipeline](README.md#request-pipeline) allows to limit the number of HTTP requests made in parallel.
 
+* Runtime parameters have new options:
+
+    * [default](README.md#parameter-option-default) sets the default value of the parameter when not configured;
+
+    * [processor](README.md#parameter-option-processor) allows to provide a function to process parameter values (e.g. parseInt to cast integers).
+
+* [Flag runtime parameters](README.md#parameter-option-flag) now have the value `false` instead of `undefined` if not activated.
+  Also, the [required option](README.md#parameter-option-required) has no effect on them (even if required, flag parameters can still be omitted when running the scenario).
+
 * Runtime parameter values are now displayed before running the steps of a scenario with the debug log level.
-  An [obfuscate parameter option](README.md#parameters-obfuscate) has been added for those parameters that you might not want to log in cleartext.
+  An [obfuscate parameter option](README.md#parameter-option-obfuscate) has been added for those parameters that you might not want to log in cleartext.
   This option is turned on by default for parameters whose name contains the words `password`, `secret` or `authToken` (case-insensitive).
 
-* Configuration options are now validated before running the scenario.
+* [Configuration options](README.md#configuration-options) are now validated before running the scenario.
   If an option has an invalid value (e.g. unknown log level, non-numeric or negative request cooldown),
   the scenario will not start running.
 
@@ -27,7 +36,7 @@
 
   Also check out:
   
-    * [the summary option](README.md#summary-option),
+    * [the summary option](README.md#summary-option);
 
     * [documenting parameters](README.md#documenting-parameters).
 

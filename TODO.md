@@ -30,3 +30,5 @@
 * keep asking for scenario identifier if user doesn't give one
 * document that extendDefaultRequestOptions has same behavior as Underscore#extend
 * show defaults in info effective configuration
+* spec running a scenario multiple times
+* spec utils

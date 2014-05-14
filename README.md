@@ -1183,6 +1183,8 @@ See [parameter options](#parameter-options) on how to configure and document par
 <a name="parameter-options"></a>
 #### Parameter options
 
+<a name="parameter-option-required"></a>
+
 * **required** - `boolean, default: true`
 
   Parameters are required by default.
@@ -1208,6 +1210,20 @@ foo=value (required)
 
 Enter a value for foo: 
 ```
+
+<a name="parameter-option-default"></a>
+
+* **default** - `any, default: undefined`
+
+  Default value of the parameter when not configured.
+
+```js
+scenario.addParam('url',  {
+  default: 'http://example.com'
+});
+```
+
+<a name="parameter-option-flag"></a>
 
 * **flag** - `boolean, default: false`
 
@@ -1237,7 +1253,7 @@ scenario.addParam('backendUrl', {
 });
 ```
 
-<a name="parameters-description"></a>
+<a name="parameter-option-description"></a>
 
 * **description** - `string, default: none`
 
@@ -1278,7 +1294,7 @@ Sample output:
 backendUrl=url
 ```
 
-<a name="parameters-obfuscate"></a>
+<a name="parameter-option-obfuscate"></a>
 
 * **obfuscate** - `boolean, default: false`
 
@@ -1304,6 +1320,45 @@ Sample output when running a scenario:
 Runtime parameters:
   password = "************"
   foo = "***"
+```
+
+<a name="parameter-option-processor"></a>
+
+* **processor** - `function(value, previousValue), default: none`
+
+  If set, the parameter will take the value obtained by calling this function with the configured value.
+  If a default value is set, it will be given as second argument.
+  This can be used to coerce values of a given type, such as numbers.
+
+```js
+scenario.addParam('n', {
+  processor: parseInt
+});
+```
+
+  If a parameter is given multiple times at the command line,
+  or is an array in the scenario object or configuration file,
+  the processor function will be called once for each value, with that value as the first argument.
+  The second argument will be the result returned by the processor function for the previous value, or the default value the first time.
+
+  This can be used to construct a parameter value from multiple values.
+
+```js
+// this scenario can use multiple URLs
+scenario.addParam('urls', {
+
+  // start with an empty list
+  default: [],
+
+  // every time a -p urls=<url> is given, add it to the list
+  processor: function(value, urls) {
+    urls.push(value);
+    return urls;
+  }
+});
+
+// if called with `-p urls=http://example.com/a -p urls=http://example.com/b`,
+// the value of the `urls` parameter will be [ "http://example.com/a", "http://example.com/b" ]
 ```
 
 <a href="#toc" style="float:right;">Back to top</a>
@@ -1362,7 +1417,7 @@ Parameter loading functions are run in the order they are added to the scenario 
 <a name="documenting-parameters"></a>
 #### Documenting parameters
 
-In addition to the [description option](#parameters-description) shown above,
+In addition to the [description option](#parameter-option-description) shown above,
 the `addParam` method returns a parameter object which will emit a `describe` event when its documentation is printed.
 
 You can listen to this event to print more documentation:
@@ -1452,7 +1507,7 @@ scenario.step('file upload', function() {
 Scenarios with many parameters can become quite complicated to understand and use.
 
 Start by specifying a short [summary](#summary-option).
-Then document your parameters with the [description option](#parameters-description) and the [describe event](#documenting-parameters).
+Then document your parameters with the [description option](#parameter-option-description) and the [describe event](#documenting-parameters).
 
 To add additional documentation at the end of the [info command](#info) output, listen to the `scenario:info` event on the scenario object:
 
