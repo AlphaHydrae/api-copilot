@@ -217,17 +217,9 @@ describe("Parameters", function() {
   describe("#validate", function() {
 
     function validate(name, options, value) {
-
-      var result = {
-        errors: [],
-        errorsForPrompt: []
-      };
-
-      var param = new Parameter(name, options);
-      result.result = param.validate(value, result.errors);
-      result.resultForPrompt = param.validate(value, result.errorsForPrompt, true);
-
-      return result;
+      var errors = [];
+      new Parameter(name, options).validate(value, errors);
+      return errors;
     }
 
     it("should accept a value for required parameters", function() {
@@ -237,31 +229,27 @@ describe("Parameters", function() {
     it("should not accept boolean values for required non-flag parameters", function() {
       // false and undefined are already handled by the required check
       expectErrors(validate('nonFlag', {}, true),
-        [ 'nonFlag'.bold + ' requires a value' + usageNotice('nonFlag') ],
-        [ 'nonFlag'.bold + ' requires a value' ]);
+        'nonFlag'.bold + ' requires a value');
     });
 
     it("should not accept boolean values for optional non-flag parameters", function() {
       _.each([ false, true ], function(bool) {
         expectErrors(validate('nonFlag', { required: false }, bool),
-          [ 'nonFlag'.bold + ' requires a value' + usageNotice('nonFlag') ],
-          [ 'nonFlag'.bold + ' requires a value' ]);
+          'nonFlag'.bold + ' requires a value');
       });
     });
 
     it("should not accept falsy values for a required parameter", function() {
       _.each([ undefined, false, 0 ], function(falsy) {
         expectErrors(validate('foo', {}, falsy),
-          [ 'foo'.bold + ' is required' + usageNotice('foo') ],
-          [ 'foo'.bold + ' is required' ]);
+          'foo'.bold + ' is required');
       });
     });
 
     it("should not accept empty or blank strings for a required parameter", function() {
       _.each([ '', '   ', '\t \t  ' ], function(blank) {
         expectErrors(validate('bar', {}, blank),
-          [ 'bar'.bold + ' is required' + usageNotice('bar') ],
-          [ 'bar'.bold + ' is required' ]);
+          'bar'.bold + ' is required');
       });
     });
 
@@ -279,15 +267,13 @@ describe("Parameters", function() {
 
     it("should not accept undefined for a flag parameter", function() {
       expectErrors(validate('flag', { flag: true }, undefined),
-        [ 'flag'.bold + ' is a boolean flag; it cannot have value "undefined"' + usageNotice('flag', true) ],
-        [ 'flag'.bold + ' is a boolean flag; it cannot have value "undefined"' ]);
+        'flag'.bold + ' is a boolean flag; it cannot have value "undefined"');
     });
 
     it("should not accept a string value for a flag parameter", function() {
       _.each([ '', 'value', '   ' ], function(string) {
         expectErrors(validate('flag', { flag: true }, string),
-          [ 'flag'.bold + ' is a boolean flag; it cannot have value "' + string + '"' + usageNotice('flag', true) ],
-          [ 'flag'.bold + ' is a boolean flag; it cannot have value "' + string + '"' ]);
+          'flag'.bold + ' is a boolean flag; it cannot have value "' + string + '"');
       });
     });
 
@@ -304,7 +290,7 @@ describe("Parameters", function() {
     it("should not accept strings not matching the configured pattern", function() {
       _.each([ '', 'foo', 'htttp//borked.url' ], function(invalid) {
         expectErrors(validate('pattern', { required: false, pattern: /^https?:/ }, invalid),
-          [ 'pattern'.bold + ' cannot accept value "' + invalid + '" because it does not match pattern /^https?:/' ]);
+          'pattern'.bold + ' cannot accept value "' + invalid + '" because it does not match pattern /^https?:/');
       });
     });
   });
@@ -470,22 +456,12 @@ describe("Parameters", function() {
     expect(rl.close).toHaveBeenCalled();
   }
 
-  function expectErrors(result, errors, errorsForPrompt) {
-    expect(result).toEqual({
-      result: false,
-      errors: errors,
-      resultForPrompt: false,
-      errorsForPrompt: errorsForPrompt || errors
-    });
+  function expectErrors(errors, result) {
+    expect(errors).toEqual(slice.call(arguments, 1));
   }
 
-  function expectNoErrors(result) {
-    expect(result).toEqual({
-      result: true,
-      errors: [],
-      resultForPrompt: true,
-      errorsForPrompt: []
-    });
+  function expectNoErrors(errors) {
+    expect(errors).toEqual([]);
   }
 
   function usageNotice(name, flag) {

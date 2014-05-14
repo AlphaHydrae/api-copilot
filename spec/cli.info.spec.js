@@ -348,7 +348,10 @@ describe("CLI Info", function() {
         ''
       ];
 
-      expectLines(paramLines.concat(description.replace(/^/gm, '  ').split("\n")));
+      var descriptionLines = description.replace(/^/gm, '  ').split("\n");
+      descriptionLines[0] = descriptionLines[0].replace(/^  /, '  -p ');
+
+      expectLines(paramLines.concat(descriptionLines));
   }
 
   function expectBaseConfiguration(options) {

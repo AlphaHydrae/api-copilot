@@ -457,13 +457,14 @@ describe("Scenario Parameters", function() {
           '- grault'
         ]);
 
-        expect(lines.slice(8, 11)).toEqual([
+        expect(lines.slice(8, 12)).toEqual([
           '',
+          "Run `api-copilot info <scenario>` for help with this scenario's parameters.".green,
           'You will now be asked for the missing or corrected values.'.green,
           'Press Ctrl-C to quit.'.green
         ]);
 
-        expect(lines.length).toBe(11);
+        expect(lines.length).toBe(12);
         lines.length = 0;
 
         expect(params[0].prompt).toHaveBeenCalledWith(undefined);

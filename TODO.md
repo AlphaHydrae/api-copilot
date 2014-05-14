@@ -1,24 +1,24 @@
-* add -p in info output before params
-* remove parameter usage notice after validation error and add one info command usage notice above validation error list
 * allow configuration from environment variables
 * allow configuration from centralized (home) config file
-* add method to obfuscate request body/response properties
-* add command line option to disable obfuscation
-* get rid of new Dependency
 * add sample with server and use as readme example
 * make scenario name optional (replace with camelcased file name?)
 * support multiple configuration files with -c, --config FILE
-* make `list` check which files export valid scenarios
+* load configuration files asynchronously
 * run request filters before passing options to client
-* output pretty errors for invalid scenario files and such
 * expose and document logger
 * add scenario file pattern option
 * document samples in readme
 * show summary when running
 * provide underscore and q dependencies
 * add shared store object and document using global variables
-* show scenario configuration at runtime with trace log level (including config before/after config file)
 * check TODO/FIXMEs
+* show scenario configuration at runtime with trace log level (including config before/after config file)
+* output pretty errors for invalid scenario files and such
+* make `list` check which files export valid scenarios
+* get rid of new Dependency
+* add method to obfuscate request body/response properties
+* add command line option to disable obfuscation
+* add min/max configuration for repeated parameters
 * do not show source directory in info sub-command output (do not give this option to the scenario when running or showing info)
 * make run the default action, display --help if no scenario available
 * refactor client to avoid bind calls (create request wrapper?)
