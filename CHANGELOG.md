@@ -4,6 +4,12 @@
 
 * **NEW:** The configurable [request pipeline](README.md#request-pipeline) allows to limit the number of HTTP requests made in parallel.
 
+* [Configuration options](README.md#configuration-options) can now also be set with environment variables (e.g. `API_COPILOT_LOG=debug`).
+
+* [Configuration options](README.md#configuration-options) are now validated before running the scenario.
+  If an option has an invalid value (e.g. unknown log level, non-numeric or negative request cooldown),
+  the scenario will not start running.
+
 * Runtime parameters have new options:
 
     * [default](README.md#parameter-option-default) sets the default value of the parameter when not configured;
@@ -16,10 +22,6 @@
 * Runtime parameter values are now displayed before running the steps of a scenario with the debug log level.
   An [obfuscate parameter option](README.md#parameter-option-obfuscate) has been added for those parameters that you might not want to log in cleartext.
   This option is turned on by default for parameters whose name contains the words `password`, `secret` or `authToken` (case-insensitive).
-
-* [Configuration options](README.md#configuration-options) are now validated before running the scenario.
-  If an option has an invalid value (e.g. unknown log level, non-numeric or negative request cooldown),
-  the scenario will not start running.
 
 * *BUGFIX:* the log level option could not be set in the scenario object because the command line program would always override it to the info level.
 

@@ -8,6 +8,9 @@ var _ = require('underscore'),
     slice = Array.prototype.slice,
     yaml = require('js-yaml');
 
+var TRUTHY_STRINGS = [ '1', 'y', 'yes', 't', 'true' ],
+    BOOLEAN_OPTIONS = [ 'showTime', 'showRequest', 'showResponseBody', 'showFullUrl' ];
+
 describe("CLI Program", function() {
 
   var CliProgram, program, defaultOptions, mocks, handlerMocks;
@@ -21,8 +24,12 @@ describe("CLI Program", function() {
       config: 'api-copilot.yml'
     };
 
+    mocks = {
+      cliEnv: {}
+    };
+
     var noop = function() {};
-    CliProgram = cliProgramFactory(noop, noop, noop, fsMock);
+    CliProgram = cliProgramFactory(noop, noop, noop, mocks.cliEnv, fsMock);
 
     handlerMocks = {
       run: jasmine.createSpy(),
@@ -39,6 +46,10 @@ describe("CLI Program", function() {
 
   function parsed(options) {
     return _.extend({}, defaultOptions, options);
+  }
+
+  function setEnvironment(options) {
+    _.extend(mocks.cliEnv, options);
   }
 
   var cwd = process.cwd(),
@@ -169,7 +180,7 @@ describe("CLI Program", function() {
         });
       });
 
-      it("should produce the default options with no arguments", function() {
+      it("should produce the default options with no arguments, environment variables or configuration files", function() {
         execute(command);
         expectActionCalled(parsed());
       });
@@ -275,17 +286,80 @@ describe("CLI Program", function() {
           execute('--config', 'bar.yml', command);
           expectActionCalled(parsed({ config: 'bar.yml' }));
         });
+      });
 
-        it("should override configuration file options", function() {
-          setConfig({ log: 'debug', source: 'foo', baseUrl: 'http://bar.com', requestPipeline: 2 });
-          execute('-l', 'trace', '--source', 'baz', '-u', 'http://qux.com', '--request-pipeline', '3', command);
-          expectActionCalled(parsed({ log: 'trace', source: 'baz', baseUrl: 'http://qux.com', requestPipeline: 3 }));
+      describe("environment variables", function() {
+
+        var booleanEnvVars;
+        beforeEach(function() {
+          booleanEnvVars = [ 'API_COPILOT_SHOW_TIME', 'API_COPILOT_SHOW_REQUEST', 'API_COPILOT_SHOW_RESPONSE_BODY', 'API_COPILOT_SHOW_FULL_URL' ];
         });
 
-        it("should extend configuration file params", function() {
-          setConfig({ params: { foo: 'a', bar: 'b', baz: [ 1, 2 ], qux: 'string' } });
-          execute('-p', 'foo', '-p', 'bar=1', '-p', 'bar=2', '-p', 'bar=3', '-p', 'baz=yeehaw', '-p', 'corge', command);
-          expectActionCalled(parsed({ params: { foo: [ true ], bar: [ '1', '2', '3' ], baz: [ 'yeehaw' ], qux: 'string', corge: [ true ] } }));
+        it("should parse options given through environment variables", function() {
+
+          setEnvironment({
+            API_COPILOT_LOG: 'trace',
+            API_COPILOT_SOURCE: 'samples',
+            API_COPILOT_BASE_URL: 'http://example.com',
+            API_COPILOT_SHOW_TIME: '1',
+            API_COPILOT_SHOW_REQUEST: '1',
+            API_COPILOT_SHOW_RESPONSE_BODY: '1',
+            API_COPILOT_SHOW_FULL_URL: '1',
+            API_COPILOT_REQUEST_PIPELINE: '3',
+            API_COPILOT_REQUEST_COOLDOWN: '250',
+            API_COPILOT_REQUEST_DELAY: '100',
+            API_COPILOT_CONFIG: 'foo.yml'
+          });
+
+          execute(command);
+
+          expectActionCalled(parsed({
+            log: 'trace',
+            source: 'samples',
+            baseUrl: 'http://example.com',
+            showTime: true,
+            showRequest: true,
+            showResponseBody: true,
+            showFullUrl: true,
+            requestPipeline: 3,
+            requestCooldown: 250,
+            requestDelay: 100,
+            config: 'foo.yml'
+          }));
+        });
+
+        _.each(TRUTHY_STRINGS, function(truthy) {
+          it("should parse " + truthy + " as true for boolean options", function() {
+
+            setEnvironment(_.reduce(booleanEnvVars, function(memo, name) {
+              memo[name] = truthy;
+              return memo;
+            }, {}));
+
+            execute(command);
+
+            expectActionCalled(parsed(_.reduce(BOOLEAN_OPTIONS, function(memo, name) {
+              memo[name] = true;
+              return memo;
+            }, {})));
+          });
+        });
+
+        _.each([ '', 'n', 'no', 'f', 'false', 'anything' ], function(falsy) {
+          it("should parse " + falsy + " as false for boolean options", function() {
+
+            setEnvironment(_.reduce(booleanEnvVars, function(memo, name) {
+              memo[name] = falsy;
+              return memo;
+            }, {}));
+
+            execute(command);
+
+            expectActionCalled(parsed(_.reduce(BOOLEAN_OPTIONS, function(memo, name) {
+              memo[name] = false;
+              return memo;
+            }, {})));
+          });
         });
       });
 
@@ -372,6 +446,34 @@ describe("CLI Program", function() {
           setConfig({ foo: 'bar', baz: 'qux' });
           execute(command);
           expectActionCalled(parsed());
+        });
+      });
+
+      describe("combined", function() {
+
+        it("should override configuration file options with command line options", function() {
+          setConfig({ log: 'debug', source: 'foo', baseUrl: 'http://bar.com', requestPipeline: 2 });
+          execute('-l', 'trace', '--source', 'baz', '--request-pipeline', '3', command);
+          expectActionCalled(parsed({ log: 'trace', source: 'baz', baseUrl: 'http://bar.com', requestPipeline: 3 }));
+        });
+
+        it("should override environment options with command line options", function() {
+          setEnvironment({ API_COPILOT_LOG: 'trace', API_COPILOT_SOURCE: 'baz', API_COPILOT_BASE_URL: 'http://example.com', API_COPILOT_REQUEST_PIPELINE: '4' });
+          execute('-l', 'debug', '--source', 'foo', '--request-pipeline', '1', command);
+          expectActionCalled(parsed({ log: 'debug', source: 'foo', baseUrl: 'http://example.com', requestPipeline: 1 }));
+        });
+
+        it("should override configuration file options with environment options and environment options with command line options", function() {
+          setConfig({ source: 'foo', baseUrl: 'http://example.com/a', requestPipeline: 10 });
+          setEnvironment({ API_COPILOT_BASE_URL: 'http://example.com/b', requestPipeline: '20' });
+          execute('--request-pipeline', '30', '-l', 'debug', command);
+          expectActionCalled(parsed({ source: 'foo', baseUrl: 'http://example.com/b', requestPipeline: 30, log: 'debug' }));
+        });
+
+        it("should extend configuration file params with command line params", function() {
+          setConfig({ params: { foo: 'a', bar: 'b', baz: [ 1, 2 ], qux: 'string' } });
+          execute('-p', 'foo', '-p', 'bar=1', '-p', 'bar=2', '-p', 'bar=3', '-p', 'baz=yeehaw', '-p', 'corge', command);
+          expectActionCalled(parsed({ params: { foo: [ true ], bar: [ '1', '2', '3' ], baz: [ 'yeehaw' ], qux: 'string', corge: [ true ] } }));
         });
       });
 

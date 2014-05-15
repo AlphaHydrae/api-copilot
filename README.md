@@ -2,7 +2,7 @@
 
 > Write testing or data population scenarios for your APIs.
 
-**[Installation](#installation) - [Documentation](#documentation) - [Usage](#usage) - [Contributing](#contributing) - [License](#license)**
+**[Installation](#installation) &mdash; [Documentation](#documentation) &mdash; [Usage](#usage) &mdash; [Contributing](#contributing) &mdash; [License](#license)**
 
 [![NPM version](https://badge.fury.io/js/api-copilot.svg)](http://badge.fury.io/js/api-copilot)
 
@@ -389,60 +389,63 @@ api-copilot run foo
 
 
 
+<a name="configuration-options"></a>
+
 ### Configuration Options
 
-API Copilot can be given configuration options in three ways:
+API Copilot can be given configuration options in four ways:
 
 * as options to the Scenario object;
 * from the `api-copilot.yml` [YAML](http://www.yaml.org) file in the current working directory;
+* from environment variables;
 * as options on the command line (run `api-copilot --help` to see available options).
 
-Command line options override options from the configuration file and both override the Scenario object options.
+Command line options override environment variable options, which override options from the configuration file, which finally override the Scenario object options.
 
 The following configuration options are supported:
 
-* `log` - command line `-l, --log <level>`
+* `log` &mdash; command line `-l, --log <level>` &mdash; env var `API_COPILOT_LOG=<level>`
 
   Log level (trace, debug or info). The default level is info. Use trace to see the stack trace of errors.
 
-* `source` - command line `-s, --source <dir>`
+* `source` &mdash; command line `-s, --source <dir>` &mdash; env var `API_COPILOT_SOURCE=<dir>`
 
   Path to the directory where API scenarios are located.
   The default directory is `api`.
   The path can be absolute or relative to the current working directory.
 
-* `baseUrl` - command line `-u, --base-url <url>`
+* `baseUrl` &mdash; command line `-u, --base-url <url>` &mdash; env var `API_COPILOT_BASE_URL=<url>`
 
   Override the base URL of the scenario.
   Only the paths of URLs will be printed in debug mode.
 
-* `showTime` - command line `-t, --show-time`
+* `showTime` &mdash; command line `-t, --show-time` &mdash; env var `API_COPILOT_SHOW_TIME=1`
 
   Print the date and time with each log.
 
-* `showRequest` - command line `-q, --show-request`
+* `showRequest` &mdash; command line `-q, --show-request` &mdash; env var `API_COPILOT_SHOW_REQUEST=1`
 
   Print options for each HTTP request (only with debug or trace log levels).
 
-* `showResponseBody` - command line `-b, --show-response-body`
+* `showResponseBody` &mdash; command line `-b, --show-response-body` &mdash; env var `API_COPILOT_SHOW_RESPONSE_BODY=1`
 
   Print response body for each HTTP request (only with debug or trace log levels).
 
-* `showFullUrl` - command line `--show-full-url`
+* `showFullUrl` &mdash; command line `--show-full-url` &mdash; env var `API_COPILOT_SHOW_FULL_URL=1`
 
   Always print full URLs even when a base URL is configured (only with debug or trace log levels).
 
-* `requestPipeline` - command line `--request-pipeline <n>`
+* `requestPipeline` &mdash; command line `--request-pipeline <n>` &mdash; env var `API_COPILOT_REQUEST_PIPELINE=<n>`
 
   Maximum number of HTTP requests to run in parallel (no limit by default).
   See [request pipeline](#request-pipeline).
 
-* `requestCooldown` - command line `--request-cooldown <ms>`
+* `requestCooldown` &mdash; command line `--request-cooldown <ms>` &mdash; env var `API_COPILOT_REQUEST_COOLDOWN=<ms>`
 
   If set and an HTTP request ends, no other request will be started before this time (in milliseconds) has elapsed (no cooldown by default).
   See [request pipeline](#request-pipeline).
 
-* `requestDelay` - command line `--request-delay <ms>`
+* `requestDelay` &mdash; command line `--request-delay <ms>` &mdash; env var `API_COPILOT_REQUEST_DELAY=<ms>`
 
   If set and an HTTP request starts, no other request will be started before this time (in milliseconds) has elapsed (no delay by default).
   See [request pipeline](#request-pipeline).
@@ -1064,7 +1067,7 @@ or maybe your API limits the frequency of calls.
 The request pipeline allows you to limit how often HTTP requests are started.
 It has three [configuration options](#configuration-options).
 
-* **requestPipeline** - `<n>`
+* **requestPipeline** &mdash; `<n>`
 
   This limits the number of HTTP requests that can be made in parallel.
   For example, if set to 3, no more than 3 HTTP requests will run concurrently at any given time.
@@ -1089,7 +1092,7 @@ scenario.step('limit request concurrency', function() {
 });
 ```
 
-* **requestCooldown** - `<ms>`
+* **requestCooldown** &mdash; `<ms>`
 
   When set, the request cooldown guarantees that after an HTTP request end,
   no other request will start before the cooldown time (in milliseconds) has elapsed.
@@ -1111,7 +1114,7 @@ scenario.step('wait after each request', function() {
 });
 ```
 
-* **requestDelay** - `<ms>`
+* **requestDelay** &mdash; `<ms>`
 
   When set, the request delay guarantees that after an HTTP request starts,
   no other request will start before the delay time (in milliseconds) has elapsed.
@@ -1185,7 +1188,7 @@ See [parameter options](#parameter-options) on how to configure and document par
 
 <a name="parameter-option-required"></a>
 
-* **required** - `boolean, default: true`
+* **required** &mdash; `boolean, default: true`
 
   Parameters are required by default.
   Set this option to `false` to make them optional.
@@ -1213,7 +1216,7 @@ Enter a value for foo:
 
 <a name="parameter-option-default"></a>
 
-* **default** - `any, default: undefined`
+* **default** &mdash; `any, default: undefined`
 
   Default value of the parameter when not configured.
 
@@ -1225,7 +1228,7 @@ scenario.addParam('url',  {
 
 <a name="parameter-option-flag"></a>
 
-* **flag** - `boolean, default: false`
+* **flag** &mdash; `boolean, default: false`
 
   Set this option to `true` to make your parameter a boolean flag.
 
@@ -1240,7 +1243,7 @@ scenario.addParam('coolFeature', {
 });
 ```
 
-* **pattern** - `regexp, default: none`
+* **pattern** &mdash; `regexp, default: none`
 
   Validate your parameter with a regular expression.
 
@@ -1255,7 +1258,7 @@ scenario.addParam('backendUrl', {
 
 <a name="parameter-option-description"></a>
 
-* **description** - `string, default: none`
+* **description** &mdash; `string, default: none`
 
   Additional documentation for your parameter.
   It will be displayed in the [info command](#info) output.
@@ -1273,7 +1276,7 @@ backendUrl=value (required)
   The URL to our cool backend. Must be HTTPS.
 ```
 
-* **valueDescription** - `string, default: none`
+* **valueDescription** &mdash; `string, default: none`
 
   Custom value description for your parameter.
 
@@ -1296,7 +1299,7 @@ backendUrl=url
 
 <a name="parameter-option-obfuscate"></a>
 
-* **obfuscate** - `boolean, default: false`
+* **obfuscate** &mdash; `boolean, default: false`
 
   If set, the value of this parameter will be obfuscated when displayed
   before the scenario starts running.
@@ -1324,7 +1327,7 @@ Runtime parameters:
 
 <a name="parameter-option-processor"></a>
 
-* **processor** - `function(value, previousValue), default: none`
+* **processor** &mdash; `function(value, previousValue), default: none`
 
   If set, the parameter will take the value obtained by calling this function with the configured value.
   If a default value is set, it will be given as second argument.

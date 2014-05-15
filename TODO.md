@@ -1,4 +1,3 @@
-* allow configuration from environment variables
 * allow configuration from centralized (home) config file
 * add sample with server and use as readme example
 * make scenario name optional (replace with camelcased file name?)
@@ -12,6 +11,7 @@
 * provide underscore and q dependencies
 * add shared store object and document using global variables
 * check TODO/FIXMEs
+* isolate program functionality from cli functionality (program should handle option overriding/basic parsing, cli should handle command line arguments)
 * show scenario configuration at runtime with trace log level (including config before/after config file)
 * output pretty errors for invalid scenario files and such
 * make `list` check which files export valid scenarios
@@ -32,3 +32,4 @@
 * show defaults in info effective configuration
 * spec running a scenario multiple times
 * spec utils
+* allow to set environment variable prefix
