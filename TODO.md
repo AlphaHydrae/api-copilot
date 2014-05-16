@@ -1,8 +1,5 @@
-* allow configuration from centralized (home) config file
 * add sample with server and use as readme example
 * make scenario name optional (replace with camelcased file name?)
-* support multiple configuration files with -c, --config FILE
-* load configuration files asynchronously
 * run request filters before passing options to client
 * expose and document logger
 * add scenario file pattern option
@@ -10,7 +7,10 @@
 * show summary when running
 * provide underscore and q dependencies
 * add shared store object and document using global variables
+* make run the default action, display --help if no scenario available
 * check TODO/FIXMEs
+* display execution time in human-friendly format (2m 30s 123ms)
+* allow JSON configuration files
 * isolate program functionality from cli functionality (program should handle option overriding/basic parsing, cli should handle command line arguments)
 * show scenario configuration at runtime with trace log level (including config before/after config file)
 * output pretty errors for invalid scenario files and such
@@ -20,7 +20,6 @@
 * add command line option to disable obfuscation
 * add min/max configuration for repeated parameters
 * do not show source directory in info sub-command output (do not give this option to the scenario when running or showing info)
-* make run the default action, display --help if no scenario available
 * refactor client to avoid bind calls (create request wrapper?)
 * handle step timeout (with configurable timeout)
 * set maximum number of steps to execute? detect loops?

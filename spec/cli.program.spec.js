@@ -21,11 +21,13 @@ describe("CLI Program", function() {
 
     defaultOptions = {
       source: 'api',
-      config: 'api-copilot.yml'
+      config: [ '/home/.api-copilot.yml', 'api-copilot.yml' ]
     };
 
     mocks = {
-      cliEnv: {}
+      cliEnv: {
+        HOME: '/home'
+      }
     };
 
     var noop = function() {};
@@ -41,7 +43,13 @@ describe("CLI Program", function() {
   });
 
   function execute() {
-    return program.execute([ 'node', 'bin', ].concat(slice.call(arguments)));
+    var promise = program.execute([ 'node', 'bin', ].concat(slice.call(arguments)));
+    return h.runPromise(promise, true);
+  }
+
+  function executeFailed() {
+    var promise = program.execute([ 'node', 'bin', ].concat(slice.call(arguments)));
+    return h.runPromise(promise, false);
   }
 
   function parsed(options) {
@@ -74,17 +82,10 @@ describe("CLI Program", function() {
 
   it("should return a resolved promise when outputting the help", function() {
 
-    var promise;
+    var fulfilledSpy;
     h.capture(function() {
-      promise = execute();
+      fulfilledSpy = execute();
     });
-
-    var fulfilledSpy = jasmine.createSpy();
-    promise.then(fulfilledSpy);
-
-    waitsFor(function() {
-      return fulfilledSpy.calls.length;
-    }, "the program to have finished running", 50);
 
     runs(function() {
       expect(fulfilledSpy).toHaveBeenCalledWith(undefined);
@@ -127,12 +128,7 @@ describe("CLI Program", function() {
 
         program = new CliProgram(handlers);
 
-        var fulfilledSpy = jasmine.createSpy();
-        execute(command).then(fulfilledSpy);
-
-        waitsFor(function() {
-          return fulfilledSpy.calls.length;
-        }, "the program to have finished executing", 50);
+        var fulfilledSpy = execute(command);
 
         runs(function() {
           expect(fulfilledSpy).toHaveBeenCalledWith(command + ' result');
@@ -146,12 +142,7 @@ describe("CLI Program", function() {
 
         program = new CliProgram(handlers);
 
-        var fulfilledSpy = jasmine.createSpy();
-        execute(command).then(fulfilledSpy);
-
-        waitsFor(function() {
-          return fulfilledSpy.calls.length;
-        }, "the program to have finished executing", 50);
+        var fulfilledSpy = execute(command);
 
         runs(function() {
           expect(fulfilledSpy).toHaveBeenCalledWith(undefined);
@@ -167,12 +158,7 @@ describe("CLI Program", function() {
 
         program = new CliProgram(handlers);
 
-        var rejectedSpy = jasmine.createSpy();
-        execute(command).fail(rejectedSpy);
-
-        waitsFor(function() {
-          return rejectedSpy.calls.length;
-        }, "the program to have finished executing", 50);
+        var rejectedSpy = executeFailed(command);
 
         runs(function() {
           expect(rejectedSpy).toHaveBeenCalled();
@@ -182,109 +168,86 @@ describe("CLI Program", function() {
 
       it("should produce the default options with no arguments, environment variables or configuration files", function() {
         execute(command);
-        expectActionCalled(parsed());
+        runs(function() {
+          expectActionCalled(parsed());
+        });
       });
 
       describe("command line", function() {
 
-        it("should parse the log option", function() {
-          execute('-l', 'debug', command);
-          expectActionCalled(parsed({ log: 'debug' }));
-          execute('--log', 'trace', command);
-          expectActionCalled(parsed({ log: 'trace' }));
+        it("should parse short command line options", function() {
+
+          execute(
+            '-l', 'debug', '-s', 'samples', '-u', 'http://example.com/foo', '-t', '-q', '-b',
+            '-p', 'foo', '-p', 'bar=baz', '-p', 'baz=1', '-p', 'baz=2', '-p', 'baz=3',
+            '-c', 'foo.yml', '-c', 'bar.yml', command
+          );
+
+          runs(function() {
+            expectActionCalled(parsed({
+              log: 'debug',
+              source: 'samples',
+              baseUrl: 'http://example.com/foo',
+              showTime: true,
+              showRequest: true,
+              showResponseBody: true,
+              params: { foo: [ true ], bar: [ 'baz' ], baz: [ '1', '2', '3' ] },
+              config: [ 'foo.yml', 'bar.yml' ]
+            }));
+          });
+        });
+
+        it("should parse long command line options", function() {
+
+          execute(
+            '--log', 'trace', '--source', 'scripts', '--base-url', 'http://example.com/bar',
+            '--show-time', '--show-request', '--show-response-body', '--show-full-url',
+            '--request-pipeline', '3', '--request-cooldown', '250', '--request-delay', '100',
+            '--params', 'foo', '--params', 'bar=baz', '--params', 'baz=1', '--params', 'baz=2', '--params', 'baz=3',
+            '--config', 'foo.yml', '--config', 'bar.yml', command
+          );
+
+          runs(function() {
+            expectActionCalled(parsed({
+              log: 'trace',
+              source: 'scripts',
+              baseUrl: 'http://example.com/bar',
+              showTime: true,
+              showRequest: true,
+              showResponseBody: true,
+              showFullUrl: true,
+              requestPipeline: 3,
+              requestCooldown: 250,
+              requestDelay: 100,
+              params: { foo: [ true ], bar: [ 'baz' ], baz: [ '1', '2', '3' ] },
+              config: [ 'foo.yml', 'bar.yml' ]
+            }));
+          });
         });
 
         it("should accept unknown log levels", function() {
-          execute('-l', 'deebug', command);
-          expectActionCalled(parsed({ log: 'deebug' }));
-          execute('--log', 'traze', command);
-          expectActionCalled(parsed({ log: 'traze' }));
-        });
 
-        it("should parse the source option", function() {
-          execute('-s', 'foo', command);
-          expectActionCalled(parsed({ source: 'foo' }));
-          execute('--source', 'bar', command);
-          expectActionCalled(parsed({ source: 'bar' }));
-        });
+          execute('--log', 'deebug', command);
 
-        it("should parse the baseUrl option", function() {
-          execute('-u', 'http://foo.com', command);
-          expectActionCalled(parsed({ baseUrl: 'http://foo.com' }));
-          execute('--base-url', 'http://bar.com', command);
-          expectActionCalled(parsed({ baseUrl: 'http://bar.com' }));
+          runs(function() {
+            expectActionCalled(parsed({
+              log: 'deebug'
+            }));
+          });
         });
+        
+        it("should coerce request pipeline options to integers", function() {
 
-        it("should parse the showTime option", function() {
-          execute('-t', command);
-          expectActionCalled(parsed({ showTime: true }));
-          execute('--show-time', command);
-          expectActionCalled(parsed({ showTime: true }));
-        });
-
-        it("should parse the showRequest option", function() {
-          execute('-q', command);
-          expectActionCalled(parsed({ showRequest: true }));
-          execute('--show-request', command);
-          expectActionCalled(parsed({ showRequest: true }));
-        });
-
-        it("should parse the showResponseBody option", function() {
-          execute('-b', command);
-          expectActionCalled(parsed({ showResponseBody: true }));
-          execute('--show-response-body', command);
-          expectActionCalled(parsed({ showResponseBody: true }));
-        });
-
-        it("should parse the params option", function() {
-          execute('-p', 'foo', command);
-          expectActionCalled(parsed({ params: { foo: [ true ] } }));
-          execute('--params', 'bar', command);
-          expectActionCalled(parsed({ params: { bar: [ true ] } }));
-        });
-
-        it("should parse multiple params options", function() {
-          execute('-p', 'foo', '--params', 'bar', '-p', 'baz', command);
-          expectActionCalled(parsed({ params: { foo: [ true ], bar: [ true ], baz: [ true ] } }));
-        });
-
-        it("should parse key/value params options", function() {
-          execute('-p', 'foo=bar', command);
-          expectActionCalled(parsed({ params: { foo: [ 'bar' ] } }));
-          execute('--params', 'baz=qux', command);
-          expectActionCalled(parsed({ params: { baz: [ 'qux' ] } }));
-        });
-
-        it("should parse repeated params options", function() {
-          execute('-p', 'foo', '-p', 'bar=abc', '--params', 'foo', '-p', 'bar=def', '--params', 'bar=ghi', '-p', 'qux=corge', command);
-          expectActionCalled(parsed({ params: { foo: [ true, true ], bar: [ 'abc', 'def', 'ghi' ], qux: [ 'corge' ] } }));
-        });
-
-        it("should parse mixed params options", function() {
-          execute('-p', 'foo=bar', '-p', 'baz', '--params', 'qux=corge', command);
-          expectActionCalled(parsed({ params: { foo: [ 'bar' ], baz: [ true ], qux: [ 'corge' ] } }));
-        });
-
-        it("should parse the request pipeline options", function() {
-          execute('--request-pipeline', '3', '--request-cooldown', '250', '--request-delay', '350', command);
-          expectActionCalled(parsed({ requestPipeline: 3, requestCooldown: 250, requestDelay: 350 }));
-        });
-
-        it("should coerce the request pipeline options to integers", function() {
           execute('--request-pipeline', 'asd', '--request-cooldown', 'sdf', '--request-delay', 'dfg', command);
-          expectActionCalled(jasmine.any(Object));
 
-          var options = spy.calls[0].args[arity];
-          expect(options.requestPipeline).toBeNaN();
-          expect(options.requestCooldown).toBeNaN();
-          expect(options.requestDelay).toBeNaN();
-        });
+          runs(function() {
+            expectActionCalled(jasmine.any(Object));
 
-        it("should parse the config option", function() {
-          execute('-c', 'foo.yml', command);
-          expectActionCalled(parsed({ config: 'foo.yml' }));
-          execute('--config', 'bar.yml', command);
-          expectActionCalled(parsed({ config: 'bar.yml' }));
+            var options = spy.calls[0].args[arity];
+            expect(options.requestPipeline).toBeNaN();
+            expect(options.requestCooldown).toBeNaN();
+            expect(options.requestDelay).toBeNaN();
+          });
         });
       });
 
@@ -313,19 +276,21 @@ describe("CLI Program", function() {
 
           execute(command);
 
-          expectActionCalled(parsed({
-            log: 'trace',
-            source: 'samples',
-            baseUrl: 'http://example.com',
-            showTime: true,
-            showRequest: true,
-            showResponseBody: true,
-            showFullUrl: true,
-            requestPipeline: 3,
-            requestCooldown: 250,
-            requestDelay: 100,
-            config: 'foo.yml'
-          }));
+          runs(function() {
+            expectActionCalled(parsed({
+              log: 'trace',
+              source: 'samples',
+              baseUrl: 'http://example.com',
+              showTime: true,
+              showRequest: true,
+              showResponseBody: true,
+              showFullUrl: true,
+              requestPipeline: 3,
+              requestCooldown: 250,
+              requestDelay: 100,
+              config: defaultOptions.config.concat([ 'foo.yml' ])
+            }));
+          });
         });
 
         _.each(TRUTHY_STRINGS, function(truthy) {
@@ -338,10 +303,12 @@ describe("CLI Program", function() {
 
             execute(command);
 
-            expectActionCalled(parsed(_.reduce(BOOLEAN_OPTIONS, function(memo, name) {
-              memo[name] = true;
-              return memo;
-            }, {})));
+            runs(function() {
+              expectActionCalled(parsed(_.reduce(BOOLEAN_OPTIONS, function(memo, name) {
+                memo[name] = true;
+                return memo;
+              }, {})));
+            });
           });
         });
 
@@ -355,125 +322,179 @@ describe("CLI Program", function() {
 
             execute(command);
 
-            expectActionCalled(parsed(_.reduce(BOOLEAN_OPTIONS, function(memo, name) {
-              memo[name] = false;
-              return memo;
-            }, {})));
+            runs(function() {
+              expectActionCalled(parsed(_.reduce(BOOLEAN_OPTIONS, function(memo, name) {
+                memo[name] = false;
+                return memo;
+              }, {})));
+            });
           });
         });
       });
 
       describe("configuration file", function() {
 
-        it("should parse the log option", function() {
-          setConfig({ log: 'debug' });
-          execute(command);
-          expectActionCalled(parsed({ log: 'debug' }));
-        });
+        it("should parse options from a YAML configuration file", function() {
 
-        it("should not accept unknown log levels", function() {
-          _.each([ 'foo', 'bar', 'baz', 'traze' ], function(unknownLogLevel) {
-            setConfig({ log: unknownLogLevel });
-            execute(command);
-            expectActionCalled(parsed({ log: unknownLogLevel }));
+          setConfig({
+            log: 'debug',
+            source: 'samples',
+            baseUrl: 'http://example.com',
+            showTime: true,
+            showRequest: true,
+            showResponseBody: true,
+            showFullUrl: true,
+            requestPipeline: 3,
+            requestCooldown: 250,
+            requestDelay: 100,
+            params: {
+              foo: true,
+              bar: 'baz',
+              baz: [ 1, 2, 3 ]
+            }
+          });
+
+          execute(command);
+
+          runs(function() {
+            expectActionCalled(parsed({
+              log: 'debug',
+              source: 'samples',
+              baseUrl: 'http://example.com',
+              showTime: true,
+              showRequest: true,
+              showResponseBody: true,
+              showFullUrl: true,
+              requestPipeline: 3,
+              requestCooldown: 250,
+              requestDelay: 100,
+              params: {
+                foo: true,
+                bar: 'baz',
+                baz: [ 1, 2, 3 ]
+              }
+            }));
           });
         });
 
-        it("should parse the source option", function() {
-          setConfig({ source: 'foo' });
+        it("should load the home configuration file", function() {
+
+          setConfig({ log: 'trace' }, '/home/.api-copilot.yml');
           execute(command);
-          expectActionCalled(parsed({ source: 'foo' }));
+
+          runs(function() {
+            expectActionCalled(parsed({ log: 'trace' }));
+          });
         });
 
-        it("should parse the baseUrl option", function() {
-          setConfig({ baseUrl: 'http://foo.com' });
-          execute(command);
-          expectActionCalled(parsed({ baseUrl: 'http://foo.com' }));
+        it("should load multiple configuration files (and omit the default configuration files)", function() {
+
+          setConfig({ log: 'trace', source: 'a', baseUrl: 'http://example.com/a', requestPipeline: 1 }, '/home/.api-copilot.yml');
+          setConfig({ source: 'b', baseUrl: 'http://example.com/b', requestPipeline: 2 });
+          setConfig({ baseUrl: 'http://example.com/c', requestPipeline: 3 }, 'foo.yml');
+          setConfig({ requestPipeline: 4 }, 'bar.yml');
+          execute('-c', 'foo.yml', '-c', 'bar.yml', command);
+
+          runs(function() {
+            expectActionCalled(parsed({
+              baseUrl: 'http://example.com/c',
+              requestPipeline: 4,
+              config: [ 'foo.yml', 'bar.yml' ]
+            }));
+          });
         });
 
-        it("should parse the showTime option", function() {
-          setConfig({ showTime: true });
-          execute(command);
-          expectActionCalled(parsed({ showTime: true }));
-        });
+        it("should load the home and cwd configuration files with the `defaultConfigs` option", function() {
 
-        it("should parse the showRequest option", function() {
-          setConfig({ showRequest: true });
-          execute(command);
-          expectActionCalled(parsed({ showRequest: true }));
-        });
+          setConfig({ log: 'trace', source: 'a', baseUrl: 'http://example.com/a', requestPipeline: 1 }, '/home/.api-copilot.yml');
+          setConfig({ source: 'b', baseUrl: 'http://example.com/b', requestPipeline: 2 });
+          setConfig({ baseUrl: 'http://example.com/c', requestPipeline: 3 }, 'foo.yml');
+          setConfig({ requestPipeline: 4 }, 'bar.yml');
+          execute('--default-configs', '-c', 'foo.yml', '-c', 'bar.yml', command);
 
-        it("should parse the showResponseBody option", function() {
-          setConfig({ showResponseBody: true });
-          execute(command);
-          expectActionCalled(parsed({ showResponseBody: true }));
-        });
-
-        it("should parse the params option", function() {
-          setConfig({ params: { foo: true, bar: 'string', baz: [ 1, 2, 3 ] } });
-          execute(command);
-          expectActionCalled(parsed({ params: { foo: true, bar: 'string', baz: [ 1, 2, 3 ] } }));
-        });
-
-        it("should parse the request pipeline options", function() {
-          setConfig({ requestPipeline: 3, requestCooldown: 250, requestDelay: 350 });
-          execute(command);
-          expectActionCalled(parsed({ requestPipeline: 3, requestCooldown: 250, requestDelay: 350 }));
-        });
-
-        it("should not coerce request pipeline options", function() {
-          setConfig({ requestPipeline: 'asd', requestCooldown: 'sdf', requestDelay: 'dfg' });
-          execute(command);
-          expectActionCalled(parsed({ requestPipeline: 'asd', requestCooldown: 'sdf', requestDelay: 'dfg' }));
+          runs(function() {
+            expectActionCalled(parsed({
+              log: 'trace',
+              source: 'b',
+              baseUrl: 'http://example.com/c',
+              requestPipeline: 4,
+              config: defaultOptions.config.concat([ 'foo.yml', 'bar.yml' ])
+            }));
+          });
         });
 
         it("should not parse the config option", function() {
-          setConfig({ config: 'foo' });
-          execute(command);
-          expectActionCalled(parsed());
-        });
 
-        it("should load the configuration from the file given in the config option", function() {
-          setConfig({ log: 'debug' });
-          setConfig({ log: 'trace' }, 'foo.yml');
-          execute('-c', 'foo.yml', command);
-          expectActionCalled(parsed({ log: 'trace', config: 'foo.yml' }));
-          execute('--config', 'foo.yml', command);
-          expectActionCalled(parsed({ log: 'trace', config: 'foo.yml' }));
+          setConfig({ config: 'foo.yml' });
+          execute(command);
+
+          runs(function() {
+            expectActionCalled(parsed());
+          });
         });
 
         it("should not parse unknown options", function() {
+
           setConfig({ foo: 'bar', baz: 'qux' });
           execute(command);
-          expectActionCalled(parsed());
+
+          runs(function() {
+            expectActionCalled(parsed());
+          });
         });
       });
 
       describe("combined", function() {
 
         it("should override configuration file options with command line options", function() {
+
           setConfig({ log: 'debug', source: 'foo', baseUrl: 'http://bar.com', requestPipeline: 2 });
           execute('-l', 'trace', '--source', 'baz', '--request-pipeline', '3', command);
-          expectActionCalled(parsed({ log: 'trace', source: 'baz', baseUrl: 'http://bar.com', requestPipeline: 3 }));
+
+          runs(function() {
+            expectActionCalled(parsed({ log: 'trace', source: 'baz', baseUrl: 'http://bar.com', requestPipeline: 3 }));
+          });
         });
 
         it("should override environment options with command line options", function() {
+
           setEnvironment({ API_COPILOT_LOG: 'trace', API_COPILOT_SOURCE: 'baz', API_COPILOT_BASE_URL: 'http://example.com', API_COPILOT_REQUEST_PIPELINE: '4' });
           execute('-l', 'debug', '--source', 'foo', '--request-pipeline', '1', command);
-          expectActionCalled(parsed({ log: 'debug', source: 'foo', baseUrl: 'http://example.com', requestPipeline: 1 }));
+
+          runs(function() {
+            expectActionCalled(parsed({ log: 'debug', source: 'foo', baseUrl: 'http://example.com', requestPipeline: 1 }));
+          });
         });
 
         it("should override configuration file options with environment options and environment options with command line options", function() {
+
           setConfig({ source: 'foo', baseUrl: 'http://example.com/a', requestPipeline: 10 });
           setEnvironment({ API_COPILOT_BASE_URL: 'http://example.com/b', requestPipeline: '20' });
           execute('--request-pipeline', '30', '-l', 'debug', command);
-          expectActionCalled(parsed({ source: 'foo', baseUrl: 'http://example.com/b', requestPipeline: 30, log: 'debug' }));
+
+          runs(function() {
+            expectActionCalled(parsed({ source: 'foo', baseUrl: 'http://example.com/b', requestPipeline: 30, log: 'debug' }));
+          });
         });
 
-        it("should extend configuration file params with command line params", function() {
-          setConfig({ params: { foo: 'a', bar: 'b', baz: [ 1, 2 ], qux: 'string' } });
-          execute('-p', 'foo', '-p', 'bar=1', '-p', 'bar=2', '-p', 'bar=3', '-p', 'baz=yeehaw', '-p', 'corge', command);
-          expectActionCalled(parsed({ params: { foo: [ true ], bar: [ '1', '2', '3' ], baz: [ 'yeehaw' ], qux: 'string', corge: [ true ] } }));
+        it("should extend configuration file params and command line params", function() {
+
+          setConfig({ params: { foo: 'a', bar: 'a', baz: 'a', qux: [ 'a', 'a' ] } }, '/home/.api-copilot.yml');
+          setConfig({ params: { bar: 'b', baz: 'b', qux: [ 'b', 'b' ] } });
+          setConfig({ params: { baz: [ 'c', 'd' ], qux: [ 'c' ] } }, 'foo.yml');
+          execute('--default-configs', '-c', 'foo.yml', '-p', 'bar', '-p', 'qux=e', command);
+
+          runs(function() {
+            expectActionCalled(parsed({
+              config: defaultOptions.config.concat([ 'foo.yml' ]),
+              params: {
+                foo: 'a',
+                bar: [ true ],
+                baz: [ 'c', 'd' ],
+                qux: [ 'e' ]
+              }
+            }));
+          });
         });
       });
 
@@ -481,12 +502,16 @@ describe("CLI Program", function() {
         describe("arguments", function() {
 
           it("should be parsed", function() {
+
             setConfig({ baseUrl: 'http://qux.com' });
             execute('-l', 'debug', command, 'foo.scenario.js');
-            expectActionCalled(parsed({
-              log: 'debug',
-              baseUrl: 'http://qux.com'
-            }), 'foo.scenario.js');
+
+            runs(function() {
+              expectActionCalled(parsed({
+                log: 'debug',
+                baseUrl: 'http://qux.com'
+              }), 'foo.scenario.js');
+            });
           });
         });
       }
@@ -529,21 +554,22 @@ describe("CLI Program", function() {
           customParamsIndex = _.indexOf(lines, '  Custom Parameters:'),
           options = cleanHelp(lines.slice(optionsIndex + 1, customParamsIndex));
 
-      expect(options.length).toBe(14);
+      expect(options.length).toBe(15);
       expect(options[0]).toBe('-h, --help output usage information');
       expect(options[1]).toBe('-V, --version output the version number');
-      expect(options[2]).toBe('-c, --config [file] Set the configuration file path');
-      expect(options[3]).toBe('-l, --log [level] Log level (trace, debug, info; info by default)');
-      expect(options[4]).toBe('-s, --source [dir] Directory where API scenarios are located ("api" by default)');
-      expect(options[5]).toBe('-u, --base-url [url] (run) Override the base URL of the scenario');
-      expect(options[6]).toBe('-p, --params [name] (run) Add a custom parameter (see Custom Parameters)');
-      expect(options[7]).toBe('-t, --show-time (run) Print the date and time with each log');
-      expect(options[8]).toBe('-q, --show-request (run) Print options for each HTTP request (only with debug or trace log level)');
-      expect(options[9]).toBe('-b, --show-response-body (run) Print response body for each HTTP request (only with debug or trace log level)');
-      expect(options[10]).toBe('--show-full-url (run) Show full URLs even when a base URL is configured (only with debug or trace log level)');
-      expect(options[11]).toBe('--request-pipeline <n> (run) maximum number of HTTP requests to run in parallel (no limit by default)');
-      expect(options[12]).toBe('--request-cooldown <ms> (run) if set and an HTTP request ends, no other request will be started before this time (milliseconds) has elapsed (no cooldown by default)');
-      expect(options[13]).toBe('--request-delay <ms> (run) if set and an HTTP request starts, no other request will be started before this time (milliseconds) has elapsed (no delay by default)');
+      expect(options[2]).toBe('-l, --log [level] Log level (trace, debug, info; info by default)');
+      expect(options[3]).toBe('-s, --source [dir] Directory where API scenarios are located ("api" by default)');
+      expect(options[4]).toBe('-u, --base-url [url] (run) Override the base URL of the scenario');
+      expect(options[5]).toBe('-p, --params [name] (run) Add a custom parameter (see Custom Parameters)');
+      expect(options[6]).toBe('-t, --show-time (run) Print the date and time with each log');
+      expect(options[7]).toBe('-q, --show-request (run) Print options for each HTTP request (only with debug or trace log level)');
+      expect(options[8]).toBe('-b, --show-response-body (run) Print response body for each HTTP request (only with debug or trace log level)');
+      expect(options[9]).toBe('--show-full-url (run) Show full URLs even when a base URL is configured (only with debug or trace log level)');
+      expect(options[10]).toBe('--request-pipeline <n> (run) maximum number of HTTP requests to run in parallel (no limit by default)');
+      expect(options[11]).toBe('--request-cooldown <ms> (run) if set and an HTTP request ends, no other request will be started before this time (milliseconds) has elapsed (no cooldown by default)');
+      expect(options[12]).toBe('--request-delay <ms> (run) if set and an HTTP request starts, no other request will be started before this time (milliseconds) has elapsed (no delay by default)');
+      expect(options[13]).toBe('-c, --config [file] Read options from a YAML configuration file (can be used multiple times; disables default configuration files)');
+      expect(options[14]).toBe('--default-configs Combine default configuration files with custom ones ($HOME/.api-copilot.yml and api-copilot.yml)');
     });
 
     it("should show information about custom parameters", function() {

@@ -396,7 +396,10 @@ api-copilot run foo
 API Copilot can be given configuration options in four ways:
 
 * as options to the Scenario object;
-* from the `api-copilot.yml` [YAML](http://www.yaml.org) file in the current working directory;
+* from [YAML](http://www.yaml.org) configuration files:
+  * the `.api-copilot.yml` file in your home directory;
+  * the `api-copilot.yml` file in the current working directory;
+  * other configuration files specified with the `config` option;
 * from environment variables;
 * as options on the command line (run `api-copilot --help` to see available options).
 
