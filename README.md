@@ -393,7 +393,7 @@ api-copilot run foo
 
 ### Configuration Options
 
-API Copilot can be given configuration options in four ways:
+API Copilot can be given configuration options in multiple ways:
 
 * as options to the Scenario object;
 * from [YAML](http://www.yaml.org) configuration files:
@@ -403,7 +403,8 @@ API Copilot can be given configuration options in four ways:
 * from environment variables;
 * as options on the command line (run `api-copilot --help` to see available options).
 
-Command line options override environment variable options, which override options from the configuration file, which finally override the Scenario object options.
+Each of these option sources has greater precedence than the previous one.
+For example, an option given on the command line will always overwrite the value of the same option read from a configuration file or given through an environment variable.
 
 The following configuration options are supported:
 
@@ -462,13 +463,23 @@ The following configuration options are supported:
 
   This option cannot be changed on the command line.
 
-Additionally, this command line option can be used to load another configuration file:
+<a name="configuration-files"></a>
 
-* `-c, --config <file>`
+Additionally, these command-line- and environment-only options can be used to customize from which configuration files options are read from:
 
-  Path to the configuration file.
-  The default path is `api-copilot.yml`.
+* `-c, --config <file>` &mdash; env var `API_COPILOT_CONFIG=<file>`
+
+  Add a configuration file to read options from.
   The path can be absolute or relative to the current working directory.
+  This option can be used multiple times.
+
+  **WARNING:** note that by default, API Copilot will attempt to read `~/.api-copilot.yml` and `$PWD/api-copilot.yml`.
+  Using the `--config` option disables these default configuration files unless you also set the `--default-configs` option.
+
+* `--default-configs` &mdash; env var `API_COPILOT_DEFAULT_CONFIGS=1`
+
+  In conjunction with the `--config` option, this causes the default configuration files
+  (`~/.api-copilot.yml` and `$PWD/api-copilot.yml`) to still be read instead of being ignored.
 
 <a href="#toc" style="float:right;">Back to top</a>
 

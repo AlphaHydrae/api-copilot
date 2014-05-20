@@ -6,7 +6,9 @@
 
 * [Configuration options](README.md#configuration-options) can now also be set with environment variables (e.g. `API_COPILOT_LOG=debug`).
 
-* [Configuration options](README.md#configuration-options) are now validated before running the scenario.
+* Configuration options can now be read from [multiple configuration files](README.md#configuration-files) with the `--config` option..
+
+* Configuration options are now validated before running the scenario.
   If an option has an invalid value (e.g. unknown log level, non-numeric or negative request cooldown),
   the scenario will not start running.
 
