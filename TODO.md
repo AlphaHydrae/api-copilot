@@ -8,6 +8,7 @@
 * provide underscore and q dependencies
 * add shared store object and document using global variables
 * make run the default action, display --help if no scenario available
+* only show effective configuration in debug mode (indicate that higher log level == more info)
 * check TODO/FIXMEs
 * display execution time in human-friendly format (2m 30s 123ms)
 * allow JSON configuration files
