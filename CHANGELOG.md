@@ -1,6 +1,6 @@
 # Changelog
 
-## Edge - [commits](https://github.com/lotaris/api-copilot/compare/0.5.0...master)
+## v0.6.0 - October 16, 2014 - [commits](https://github.com/lotaris/api-copilot/compare/0.5.0...0.6.0)
 
 * **NEW:** The configurable [request pipeline](README.md#request-pipeline) allows to limit the number of HTTP requests made in parallel.
 
