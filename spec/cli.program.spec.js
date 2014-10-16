@@ -177,6 +177,9 @@ describe("CLI Program", function() {
 
         it("should parse short command line options", function() {
 
+          setConfig({}, 'foo.yml');
+          setConfig({}, 'bar.yml');
+
           execute(
             '-l', 'debug', '-s', 'samples', '-u', 'http://example.com/foo', '-t', '-q', '-b',
             '-p', 'foo', '-p', 'bar=baz', '-p', 'baz=1', '-p', 'baz=2', '-p', 'baz=3',
@@ -198,6 +201,9 @@ describe("CLI Program", function() {
         });
 
         it("should parse long command line options", function() {
+
+          setConfig({}, 'foo.yml');
+          setConfig({}, 'bar.yml');
 
           execute(
             '--log', 'trace', '--source', 'scripts', '--base-url', 'http://example.com/bar',
@@ -260,6 +266,8 @@ describe("CLI Program", function() {
 
         it("should parse options given through environment variables", function() {
 
+          setConfig({}, 'foo.yml');
+
           setEnvironment({
             API_COPILOT_LOG: 'trace',
             API_COPILOT_SOURCE: 'samples',
@@ -271,7 +279,8 @@ describe("CLI Program", function() {
             API_COPILOT_REQUEST_PIPELINE: '3',
             API_COPILOT_REQUEST_COOLDOWN: '250',
             API_COPILOT_REQUEST_DELAY: '100',
-            API_COPILOT_CONFIG: 'foo.yml'
+            API_COPILOT_CONFIG: 'foo.yml',
+            API_COPILOT_DEFAULT_CONFIGS: '1'
           });
 
           execute(command);
@@ -288,7 +297,8 @@ describe("CLI Program", function() {
               requestPipeline: 3,
               requestCooldown: 250,
               requestDelay: 100,
-              config: defaultOptions.config.concat([ 'foo.yml' ])
+              config: defaultOptions.config.concat([ 'foo.yml' ]),
+              defaultConfigs: true
             }));
           });
         });

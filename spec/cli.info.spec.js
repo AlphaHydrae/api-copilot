@@ -184,7 +184,7 @@ describe("CLI Info", function() {
       fsMock.files['config.yml'] = 'log: trace';
 
       displayInfo({}, {
-        config: 'config.yml'
+        config: [ 'config.yml' ]
       });
 
       runs(function() {
@@ -192,7 +192,28 @@ describe("CLI Info", function() {
         expectHeader('Sample', 'api/b.scenario.js');
         expectParametersHeader(0);
         expectBaseConfiguration({});
-        expectCurrentConfiguration({ config: 'config.yml' }, { configFile: 'config.yml', configFileExists: true });
+        expectCurrentConfiguration({ config: [ 'config.yml' ] }, { configFile: 'config.yml', configFileExists: true });
+        expectSteps([]);
+
+        expectNothingMore();
+      });
+    });
+
+    it("should display multiple configuration files", function() {
+
+      fsMock.files['foo.yml'] = 'log: trace';
+      fsMock.files['bar.yml'] = 'log: info';
+
+      displayInfo({}, {
+        config: [ 'foo.yml', 'bar.yml' ]
+      });
+
+      runs(function() {
+
+        expectHeader('Sample', 'api/b.scenario.js');
+        expectParametersHeader(0);
+        expectBaseConfiguration({});
+        expectMultipleConfigurations({ config: [ 'foo.yml', 'bar.yml' ] }, [ 'foo.yml', 'bar.yml' ]);
         expectSteps([]);
 
         expectNothingMore();
@@ -387,6 +408,27 @@ describe("CLI Info", function() {
         ]);
       }
     }
+
+    expectJson(configuration);
+  }
+
+  function expectMultipleConfigurations(configuration, configFiles) {
+
+    expectLines([
+      '',
+      'EFFECTIVE CONFIGURATION'.bold,
+      ''
+    ]);
+
+    expectLines([
+      '  Configuration files:'
+    ]);
+
+    expectLines(_.map(configFiles, function(configFile) {
+      return '  - ' + path.resolve(configFile);
+    }));
+
+    expectLines(['']);
 
     expectJson(configuration);
   }

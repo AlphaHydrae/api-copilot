@@ -11,7 +11,7 @@ _.extend(FileSystem.prototype, {
   },
 
   exists: function(file, callback) {
-    callback(undefined, !!this.files[file]);
+    callback(!!this.files[file]);
   },
 
   existsSync: function(file) {
