@@ -56,7 +56,7 @@ scenario.step('create 3 products', function(response) {
       },
       expect: { statusCode: 201 }
     });
-  });
+  }, this);
 
   // run HTTP requests in parallel
   return this.all(requests);
