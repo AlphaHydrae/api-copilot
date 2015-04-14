@@ -27,7 +27,7 @@ describe("Mock Server Scenario", function() {
 
     scenario.step('check plain text response', function(response) {
       expect(response.statusCode).toBe(200);
-      expect(response.headers['content-type']).toEqual('text/plain');
+      expect(response.headers['content-type']).toMatch(/^text\/plain(?:\;|$)/);
       expect(response.body).toBe('Hello World!');
       return this.success(response.statusCode, response.body);
     });
