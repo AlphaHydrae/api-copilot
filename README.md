@@ -5,6 +5,9 @@
 **[Installation](#installation) &mdash; [Documentation](#documentation) &mdash; [Usage](#usage) &mdash; [Contributing](#contributing) &mdash; [License](#license)**
 
 [![NPM version](https://badge.fury.io/js/api-copilot.svg)](http://badge.fury.io/js/api-copilot)
+[![Build Status](https://travis-ci.org/AlphaHydrae/api-copilot.svg?branch=master)](https://travis-ci.org/AlphaHydrae/api-copilot)
+[![Dependency Status](https://gemnasium.com/AlphaHydrae/api-copilot.svg)](https://gemnasium.com/AlphaHydrae/api-copilot)
+[![License](https://img.shields.io/npm/l/api-copilot.svg)](http://opensource.org/licenses/MIT)
 
 **Write an API scenario to make HTTP calls on your API:**
 
