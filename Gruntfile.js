@@ -5,6 +5,15 @@ module.exports = function(grunt) {
 
     pkg: grunt.file.readJSON('package.json'),
 
+    bump: {
+      options: {
+        files: ['package.json'],
+        commit: false,
+        createTag: false,
+        push: false
+      }
+    },
+
     jshint: {
       all: [ 'index.js', 'lib/**/*.js', 'spec/**/*.js' ]
     },
