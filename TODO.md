@@ -1,3 +1,4 @@
+* add retry flow control method
 * add sample with server and use as readme example
 * make scenario name optional (replace with camelcased file name?)
 * run request filters before passing options to client
